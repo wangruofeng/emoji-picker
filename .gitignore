@@ -1,0 +1,16 @@
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 测试 / 工具临时产物
+.playwright-mcp/
+node_modules/
+*.log
+
+# 截图（如不想纳入版本）
+/*.png

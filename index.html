@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emoji 展示选择器</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --border: #e5e7eb;
+    --border-strong: #d1d5db;
+    --text: #1f2328;
+    --text-muted: #6b7280;
+    --text-faint: #9ca3af;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-soft: #eff6ff;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+    --success: #16a34a;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 10px;
+  }
+  html.dark {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --border-strong: #484f58;
+    --text: #e6edf3;
+    --text-muted: #9198a1;
+    --text-faint: #6e7681;
+    --accent: #58a6ff;
+    --accent-hover: #79b8ff;
+    --accent-soft: #1a2332;
+    --danger: #f87171;
+    --danger-soft: #2a1a1c;
+    --success: #3fb950;
+    --shadow: 0 1px 3px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; background: var(--panel);
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 650; }
+  .logo .mark {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff; font-size: 16px; font-weight: 700; line-height: 1;
+  }
+  .logo .sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+  .spacer { flex: 1; }
+
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--panel);
+    color: var(--text-muted); cursor: pointer;
+    display: grid; place-items: center; transition: all .15s; flex-shrink: 0;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--border-strong); background: var(--bg); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  header .icon-btn { border: none; background: transparent; }
+  header .icon-btn:hover { background: var(--bg); }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; background: var(--panel);
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .search-wrap {
+    flex: 1; position: relative; min-width: 0;
+  }
+  .search-wrap svg.search-icon {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; color: var(--text-faint); pointer-events: none;
+  }
+  #searchInput {
+    width: 100%; height: 38px; padding: 0 34px 0 34px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); color: var(--text); font-size: 14px;
+    outline: none; transition: border .15s, box-shadow .15s;
+  }
+  #searchInput:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  #searchInput::placeholder { color: var(--text-faint); }
+  .search-wrap .clear-btn {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    width: 22px; height: 22px; border-radius: 50%; border: 0;
+    background: var(--border); color: var(--text-muted); cursor: pointer;
+    display: none; align-items: center; justify-content: center; padding: 0;
+  }
+  .search-wrap .clear-btn:hover { background: var(--border-strong); color: var(--text); }
+  .search-wrap .clear-btn.show { display: flex; }
+  .search-wrap .clear-btn svg { width: 12px; height: 12px; }
+
+  .stat { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+  .stat b { color: var(--text); font-weight: 600; }
+
+  /* ---------- Category tabs ---------- */
+  .tabs {
+    display: flex; gap: 6px; overflow-x: auto;
+    padding: 10px 20px; background: var(--panel);
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0; height: 32px; padding: 0 14px;
+    border: 1px solid var(--border); border-radius: 16px;
+    background: var(--panel); color: var(--text-muted); font-size: 13px;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .tab-btn:hover { background: var(--bg); color: var(--text); border-color: var(--border-strong); }
+  .tab-btn.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- App body ---------- */
+  .app-body {
+    flex: 1; display: flex; overflow: hidden;
+  }
+  main {
+    flex: 1; overflow-y: auto; padding: 18px 20px 60px;
+  }
+
+  /* ---------- Sections & grid ---------- */
+  .cat-section { margin-bottom: 28px; }
+  .cat-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 15px; font-weight: 600; color: var(--text);
+    margin: 0 0 12px; position: sticky; top: 0;
+    background: var(--bg); padding: 8px 0; z-index: 5;
+  }
+  .cat-title .count {
+    font-size: 12px; color: var(--text-muted); font-weight: 400;
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 2px 8px; border-radius: 10px;
+  }
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    gap: 8px;
+  }
+  .emoji-cell {
+    aspect-ratio: 1;
+    display: grid; place-items: center;
+    font-size: 32px; line-height: 1;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform .12s, border-color .12s, box-shadow .12s;
+    position: relative;
+  }
+  .emoji-cell:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(37,99,235,.15);
+  }
+  .emoji-cell.empty { display: none; }
+
+  /* ---------- Empty state ---------- */
+  .empty-state {
+    max-width: 420px; margin: 10vh auto; text-align: center;
+    color: var(--text-muted);
+  }
+  .empty-state .big {
+    font-size: 56px; margin-bottom: 14px;
+  }
+  .empty-state h3 { margin: 0 0 8px; font-size: 17px; color: var(--text); }
+  .empty-state p { margin: 0; font-size: 13.5px; line-height: 1.7; }
+
+  /* ---------- Detail panel ---------- */
+  .detail {
+    width: 320px; flex-shrink: 0; background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow-y: auto;
+  }
+  .detail.hidden { display: none; }
+  .detail-head {
+    padding: 16px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .detail-big {
+    width: 72px; height: 72px; font-size: 52px;
+    display: grid; place-items: center;
+    background: var(--bg); border-radius: var(--radius);
+    border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .detail-names { min-width: 0; }
+  .detail-names .cn { font-size: 16px; font-weight: 600; color: var(--text); margin: 0 0 4px; }
+  .detail-names .en { font-size: 12px; color: var(--text-muted); margin: 0; word-break: break-word; }
+  .detail-body { padding: 14px 18px 24px; }
+  .detail-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .detail-row label {
+    width: 78px; flex-shrink: 0; font-size: 12px; color: var(--text-muted);
+  }
+  .detail-row .value {
+    flex: 1; min-width: 0; font-size: 13px; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 8px;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .detail-row .copy-mini {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--panel);
+    color: var(--text-muted); cursor: pointer;
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .detail-row .copy-mini:hover { color: var(--accent); border-color: var(--accent); }
+  .detail-row .copy-mini svg { width: 13px; height: 13px; }
+
+  .detail-section-title {
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    margin: 18px 0 10px; text-transform: uppercase; letter-spacing: .03em;
+  }
+
+  .skin-row {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .skin-btn {
+    width: 44px; height: 44px; font-size: 28px; line-height: 1;
+    display: grid; place-items: center;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer; transition: all .12s;
+  }
+  .skin-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+  .detail-close {
+    display: none; margin-left: auto;
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 0; background: var(--bg); color: var(--text-muted); cursor: pointer;
+  }
+  .detail-close:hover { color: var(--text); }
+
+  /* ---------- Toast ---------- */
+  #toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: var(--panel);
+    padding: 9px 16px; border-radius: 8px; font-size: 13px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    opacity: 0; pointer-events: none; transition: all .22s;
+    z-index: 200; display: flex; align-items: center; gap: 7px;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast svg { width: 15px; height: 15px; }
+
+  /* ---------- Tooltip ---------- */
+  #tooltip {
+    position: fixed; z-index: 150; pointer-events: none;
+    background: var(--text); color: var(--panel);
+    padding: 5px 10px; border-radius: 6px; font-size: 12px;
+    opacity: 0; transform: translate(-50%, -100%); margin-top: -8px;
+    transition: opacity .12s; white-space: nowrap;
+  }
+  #tooltip.show { opacity: 1; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+  @media (max-width: 768px) {
+    header { padding: 12px 14px; }
+    .toolbar { padding: 8px 14px; }
+    .tabs { padding: 8px 14px; }
+    main { padding: 12px 14px 50px; }
+    .logo .sub { display: none; }
+    .emoji-grid { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
+    .emoji-cell { font-size: 28px; }
+    .app-body { flex-direction: column; }
+    .detail {
+      width: auto; border-left: 0; border-top: 1px solid var(--border);
+      max-height: 45vh; display: none;
+    }
+    .detail.visible { display: flex; }
+    .detail-close { display: grid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="mark">😀</div>
+    <div>
+      Emoji 展示选择器
+      <div class="sub">中文搜索 / 一键复制 / 码点详情</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <a class="icon-btn" href="https://github.com/wangruofeng/emoji-picker" target="_blank" rel="noopener noreferrer" title="查看 GitHub 源码" aria-label="GitHub 源码仓库">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.37.5 0 5.78 0 12.292c0 5.211 3.438 9.63 8.205 11.188.6.111.82-.254.82-.567 0-.28-.01-1.022-.015-2.005-3.338.711-4.042-1.582-4.042-1.582-.546-1.361-1.335-1.725-1.335-1.725-1.087-.731.084-.716.084-.716 1.205.082 1.838 1.215 1.838 1.215 1.07 1.803 2.809 1.282 3.495.981.108-.763.417-1.282.76-1.577-2.665-.295-5.466-1.309-5.466-5.827 0-1.287.465-2.339 1.235-3.164-.135-.297-.54-1.498.105-3.121 0 0 1.005-.316 3.3 1.209.96-.262 1.98-.392 3-.397 1.02.005 2.04.135 3 .397 2.28-1.525 3.285-1.209 3.285-1.209.645 1.623.24 2.824.12 3.121.765.825 1.23 1.877 1.23 3.164 0 4.53-2.805 5.527-5.475 5.817.42.354.81 1.077.81 2.182 0 1.578-.015 2.846-.015 3.229 0 .309.21.678.825.562C20.565 21.917 24 17.495 24 12.292 24 5.78 18.627.5 12 .5z"/></svg>
+  </a>
+  <button class="icon-btn" id="themeBtn" title="切换深浅色"></button>
+</header>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="searchInput" placeholder="搜索中文名、关键词或英文名（如：笑、heart、火）…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="clear-btn" id="clearSearch" title="清空搜索">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="stat" id="statBar">共 <b id="totalStat">0</b> 个 · 匹配 <b id="matchStat">0</b> 个</div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="app-body">
+  <main id="main"></main>
+  <aside class="detail hidden" id="detail">
+    <div class="detail-head">
+      <div class="detail-big" id="detailBig">😀</div>
+      <div class="detail-names">
+        <p class="cn" id="detailCn">笑脸</p>
+        <p class="en" id="detailEn">grinning face</p>
+      </div>
+      <button class="detail-close" id="detailClose" title="关闭详情">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-section-title">编码信息</div>
+      <div class="detail-row"><label>Unicode</label><div class="value" id="detailCodepoint"></div><button class="copy-mini" data-target="detailCodepoint" title="复制 Unicode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+      <div class="detail-row"><label>UTF-8</label><div class="value" id="detailUtf8"></div><button class="copy-mini" data-target="detailUtf8" title="复制 UTF-8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+      <div class="detail-row"><label>HTML</label><div class="value" id="detailHtml"></div><button class="copy-mini" data-target="detailHtml" title="复制 HTML 实体"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+      <div class="detail-row"><label>CSS</label><div class="value" id="detailCss"></div><button class="copy-mini" data-target="detailCss" title="复制 CSS content"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+      <div class="detail-row"><label>JS 转义</label><div class="value" id="detailJs"></div><button class="copy-mini" data-target="detailJs" title="复制 JS 转义"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+      <div class="detail-section-title" id="skinTitle" style="display:none">肤色变体</div>
+      <div class="skin-row" id="skinRow"></div>
+    </div>
+  </aside>
+</div>
+
+<div id="toast"></div>
+<div id="tooltip"></div>
+
+<script>
+/* =========================================================
+   Emoji 展示选择器
+   - 中文 / 英文 / 关键词搜索
+   - 分类浏览 + 最近使用
+   - 点击复制 + 码点详情
+   - 肤色变体 + 深浅色主题
+   ========================================================= */
+
+const EMOJI_DATA = [
+  { ch: "☠️", name: "skull and crossbones", cn: "骷髅和交叉骨", kw: ["crossbones", "骷髅和交叉骨", "skull", "死亡", "骷髅", "情感", "骨头", "表情", "头骨", "交", "叉", "骨"], cat: "笑脸情感" },
+  { ch: "☹️", name: "frowning face", cn: "皱眉的脸", kw: ["frowning", "皱眉的脸", "情感", "表情", "皱", "眉", "脸"], cat: "笑脸情感" },
+  { ch: "☺️", name: "smiling face", cn: "微笑的面孔", kw: ["smiling", "微笑的面孔", "开心", "愉快", "情感", "微笑", "高兴", "表情", "笑", "面", "孔"], cat: "笑脸情感" },
+  { ch: "❣️", name: "heart exclamation", cn: "心中感叹", kw: ["exclamation", "heart", "心中感叹", "喜欢", "情感", "爱心", "表情", "心", "感", "爱", "叹", "中"], cat: "笑脸情感" },
+  { ch: "❤️", name: "red heart", cn: "红心", kw: ["heart", "red", "红心", "情感", "表情"], cat: "笑脸情感" },
+  { ch: "❤️‍🔥", name: "heart on fire", cn: "心脏着火", kw: ["heart", "fire", "心脏着火", "喜欢", "情感", "爱心", "表情", "脏", "心", "火", "爱"], cat: "笑脸情感" },
+  { ch: "❤️‍🩹", name: "mending heart", cn: "修补心", kw: ["mending", "heart", "修补心", "喜欢", "情感", "爱心", "表情", "补", "心", "爱", "修"], cat: "笑脸情感" },
+  { ch: "👁‍🗨️", name: "eye in speech bubble", cn: "讲话泡泡中的眼睛", kw: ["讲话泡泡中的眼睛", "bubble", "speech", "eye", "情感", "表情", "讲", "眼", "话", "睛", "泡", "中"], cat: "笑脸情感" },
+  { ch: "👹", name: "ogre", cn: "食人魔", kw: ["ogre", "食人魔", "人类", "情感", "表情", "人物", "有人", "食", "魔", "人"], cat: "笑脸情感" },
+  { ch: "👺", name: "goblin", cn: "妖精", kw: ["goblin", "情感", "妖精", "表情", "精", "妖"], cat: "笑脸情感" },
+  { ch: "👻", name: "ghost", cn: "鬼", kw: ["ghost", "情感", "恐怖", "幽灵", "表情", "魂魄", "鬼"], cat: "笑脸情感" },
+  { ch: "👽", name: "alien", cn: "外星人", kw: ["alien", "外星人", "ufo", "情感", "et", "外星", "表情"], cat: "笑脸情感" },
+  { ch: "👾", name: "alien monster", cn: "外星怪物", kw: ["monster", "alien", "外星怪物", "情感", "表情", "星", "外", "物", "怪"], cat: "笑脸情感" },
+  { ch: "👿", name: "angry face with horns", cn: "有角的愤怒的脸", kw: ["有角的愤怒的脸", "horns", "angry", "发怒", "生气", "情感", "愤怒", "表情", "恼火", "怒", "角", "脸"], cat: "笑脸情感" },
+  { ch: "💀", name: "skull", cn: "颅骨", kw: ["skull", "情感", "颅骨", "表情", "颅", "骨"], cat: "笑脸情感" },
+  { ch: "💋", name: "kiss mark", cn: "吻痕", kw: ["kiss", "mark", "情感", "吻痕", "表情", "吻", "痕"], cat: "笑脸情感" },
+  { ch: "💌", name: "love letter", cn: "爱情信", kw: ["letter", "love", "爱情信", "喜欢", "热爱", "情感", "爱心", "喜爱", "表情", "信", "情", "心", "爱"], cat: "笑脸情感" },
+  { ch: "💓", name: "beating heart", cn: "跳动的心", kw: ["beating", "heart", "跳动的心", "喜欢", "情感", "爱心", "表情", "动", "心", "跳", "爱"], cat: "笑脸情感" },
+  { ch: "💔", name: "broken heart", cn: "破碎的心", kw: ["broken", "heart", "破碎的心", "情感", "表情"], cat: "笑脸情感" },
+  { ch: "💕", name: "two hearts", cn: "两颗心", kw: ["hearts", "two", "两颗心", "喜欢", "情感", "爱心", "表情", "两", "颗", "心", "爱"], cat: "笑脸情感" },
+  { ch: "💖", name: "sparkling heart", cn: "闪闪发光的心", kw: ["sparkling", "闪闪发光的心", "heart", "喜欢", "情感", "爱心", "表情", "发", "闪", "光", "心", "爱"], cat: "笑脸情感" },
+  { ch: "💗", name: "growing heart", cn: "成长的心", kw: ["growing", "heart", "成长的心", "喜欢", "情感", "爱心", "表情", "成", "长", "心", "爱"], cat: "笑脸情感" },
+  { ch: "💘", name: "heart with arrow", cn: "带箭头的心", kw: ["带箭头的心", "heart", "arrow", "喜欢", "指向", "情感", "爱心", "方向", "表情", "箭头", "心", "带", "爱"], cat: "笑脸情感" },
+  { ch: "💙", name: "blue heart", cn: "蓝色的心", kw: ["heart", "蓝色的心", "blue", "喜欢", "情感", "爱心", "表情", "色", "心", "爱", "蓝"], cat: "笑脸情感" },
+  { ch: "💚", name: "green heart", cn: "绿心", kw: ["heart", "green", "绿心", "情感", "表情"], cat: "笑脸情感" },
+  { ch: "💛", name: "yellow heart", cn: "黄心", kw: ["yellow", "heart", "黄心", "情感", "表情"], cat: "笑脸情感" },
+  { ch: "💜", name: "purple heart", cn: "紫心勋章", kw: ["purple", "heart", "紫心勋章", "情感", "紫心", "表情", "勋", "章"], cat: "笑脸情感" },
+  { ch: "💝", name: "heart with ribbon", cn: "带丝带的心", kw: ["ribbon", "带丝带的心", "heart", "喜欢", "情感", "爱心", "表情", "心", "带", "爱", "丝"], cat: "笑脸情感" },
+  { ch: "💞", name: "revolving hearts", cn: "旋转的心", kw: ["revolving", "hearts", "旋转的心", "喜欢", "情感", "爱心", "表情", "旋", "心", "转", "爱"], cat: "笑脸情感" },
+  { ch: "💟", name: "heart decoration", cn: "心形装饰", kw: ["decoration", "heart", "心形装饰", "喜欢", "情感", "爱心", "表情", "形", "装", "心", "爱", "饰"], cat: "笑脸情感" },
+  { ch: "💢", name: "anger symbol", cn: "愤怒的象征", kw: ["symbol", "愤怒的象征", "anger", "发怒", "生气", "情感", "愤怒", "表情", "恼火", "怒", "征", "象"], cat: "笑脸情感" },
+  { ch: "💤", name: "ZZZ", cn: "ZZZ", kw: ["zzz", "情感", "表情"], cat: "笑脸情感" },
+  { ch: "💥", name: "collision", cn: "碰撞", kw: ["collision", "情感", "碰撞", "表情", "碰", "撞"], cat: "笑脸情感" },
+  { ch: "💦", name: "sweat droplets", cn: "汗滴", kw: ["droplets", "sweat", "汗滴", "情感", "表情", "滴", "汗"], cat: "笑脸情感" },
+  { ch: "💨", name: "dashing away", cn: "匆匆而去", kw: ["dashing", "away", "匆匆而去", "情感", "表情", "匆"], cat: "笑脸情感" },
+  { ch: "💩", name: "pile of poo", cn: "一堆便便", kw: ["一堆便便", "pile", "poo", "排泄", "情感", "便便", "表情", "大便", "一", "屎", "堆"], cat: "笑脸情感" },
+  { ch: "💫", name: "dizzy", cn: "晕眩的", kw: ["dizzy", "晕眩的", "情感", "表情", "眩", "晕"], cat: "笑脸情感" },
+  { ch: "💬", name: "speech balloon", cn: "语音气球", kw: ["balloon", "speech", "语音气球", "派对", "情感", "表情", "气球", "庆祝", "语", "音"], cat: "笑脸情感" },
+  { ch: "💭", name: "thought balloon", cn: "思想气球", kw: ["thought", "balloon", "思想气球", "派对", "情感", "表情", "气球", "庆祝", "思", "想"], cat: "笑脸情感" },
+  { ch: "💯", name: "hundred points", cn: "百分", kw: ["hundred", "points", "情感", "百分", "表情", "分", "百"], cat: "笑脸情感" },
+  { ch: "🕳️", name: "hole", cn: "洞", kw: ["hole", "情感", "表情", "洞"], cat: "笑脸情感" },
+  { ch: "🖤", name: "black heart", cn: "黑心", kw: ["heart", "black", "黑心", "情感", "表情"], cat: "笑脸情感" },
+  { ch: "🗨️", name: "left speech bubble", cn: "左边的语音气泡", kw: ["左边的语音气泡", "speech", "bubble", "left", "对话框", "情感", "左边", "向左", "气泡", "表情", "语", "左", "边", "音"], cat: "笑脸情感" },
+  { ch: "🗯️", name: "right anger bubble", cn: "右愤怒泡沫", kw: ["bubble", "右愤怒泡沫", "anger", "right", "发怒", "生气", "情感", "向右", "愤怒", "右边", "表情", "恼火", "怒", "右", "沫", "泡"], cat: "笑脸情感" },
+  { ch: "😀", name: "grinning face", cn: "笑脸", kw: ["grinning", "开心", "呲牙", "情感", "笑脸", "微笑", "高兴", "表情", "笑"], cat: "笑脸情感" },
+  { ch: "😁", name: "beaming face with smiling eyes", cn: "脸上带着微笑的眼睛", kw: ["脸上带着微笑的眼睛", "beaming", "smiling", "eyes", "开心", "愉快", "情感", "向上", "微笑", "高兴", "上面", "表情", "上", "带", "眼", "睛", "笑", "脸"], cat: "笑脸情感" },
+  { ch: "😂", name: "face with tears of joy", cn: "满脸喜悦的泪水", kw: ["满脸喜悦的泪水", "tears", "joy", "饮用水", "情感", "表情", "水", "泪", "喜", "悦", "脸", "满"], cat: "笑脸情感" },
+  { ch: "😃", name: "grinning face with big eyes", cn: "笑脸大眼睛", kw: ["grinning", "笑脸大眼睛", "eyes", "big", "开心", "呲牙", "情感", "笑脸", "高兴", "微笑", "表情", "笑", "眼", "睛", "大"], cat: "笑脸情感" },
+  { ch: "😄", name: "grinning face with smiling eyes", cn: "笑脸和微笑的眼睛", kw: ["grinning", "笑脸和微笑的眼睛", "smiling", "eyes", "开心", "愉快", "呲牙", "情感", "笑脸", "微笑", "高兴", "表情", "笑", "眼", "睛"], cat: "笑脸情感" },
+  { ch: "😅", name: "grinning face with sweat", cn: "满脸汗水的笑脸", kw: ["grinning", "满脸汗水的笑脸", "sweat", "饮用水", "开心", "呲牙", "情感", "笑脸", "微笑", "高兴", "表情", "水", "汗", "笑", "脸", "满"], cat: "笑脸情感" },
+  { ch: "😆", name: "grinning squinting face", cn: "眯着眼睛笑的脸", kw: ["squinting", "grinning", "眯着眼睛笑的脸", "情感", "高兴", "表情", "快乐", "愉快", "欢乐", "呲牙", "欣喜", "开心", "笑脸", "微笑", "睛", "笑", "眯", "眼", "脸"], cat: "笑脸情感" },
+  { ch: "😇", name: "smiling face with halo", cn: "带光环的笑脸", kw: ["smiling", "带光环的笑脸", "halo", "开心", "呲牙", "情感", "笑脸", "微笑", "高兴", "表情", "光", "环", "笑", "带"], cat: "笑脸情感" },
+  { ch: "😈", name: "smiling face with horns", cn: "带角的笑脸", kw: ["smiling", "horns", "带角的笑脸", "开心", "呲牙", "情感", "笑脸", "微笑", "高兴", "表情", "笑", "带", "角"], cat: "笑脸情感" },
+  { ch: "😉", name: "winking face", cn: "眨眼的脸", kw: ["winking", "眨眼的脸", "情感", "表情", "眨眼", "脸"], cat: "笑脸情感" },
+  { ch: "😊", name: "smiling face with smiling eyes", cn: "微笑的脸和微笑的眼睛", kw: ["微笑的脸和微笑的眼睛", "smiling", "eyes", "愉快", "开心", "情感", "微笑", "高兴", "表情", "眼", "睛", "笑", "脸"], cat: "笑脸情感" },
+  { ch: "😋", name: "face savoring food", cn: "品尝食物的脸", kw: ["savoring", "品尝食物的脸", "food", "情感", "表情", "品", "食", "尝", "物", "脸"], cat: "笑脸情感" },
+  { ch: "😌", name: "relieved face", cn: "释然的脸", kw: ["relieved", "释然的脸", "情感", "表情", "释", "然", "脸"], cat: "笑脸情感" },
+  { ch: "😍", name: "smiling face with heart-eyes", cn: "心形眼睛的笑脸", kw: ["心形眼睛的笑脸", "smiling", "heart", "eyes", "情感", "爱心", "高兴", "表情", "喜欢", "呲牙", "开心", "笑脸", "微笑", "形", "心", "睛", "笑", "爱", "眼"], cat: "笑脸情感" },
+  { ch: "😎", name: "smiling face with sunglasses", cn: "戴着墨镜的笑脸", kw: ["sunglasses", "smiling", "戴着墨镜的笑脸", "开心", "呲牙", "情感", "笑脸", "微笑", "高兴", "表情", "戴", "墨", "笑", "镜"], cat: "笑脸情感" },
+  { ch: "😏", name: "smirking face", cn: "傻笑的脸", kw: ["smirking", "傻笑的脸", "欣喜", "开心", "快乐", "愉快", "呲牙", "情感", "笑脸", "微笑", "表情", "高兴", "欢乐", "傻", "笑", "脸"], cat: "笑脸情感" },
+  { ch: "😐", name: "neutral face", cn: "中性面孔", kw: ["neutral", "中性面孔", "情感", "表情", "性", "面", "孔", "中"], cat: "笑脸情感" },
+  { ch: "😑", name: "expressionless face", cn: "面无表情", kw: ["expressionless", "面无表情", "情感", "表情", "情", "无", "表", "面"], cat: "笑脸情感" },
+  { ch: "😒", name: "unamused face", cn: "不高兴的脸", kw: ["unamused", "不高兴的脸", "情感", "表情", "高", "不", "脸", "兴"], cat: "笑脸情感" },
+  { ch: "😓", name: "downcast face with sweat", cn: "满脸汗水低垂的脸", kw: ["downcast", "满脸汗水低垂的脸", "sweat", "饮用水", "情感", "表情", "垂", "低", "水", "汗", "脸", "满"], cat: "笑脸情感" },
+  { ch: "😔", name: "pensive face", cn: "沉思的脸", kw: ["pensive", "沉思的脸", "情感", "表情", "思", "沉", "脸"], cat: "笑脸情感" },
+  { ch: "😕", name: "confused face", cn: "困惑的脸", kw: ["confused", "困惑的脸", "困倦", "情感", "瞌睡", "睡觉", "表情", "困", "惑", "脸"], cat: "笑脸情感" },
+  { ch: "😖", name: "confounded face", cn: "困惑的脸", kw: ["confounded", "困惑的脸", "困倦", "情感", "瞌睡", "睡觉", "表情", "困", "惑", "脸"], cat: "笑脸情感" },
+  { ch: "😗", name: "kissing face", cn: "亲吻脸", kw: ["kissing", "亲吻脸", "情感", "亲吻", "表情", "脸"], cat: "笑脸情感" },
+  { ch: "😘", name: "face blowing a kiss", cn: "脸飞吻", kw: ["blowing", "kiss", "脸飞吻", "情感", "飞吻", "表情", "脸"], cat: "笑脸情感" },
+  { ch: "😙", name: "kissing face with smiling eyes", cn: "带着微笑的眼睛亲吻脸", kw: ["带着微笑的眼睛亲吻脸", "kissing", "smiling", "eyes", "开心", "愉快", "情感", "亲吻", "微笑", "高兴", "表情", "笑", "带", "眼", "睛", "脸"], cat: "笑脸情感" },
+  { ch: "😚", name: "kissing face with closed eyes", cn: "闭着眼睛亲吻脸", kw: ["闭着眼睛亲吻脸", "kissing", "closed", "eyes", "情感", "亲吻", "表情", "眼", "睛", "闭", "脸"], cat: "笑脸情感" },
+  { ch: "😛", name: "face with tongue", cn: "用舌头面对", kw: ["tongue", "用舌头面对", "情感", "表情", "面", "用", "头", "舌"], cat: "笑脸情感" },
+  { ch: "😜", name: "winking face with tongue", cn: "用舌头眨眼的脸", kw: ["用舌头眨眼的脸", "winking", "tongue", "情感", "表情", "眨眼", "用", "头", "舌", "脸"], cat: "笑脸情感" },
+  { ch: "😝", name: "squinting face with tongue", cn: "用舌头眯着脸", kw: ["squinting", "用舌头眯着脸", "tongue", "情感", "表情", "用", "头", "舌", "脸", "眯"], cat: "笑脸情感" },
+  { ch: "😞", name: "disappointed face", cn: "失望的脸", kw: ["disappointed", "失望的脸", "情感", "失望", "表情", "脸"], cat: "笑脸情感" },
+  { ch: "😟", name: "worried face", cn: "担心的脸", kw: ["worried", "担心的脸", "担心", "情感", "表情", "脸"], cat: "笑脸情感" },
+  { ch: "😠", name: "angry face", cn: "愤怒的脸", kw: ["angry", "愤怒的脸", "发怒", "生气", "情感", "愤怒", "表情", "恼火", "怒", "脸"], cat: "笑脸情感" },
+  { ch: "😡", name: "enraged face", cn: "愤怒的脸", kw: ["enraged", "愤怒的脸", "发怒", "生气", "情感", "愤怒", "表情", "恼火", "怒", "脸"], cat: "笑脸情感" },
+  { ch: "😢", name: "crying face", cn: "哭泣的脸", kw: ["crying", "哭泣的脸", "哭泣", "情感", "表情", "脸"], cat: "笑脸情感" },
+  { ch: "😣", name: "persevering face", cn: "坚忍的脸", kw: ["persevering", "坚忍的脸", "情感", "表情", "忍", "坚", "脸"], cat: "笑脸情感" },
+  { ch: "😤", name: "face with steam from nose", cn: "鼻子里冒着蒸汽的脸", kw: ["鼻子里冒着蒸汽的脸", "steam", "nose", "情感", "表情", "蒸", "汽", "鼻", "子", "里", "冒", "脸"], cat: "笑脸情感" },
+  { ch: "😥", name: "sad but relieved face", cn: "悲伤但如释重负的脸", kw: ["悲伤但如释重负的脸", "relieved", "sad", "情感", "悲伤", "表情", "释", "重", "负", "脸"], cat: "笑脸情感" },
+  { ch: "😦", name: "frowning face with open mouth", cn: "张开嘴皱着眉头", kw: ["frowning", "张开嘴皱着眉头", "mouth", "open", "情感", "表情", "开", "皱", "眉", "张", "头", "嘴"], cat: "笑脸情感" },
+  { ch: "😧", name: "anguished face", cn: "痛苦的脸", kw: ["anguished", "痛苦的脸", "情感", "表情", "苦", "脸", "痛"], cat: "笑脸情感" },
+  { ch: "😨", name: "fearful face", cn: "恐惧的脸", kw: ["fearful", "恐惧的脸", "情感", "恐惧", "表情", "脸"], cat: "笑脸情感" },
+  { ch: "😩", name: "weary face", cn: "疲倦的脸", kw: ["weary", "疲倦的脸", "情感", "表情", "倦", "疲", "脸"], cat: "笑脸情感" },
+  { ch: "😪", name: "sleepy face", cn: "困倦的脸", kw: ["sleepy", "困倦的脸", "困倦", "情感", "瞌睡", "睡觉", "表情", "倦", "困", "脸"], cat: "笑脸情感" },
+  { ch: "😫", name: "tired face", cn: "疲惫的脸", kw: ["tired", "疲惫的脸", "疲惫", "情感", "表情", "脸"], cat: "笑脸情感" },
+  { ch: "😬", name: "grimacing face", cn: "鬼脸", kw: ["grimacing", "情感", "恐怖", "幽灵", "鬼脸", "表情", "魂魄", "鬼", "脸"], cat: "笑脸情感" },
+  { ch: "😭", name: "loudly crying face", cn: "大声哭泣的脸", kw: ["crying", "大声哭泣的脸", "loudly", "哭泣", "情感", "表情", "声", "大", "脸"], cat: "笑脸情感" },
+  { ch: "😮", name: "face with open mouth", cn: "张开嘴的脸", kw: ["张开嘴的脸", "mouth", "open", "情感", "表情", "开", "嘴", "张", "脸"], cat: "笑脸情感" },
+  { ch: "😮‍💨", name: "face exhaling", cn: "面部呼气", kw: ["exhaling", "面部呼气", "情感", "表情", "呼", "部", "气", "面"], cat: "笑脸情感" },
+  { ch: "😯", name: "hushed face", cn: "安静的脸", kw: ["hushed", "安静的脸", "情感", "表情", "静", "安", "脸"], cat: "笑脸情感" },
+  { ch: "😰", name: "anxious face with sweat", cn: "满脸焦急满头大汗", kw: ["满脸焦急满头大汗", "anxious", "sweat", "情感", "表情", "焦", "急", "头", "汗", "大", "脸", "满"], cat: "笑脸情感" },
+  { ch: "😱", name: "face screaming in fear", cn: "脸上因恐惧而尖叫", kw: ["screaming", "脸上因恐惧而尖叫", "fear", "情感", "向上", "恐惧", "上面", "表情", "上", "叫", "脸", "尖", "因"], cat: "笑脸情感" },
+  { ch: "😲", name: "astonished face", cn: "惊讶的脸", kw: ["astonished", "惊讶的脸", "意外", "吃惊", "惊奇", "震惊", "情感", "惊讶", "表情", "脸"], cat: "笑脸情感" },
+  { ch: "😳", name: "flushed face", cn: "脸红了", kw: ["flushed", "脸红了", "情感", "表情", "红", "脸"], cat: "笑脸情感" },
+  { ch: "😴", name: "sleeping face", cn: "睡脸", kw: ["sleeping", "情感", "睡脸", "表情", "睡", "脸"], cat: "笑脸情感" },
+  { ch: "😵", name: "face with crossed-out eyes", cn: "交叉眼睛的脸", kw: ["crossed", "交叉眼睛的脸", "eyes", "out", "情感", "表情", "交", "叉", "眼", "睛", "脸"], cat: "笑脸情感" },
+  { ch: "😵‍💫", name: "face with spiral eyes", cn: "螺旋形眼睛的脸", kw: ["螺旋形眼睛的脸", "spiral", "eyes", "情感", "表情", "旋", "形", "螺", "眼", "睛", "脸"], cat: "笑脸情感" },
+  { ch: "😶", name: "face without mouth", cn: "没有嘴的脸", kw: ["without", "没有嘴的脸", "mouth", "情感", "表情", "嘴", "没", "脸"], cat: "笑脸情感" },
+  { ch: "😶‍🌫️", name: "face in clouds", cn: "云中的脸", kw: ["clouds", "云中的脸", "云朵", "情感", "表情", "云", "脸", "中"], cat: "笑脸情感" },
+  { ch: "😷", name: "face with medical mask", cn: "带着医用口罩的脸", kw: ["带着医用口罩的脸", "medical", "mask", "情感", "口罩", "表情", "带", "用", "脸", "医"], cat: "笑脸情感" },
+  { ch: "😸", name: "grinning cat with smiling eyes", cn: "微笑的猫，带着微笑的眼睛", kw: ["微笑的猫，带着微笑的眼睛", "grinning", "smiling", "eyes", "cat", "情感", "高兴", "表情", "愉快", "猫咪", "开心", "宠物", "微笑", "猫", "睛", "笑", "眼", "带", "喵"], cat: "笑脸情感" },
+  { ch: "😹", name: "cat with tears of joy", cn: "猫流着喜悦的泪水", kw: ["猫流着喜悦的泪水", "tears", "joy", "cat", "饮用水", "情感", "宠物", "表情", "猫咪", "水", "泪", "流", "喵", "猫", "喜", "悦"], cat: "笑脸情感" },
+  { ch: "😺", name: "grinning cat", cn: "咧着嘴笑的猫", kw: ["grinning", "咧着嘴笑的猫", "cat", "情感", "高兴", "表情", "快乐", "微笑", "愉快", "欢乐", "呲牙", "猫咪", "欣喜", "开心", "笑脸", "宠物", "笑", "咧", "喵", "猫", "嘴"], cat: "笑脸情感" },
+  { ch: "😻", name: "smiling cat with heart-eyes", cn: "心形眼睛微笑的猫", kw: ["心形眼睛微笑的猫", "smiling", "heart", "eyes", "cat", "情感", "爱心", "高兴", "表情", "喜欢", "微笑", "愉快", "猫咪", "开心", "宠物", "形", "心", "睛", "笑", "爱", "眼", "喵", "猫"], cat: "笑脸情感" },
+  { ch: "😼", name: "cat with wry smile", cn: "苦笑的猫", kw: ["smile", "苦笑的猫", "wry", "cat", "情感", "苦笑", "宠物", "表情", "猫咪", "喵", "猫"], cat: "笑脸情感" },
+  { ch: "😽", name: "kissing cat", cn: "接吻猫", kw: ["kissing", "cat", "接吻猫", "情感", "接吻", "宠物", "表情", "猫咪", "喵", "猫"], cat: "笑脸情感" },
+  { ch: "😾", name: "pouting cat", cn: "撅嘴的猫", kw: ["pouting", "撅嘴的猫", "cat", "情感", "宠物", "表情", "猫咪", "撅", "喵", "猫", "嘴"], cat: "笑脸情感" },
+  { ch: "😿", name: "crying cat", cn: "哭泣的猫", kw: ["crying", "哭泣的猫", "cat", "哭泣", "情感", "宠物", "表情", "猫咪", "喵", "猫"], cat: "笑脸情感" },
+  { ch: "🙀", name: "weary cat", cn: "疲倦的猫", kw: ["weary", "疲倦的猫", "cat", "情感", "宠物", "表情", "猫咪", "倦", "疲", "喵", "猫"], cat: "笑脸情感" },
+  { ch: "🙁", name: "slightly frowning face", cn: "微微皱眉的脸", kw: ["frowning", "slightly", "微微皱眉的脸", "情感", "表情", "微", "皱", "眉", "脸"], cat: "笑脸情感" },
+  { ch: "🙂", name: "slightly smiling face", cn: "微微微笑的脸", kw: ["slightly", "smiling", "微微微笑的脸", "开心", "愉快", "情感", "微笑", "高兴", "表情", "微", "笑", "脸"], cat: "笑脸情感" },
+  { ch: "🙂‍↔️", name: "head shaking horizontally", cn: "头水平晃动", kw: ["horizontally", "shaking", "头水平晃动", "head", "饮用水", "情感", "表情", "动", "平", "水", "晃", "头"], cat: "笑脸情感" },
+  { ch: "🙂‍↕️", name: "head shaking vertically", cn: "头垂直摇头", kw: ["vertically", "shaking", "头垂直摇头", "head", "情感", "表情", "垂", "头", "直", "摇"], cat: "笑脸情感" },
+  { ch: "🙃", name: "upside-down face", cn: "颠倒的脸", kw: ["upside", "down", "颠倒的脸", "情感", "表情", "颠", "倒", "脸"], cat: "笑脸情感" },
+  { ch: "🙄", name: "face with rolling eyes", cn: "翻白眼的脸", kw: ["rolling", "翻白眼的脸", "eyes", "情感", "表情", "白", "眼", "翻", "脸"], cat: "笑脸情感" },
+  { ch: "🙈", name: "see-no-evil monkey", cn: "无恶不作的猴子", kw: ["无恶不作的猴子", "monkey", "evil", "see", "情感", "猴子", "表情", "作", "无", "不", "恶"], cat: "笑脸情感" },
+  { ch: "🙉", name: "hear-no-evil monkey", cn: "不闻不问的猴子", kw: ["不闻不问的猴子", "monkey", "evil", "hear", "情感", "猴子", "表情", "闻", "不", "问"], cat: "笑脸情感" },
+  { ch: "🙊", name: "speak-no-evil monkey", cn: "不说邪恶的猴子", kw: ["不说邪恶的猴子", "monkey", "speak", "evil", "情感", "邪恶", "猴子", "表情", "不"], cat: "笑脸情感" },
+  { ch: "🤍", name: "white heart", cn: "白心", kw: ["white", "heart", "情感", "白心", "表情"], cat: "笑脸情感" },
+  { ch: "🤎", name: "brown heart", cn: "棕色的心", kw: ["heart", "brown", "棕色的心", "喜欢", "情感", "爱心", "表情", "色", "心", "爱", "棕"], cat: "笑脸情感" },
+  { ch: "🤐", name: "zipper-mouth face", cn: "拉链嘴脸", kw: ["zipper", "mouth", "拉链嘴脸", "情感", "表情", "嘴", "链", "脸", "拉"], cat: "笑脸情感" },
+  { ch: "🤑", name: "money-mouth face", cn: "钱嘴脸", kw: ["mouth", "money", "钱嘴脸", "货币", "情感", "金钱", "表情", "嘴", "脸", "钱"], cat: "笑脸情感" },
+  { ch: "🤒", name: "face with thermometer", cn: "带温度计的脸", kw: ["thermometer", "带温度计的脸", "温度计", "情感", "表情", "带", "脸"], cat: "笑脸情感" },
+  { ch: "🤓", name: "nerd face", cn: "书呆子脸", kw: ["书呆子脸", "nerd", "情感", "表情", "呆", "书", "子", "脸"], cat: "笑脸情感" },
+  { ch: "🤔", name: "thinking face", cn: "思考的脸", kw: ["thinking", "思考的脸", "情感", "沉思", "思考", "表情", "想", "脸"], cat: "笑脸情感" },
+  { ch: "🤕", name: "face with head-bandage", cn: "头上缠着绷带的脸", kw: ["头上缠着绷带的脸", "bandage", "head", "情感", "向上", "包扎", "绷带", "上面", "表情", "上", "缠", "头", "脸"], cat: "笑脸情感" },
+  { ch: "🤖", name: "robot", cn: "机器人", kw: ["robot", "机器人", "情感", "安卓", "表情", "机械"], cat: "笑脸情感" },
+  { ch: "☝️", name: "index pointing up", cn: "索引向上", kw: ["pointing", "index", "索引向上", "手势", "向上", "up", "上面", "身体", "人物", "上", "引", "索", "人", "向", "手"], cat: "人物手势" },
+  { ch: "⛷️", name: "skier", cn: "滑雪者", kw: ["skier", "雪上运动", "滑雪者", "手势", "滑雪", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "⛹‍♀️", name: "woman bouncing ball", cn: "女人弹跳球", kw: ["bouncing", "女人弹跳球", "woman", "ball", "女孩", "小姐", "手势", "女人", "女性", "女士", "身体", "人物", "弹", "球", "人", "跳", "手"], cat: "人物手势" },
+  { ch: "⛹‍♂️", name: "man bouncing ball", cn: "男人弹球", kw: ["bouncing", "男人弹球", "ball", "man", "男孩", "手势", "男人", "男士", "男性", "先生", "身体", "人物", "弹", "球", "人", "手"], cat: "人物手势" },
+  { ch: "⛹️", name: "person bouncing ball", cn: "人弹球", kw: ["bouncing", "person", "ball", "人弹球", "人类", "手势", "身体", "人物", "有人", "弹", "球", "人", "手"], cat: "人物手势" },
+  { ch: "✊", name: "raised fist", cn: "举起拳头", kw: ["raised", "举起拳头", "fist", "手势", "身体", "人物", "拳头", "人", "举", "起", "手"], cat: "人物手势" },
+  { ch: "✋", name: "raised hand", cn: "举起手", kw: ["raised", "hand", "举起手", "手势", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "✌️", name: "victory hand", cn: "胜利之手", kw: ["victory", "hand", "胜利之手", "剪刀手", "手势", "手掌", "手指", "胜利", "身体", "人物", "v字", "手", "人", "耶"], cat: "人物手势" },
+  { ch: "✍️", name: "writing hand", cn: "写字的手", kw: ["writing", "写字的手", "hand", "手势", "写字", "手掌", "手指", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "🎅", name: "Santa Claus", cn: "圣诞老人", kw: ["claus", "santa", "圣诞老人", "圣诞节", "长者", "圣诞", "老年", "手势", "礼物", "老人", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "🏂", name: "snowboarder", cn: "单板滑雪者", kw: ["snowboarder", "单板滑雪者", "雪上运动", "手势", "滑雪", "身体", "人物", "单", "人", "板", "手"], cat: "人物手势" },
+  { ch: "🏃", name: "person running", cn: "跑步的人", kw: ["running", "person", "跑步的人", "人类", "跑步", "运动", "手势", "奔跑", "快跑", "身体", "人物", "有人", "人", "手"], cat: "人物手势" },
+  { ch: "🏃‍♀‍➡️", name: "woman running facing right", cn: "面朝右跑的女人", kw: ["面朝右跑的女人", "running", "facing", "right", "woman", "女孩", "身体", "女人", "小姐", "手势", "向右", "人物", "女性", "右边", "女士", "朝", "跑", "人", "面", "右", "手"], cat: "人物手势" },
+  { ch: "🏃‍♀️", name: "woman running", cn: "女人跑步", kw: ["running", "woman", "女人跑步", "跑步", "女孩", "小姐", "运动", "手势", "奔跑", "女人", "女性", "快跑", "女士", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "🏃‍♂‍➡️", name: "man running facing right", cn: "面朝右跑的人", kw: ["running", "面朝右跑的人", "facing", "right", "man", "人类", "人物", "手势", "向右", "右边", "身体", "有人", "跑", "朝", "人", "面", "右", "手"], cat: "人物手势" },
+  { ch: "🏃‍♂️", name: "man running", cn: "男人跑步", kw: ["running", "男人跑步", "man", "跑步", "运动", "男孩", "手势", "男人", "男士", "奔跑", "男性", "先生", "快跑", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "🏃‍➡️", name: "person running facing right", cn: "面朝右跑的人", kw: ["running", "面朝右跑的人", "person", "facing", "right", "人类", "手势", "向右", "有人", "右边", "身体", "人物", "跑", "朝", "人", "面", "右", "手"], cat: "人物手势" },
+  { ch: "🏄", name: "person surfing", cn: "冲浪的人", kw: ["surfing", "person", "冲浪的人", "人类", "滑浪", "手势", "冲浪", "身体", "人物", "有人", "人", "手"], cat: "人物手势" },
+  { ch: "🏄‍♀️", name: "woman surfing", cn: "女子冲浪", kw: ["surfing", "woman", "女子冲浪", "滑浪", "手势", "女人", "女性", "冲浪", "身体", "人物", "女", "人", "子", "手"], cat: "人物手势" },
+  { ch: "🏄‍♂️", name: "man surfing", cn: "男子冲浪", kw: ["surfing", "男子冲浪", "man", "滑浪", "手势", "男人", "男性", "冲浪", "身体", "人物", "人", "男", "子", "手"], cat: "人物手势" },
+  { ch: "🏇", name: "horse racing", cn: "赛马", kw: ["racing", "horse", "赛马", "手势", "小马", "骏马", "身体", "人物", "赛", "马", "人", "手"], cat: "人物手势" },
+  { ch: "🏊", name: "person swimming", cn: "游泳的人", kw: ["swimming", "person", "游泳的人", "人类", "游水", "手势", "游泳", "身体", "人物", "有人", "泳", "人", "手"], cat: "人物手势" },
+  { ch: "🏊‍♀️", name: "woman swimming", cn: "女人游泳", kw: ["swimming", "woman", "女人游泳", "女孩", "游水", "小姐", "手势", "女人", "游泳", "女性", "女士", "身体", "人物", "泳", "人", "手"], cat: "人物手势" },
+  { ch: "🏊‍♂️", name: "man swimming", cn: "男子游泳", kw: ["swimming", "男子游泳", "man", "游水", "男人", "手势", "游泳", "男性", "身体", "人物", "手", "泳", "人", "男", "子"], cat: "人物手势" },
+  { ch: "🏋‍♀️", name: "woman lifting weights", cn: "女人举重", kw: ["weights", "lifting", "woman", "女人举重", "女孩", "小姐", "女士", "健身", "手势", "女人", "女性", "举重", "力量", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "🏋‍♂️", name: "man lifting weights", cn: "男子举重", kw: ["weights", "lifting", "男子举重", "man", "健身", "男人", "手势", "男性", "举重", "力量", "身体", "人物", "人", "男", "子", "手"], cat: "人物手势" },
+  { ch: "🏋️", name: "person lifting weights", cn: "举重的人", kw: ["weights", "lifting", "person", "举重的人", "人类", "健身", "手势", "举重", "力量", "身体", "人物", "有人", "人", "手"], cat: "人物手势" },
+  { ch: "🏌‍♀️", name: "woman golfing", cn: "打高尔夫球的女人", kw: ["打高尔夫球的女人", "golfing", "woman", "打高尔夫", "女孩", "小姐", "手势", "女人", "女性", "女士", "身体", "人物", "球", "人", "手"], cat: "人物手势" },
+  { ch: "🏌‍♂️", name: "man golfing", cn: "男子打高尔夫球", kw: ["男子打高尔夫球", "golfing", "打高尔夫", "man", "手势", "男人", "男性", "身体", "人物", "球", "人", "男", "子", "手"], cat: "人物手势" },
+  { ch: "🏌️", name: "person golfing", cn: "打高尔夫球的人", kw: ["打高尔夫球的人", "golfing", "person", "打高尔夫", "人类", "手势", "身体", "人物", "有人", "球", "人", "手"], cat: "人物手势" },
+  { ch: "👀", name: "eyes", cn: "眼睛", kw: ["eyes", "眼睛", "手势", "身体", "人物", "人", "眼", "睛", "手"], cat: "人物手势" },
+  { ch: "👁️", name: "eye", cn: "眼睛", kw: ["eye", "眼睛", "手势", "身体", "人物", "人", "眼", "睛", "手"], cat: "人物手势" },
+  { ch: "👂", name: "ear", cn: "耳朵", kw: ["ear", "手势", "耳朵", "身体", "人物", "耳", "人", "朵", "手"], cat: "人物手势" },
+  { ch: "👃", name: "nose", cn: "鼻子", kw: ["nose", "手势", "鼻子", "身体", "人物", "人", "鼻", "子", "手"], cat: "人物手势" },
+  { ch: "👄", name: "mouth", cn: "嘴", kw: ["mouth", "手势", "身体", "人物", "嘴", "人", "手"], cat: "人物手势" },
+  { ch: "👅", name: "tongue", cn: "舌头", kw: ["tongue", "舌头", "手势", "身体", "人物", "人", "头", "舌", "手"], cat: "人物手势" },
+  { ch: "👆", name: "backhand index pointing up", cn: "反手指数向上", kw: ["backhand", "pointing", "反手指数向上", "index", "向上", "手掌", "up", "上面", "身体", "手势", "人物", "手指", "反", "数", "指", "上", "人", "向", "手"], cat: "人物手势" },
+  { ch: "👇", name: "backhand index pointing down", cn: "反手指数朝下", kw: ["backhand", "pointing", "反手指数朝下", "index", "down", "手掌", "下面", "身体", "手势", "向下", "人物", "手指", "朝", "反", "数", "指", "下", "人", "手"], cat: "人物手势" },
+  { ch: "👈", name: "backhand index pointing left", cn: "反手食指指向左侧", kw: ["反手食指指向左侧", "backhand", "pointing", "index", "left", "手掌", "左边", "身体", "手势", "人物", "手指", "向左", "食", "反", "指", "左", "侧", "人", "向", "手"], cat: "人物手势" },
+  { ch: "👉", name: "backhand index pointing right", cn: "反手食指指向右侧", kw: ["backhand", "pointing", "反手食指指向右侧", "right", "index", "手掌", "身体", "手势", "向右", "人物", "手指", "右边", "食", "反", "指", "侧", "人", "向", "右", "手"], cat: "人物手势" },
+  { ch: "👊", name: "oncoming fist", cn: "迎面而来的拳头", kw: ["oncoming", "迎面而来的拳头", "fist", "手势", "身体", "人物", "拳头", "人", "面", "迎", "手"], cat: "人物手势" },
+  { ch: "👋", name: "waving hand", cn: "挥手", kw: ["waving", "hand", "招手", "挥手", "拜拜", "再见", "手势", "你好", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "👌", name: "OK hand", cn: "好的手", kw: ["hand", "好的手", "ok", "手势", "手掌", "手指", "身体", "人物", "人", "好", "手"], cat: "人物手势" },
+  { ch: "👍", name: "thumbs up", cn: "竖起大拇指", kw: ["thumbs", "竖起大拇指", "大拇指", "手势", "点赞", "up", "身体", "人物", "赞", "人", "好", "棒", "手"], cat: "人物手势" },
+  { ch: "👎", name: "thumbs down", cn: "不看好", kw: ["thumbs", "down", "不看好", "手势", "身体", "人物", "人", "好", "不", "手"], cat: "人物手势" },
+  { ch: "👏", name: "clapping hands", cn: "拍手", kw: ["clapping", "hands", "拍手", "手势", "掌声", "鼓掌", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "👐", name: "open hands", cn: "张开双手", kw: ["hands", "open", "张开双手", "手势", "手掌", "手指", "身体", "人物", "双", "开", "人", "张", "手"], cat: "人物手势" },
+  { ch: "👣", name: "footprints", cn: "脚印", kw: ["footprints", "脚印", "手势", "身体", "人物", "印", "人", "脚", "手"], cat: "人物手势" },
+  { ch: "👤", name: "bust in silhouette", cn: "半身像的剪影", kw: ["silhouette", "半身像的剪影", "bust", "剪影", "手势", "身体", "人物", "身", "像", "人", "半", "手"], cat: "人物手势" },
+  { ch: "👥", name: "busts in silhouette", cn: "半身像的剪影", kw: ["silhouette", "半身像的剪影", "busts", "剪影", "手势", "身体", "人物", "身", "人", "像", "半", "手"], cat: "人物手势" },
+  { ch: "👦", name: "boy", cn: "男生", kw: ["boy", "手势", "男人", "男性", "男生", "身体", "人物", "人", "男", "生", "手"], cat: "人物手势" },
+  { ch: "👧", name: "girl", cn: "女孩", kw: ["girl", "女孩", "手势", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "👨", name: "man", cn: "男人", kw: ["man", "男孩", "手势", "男人", "男士", "男性", "先生", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍⚕️", name: "man health worker", cn: "男保健员", kw: ["health", "worker", "男保健员", "man", "手势", "男人", "男性", "身体", "人物", "健", "人", "保", "男", "员", "手"], cat: "人物手势" },
+  { ch: "👨‍⚖️", name: "man judge", cn: "男法官", kw: ["judge", "男法官", "man", "手势", "男人", "男性", "身体", "人物", "人", "男", "法", "官", "手"], cat: "人物手势" },
+  { ch: "👨‍✈️", name: "man pilot", cn: "男飞行员", kw: ["pilot", "男飞行员", "man", "男人", "手势", "男性", "身体", "人物", "飞", "人", "男", "员", "行", "手"], cat: "人物手势" },
+  { ch: "👨‍❤️‍👨", name: "couple with heart: man, man", cn: "情侣与心：男人，男人", kw: ["情侣与心：男人，男人", "couple", "heart:", "man", "情侣", "爱心", "爱人", "恋人", "喜欢", "夫妻", "身体", "手势", "男人", "男性", "先生", "人物", "男孩", "男士", "心", "爱", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍❤️‍💋‍👨", name: "kiss: man, man", cn: "吻：男人，男人", kw: ["吻：男人，男人", "kiss:", "man", "男孩", "手势", "男人", "男士", "男性", "先生", "身体", "人物", "吻", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍🌾", name: "man farmer", cn: "男农民", kw: ["farmer", "man", "男农民", "手势", "男人", "务农", "男性", "农夫", "身体", "人物", "农民", "人", "男", "手"], cat: "人物手势" },
+  { ch: "👨‍🍳", name: "man cook", cn: "男厨师", kw: ["cook", "男厨师", "man", "手势", "男人", "大厨", "厨师", "做饭", "男性", "烹饪", "身体", "人物", "男", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍🍼", name: "man feeding baby", cn: "男人喂婴儿", kw: ["feeding", "男人喂婴儿", "baby", "man", "男孩", "手势", "男人", "男士", "男性", "先生", "婴儿", "宝宝", "小孩", "身体", "人物", "喂", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍🎓", name: "man student", cn: "男学生", kw: ["student", "男学生", "man", "手势", "男人", "学生", "同学", "男性", "学子", "身体", "人物", "人", "男", "手"], cat: "人物手势" },
+  { ch: "👨‍🎤", name: "man singer", cn: "男歌手", kw: ["singer", "男歌手", "man", "歌唱", "手势", "男人", "男性", "歌手", "演唱", "身体", "人物", "人", "男", "手"], cat: "人物手势" },
+  { ch: "👨‍🎨", name: "man artist", cn: "男艺术家", kw: ["artist", "男艺术家", "艺术家", "man", "手势", "男人", "艺术", "男性", "画家", "身体", "人物", "人", "男", "手"], cat: "人物手势" },
+  { ch: "👨‍🏫", name: "man teacher", cn: "男老师", kw: ["teacher", "男老师", "man", "导师", "老师", "手势", "男人", "教师", "男性", "先生", "身体", "人物", "人", "男", "手"], cat: "人物手势" },
+  { ch: "👨‍🏭", name: "man factory worker", cn: "男工厂工人", kw: ["factory", "worker", "男工厂工人", "man", "劳动者", "工厂", "手势", "男人", "务工", "身体", "男性", "工人", "人物", "人", "男", "手"], cat: "人物手势" },
+  { ch: "👨‍👦", name: "family: man, boy", cn: "家庭成员： 男人、男孩", kw: ["家庭成员： 男人、男孩", "family:", "boy", "man", "亲属", "亲戚", "身体", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "成", "人", "员", "手"], cat: "人物手势" },
+  { ch: "👨‍👦‍👦", name: "family: man, boy, boy", cn: "家庭： 男人、男孩、男孩", kw: ["家庭： 男人、男孩、男孩", "family:", "man", "boy", "男孩", "手势", "男人", "男士", "家人", "男性", "先生", "家庭", "亲戚", "身体", "人物", "亲属", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍👧", name: "family: man, girl", cn: "家庭成员：男、女", kw: ["家庭成员：男、女", "family:", "girl", "man", "亲属", "亲戚", "身体", "女人", "手势", "男人", "男性", "家庭", "人物", "家人", "女性", "男", "女", "成", "人", "员", "手"], cat: "人物手势" },
+  { ch: "👨‍👧‍👦", name: "family: man, girl, boy", cn: "家庭成员：男人、女孩、男孩", kw: ["家庭成员：男人、女孩、男孩", "family:", "girl", "boy", "man", "女孩", "亲属", "亲戚", "身体", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "成", "人", "员", "手"], cat: "人物手势" },
+  { ch: "👨‍👧‍👧", name: "family: man, girl, girl", cn: "家庭：男人、女孩、女孩", kw: ["家庭：男人、女孩、女孩", "family:", "girl", "man", "女孩", "亲属", "亲戚", "身体", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍👨‍👦", name: "family: man, man, boy", cn: "家庭：男人、男人、男孩", kw: ["家庭：男人、男人、男孩", "family:", "man", "boy", "男孩", "手势", "男人", "男士", "家人", "男性", "先生", "家庭", "亲戚", "身体", "人物", "亲属", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍👨‍👦‍👦", name: "family: man, man, boy, boy", cn: "家庭： 男人，男人，男孩，男孩", kw: ["家庭： 男人，男人，男孩，男孩", "family:", "man", "boy", "男孩", "手势", "男人", "男士", "家人", "男性", "先生", "家庭", "亲戚", "身体", "人物", "亲属", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍👨‍👧", name: "family: man, man, girl", cn: "家庭：男人、男人、女孩", kw: ["家庭：男人、男人、女孩", "family:", "girl", "man", "女孩", "亲属", "亲戚", "身体", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍👨‍👧‍👦", name: "family: man, man, girl, boy", cn: "家庭：男人、男人、女孩、男孩", kw: ["家庭：男人、男人、女孩、男孩", "family:", "girl", "boy", "man", "女孩", "亲属", "亲戚", "身体", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍👨‍👧‍👧", name: "family: man, man, girl, girl", cn: "家庭：男人，男人，女孩，女孩", kw: ["家庭：男人，男人，女孩，女孩", "family:", "girl", "man", "女孩", "亲属", "亲戚", "身体", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍👩‍👦", name: "family: man, woman, boy", cn: "家庭成员：男人、女人、男孩", kw: ["家庭成员：男人、女人、男孩", "family:", "woman", "boy", "man", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "女性", "女士", "成", "人", "员", "手"], cat: "人物手势" },
+  { ch: "👨‍👩‍👦‍👦", name: "family: man, woman, boy, boy", cn: "家庭：男人、女人、男孩、男孩", kw: ["家庭：男人、女人、男孩、男孩", "family:", "woman", "boy", "man", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "女性", "女士", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍👩‍👧", name: "family: man, woman, girl", cn: "家庭成员：男人、女人、女孩", kw: ["家庭成员：男人、女人、女孩", "family:", "woman", "girl", "man", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "女性", "女士", "成", "人", "员", "手"], cat: "人物手势" },
+  { ch: "👨‍👩‍👧‍👦", name: "family: man, woman, girl, boy", cn: "家庭：男人、女人、女孩、男孩", kw: ["家庭：男人、女人、女孩、男孩", "family:", "woman", "girl", "man", "boy", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "女性", "女士", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍👩‍👧‍👧", name: "family: man, woman, girl, girl", cn: "家庭：男人、女人、女孩、女孩", kw: ["家庭：男人、女人、女孩、女孩", "family:", "woman", "girl", "man", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "男人", "男性", "先生", "家庭", "人物", "男孩", "男士", "家人", "女性", "女士", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍💻", name: "man technologist", cn: "男技术专家", kw: ["technologist", "男技术专家", "man", "手势", "男人", "住所", "男性", "家庭", "身体", "人物", "家", "术", "男", "人", "专", "手", "技"], cat: "人物手势" },
+  { ch: "👨‍💼", name: "man office worker", cn: "男性办公室职员", kw: ["男性办公室职员", "office", "worker", "man", "手势", "男人", "男性", "身体", "人物", "室", "性", "人", "男", "办", "公", "员", "职", "手"], cat: "人物手势" },
+  { ch: "👨‍🔧", name: "man mechanic", cn: "男机械师", kw: ["mechanic", "男机械师", "man", "男人", "手势", "男性", "身体", "人物", "械", "人", "男", "机", "师", "手"], cat: "人物手势" },
+  { ch: "👨‍🔬", name: "man scientist", cn: "人类科学家", kw: ["scientist", "人类科学家", "科学家", "man", "人类", "手势", "科研", "研究", "身体", "人物", "有人", "类", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍🚀", name: "man astronaut", cn: "男宇航员", kw: ["astronaut", "男宇航员", "man", "手势", "男人", "男性", "身体", "人物", "航", "人", "男", "员", "宇", "手"], cat: "人物手势" },
+  { ch: "👨‍🚒", name: "man firefighter", cn: "男消防员", kw: ["firefighter", "男消防员", "消防员", "man", "手势", "男人", "救火", "消防", "男性", "身体", "人物", "人", "男", "手"], cat: "人物手势" },
+  { ch: "👨‍🦯", name: "man with white cane", cn: "拄着白拐杖的男人", kw: ["拄着白拐杖的男人", "white", "cane", "man", "男孩", "手势", "男人", "男士", "手杖", "男性", "先生", "拐杖", "身体", "人物", "拄", "白", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍🦯‍➡️", name: "man with white cane facing right", cn: "拄着白色手杖的男子面朝右侧", kw: ["拄着白色手杖的男子面朝右侧", "facing", "right", "white", "cane", "man", "手掌", "身体", "手势", "男人", "向右", "男性", "人物", "手指", "右边", "杖", "朝", "拄", "男", "子", "色", "侧", "白", "人", "面", "右", "手"], cat: "人物手势" },
+  { ch: "👨‍🦰", name: "man: red hair", cn: "男：红头发", kw: ["男：红头发", "hair", "man:", "red", "手势", "男人", "男性", "身体", "人物", "发", "红", "人", "男", "头", "手"], cat: "人物手势" },
+  { ch: "👨‍🦱", name: "man: curly hair", cn: "男：卷发", kw: ["curly", "男：卷发", "hair", "man:", "手势", "男人", "男性", "身体", "人物", "发", "人", "男", "卷", "手"], cat: "人物手势" },
+  { ch: "👨‍🦲", name: "man: bald", cn: "男：秃头", kw: ["男：秃头", "bald", "man:", "手势", "男人", "男性", "身体", "人物", "秃", "人", "男", "头", "手"], cat: "人物手势" },
+  { ch: "👨‍🦳", name: "man: white hair", cn: "男：白发", kw: ["white", "hair", "男：白发", "man:", "手势", "男人", "男性", "身体", "人物", "发", "白", "人", "男", "手"], cat: "人物手势" },
+  { ch: "👨‍🦼", name: "man in motorized wheelchair", cn: "电动轮椅上的男人", kw: ["wheelchair", "motorized", "电动轮椅上的男人", "man", "向上", "轮椅", "上面", "身体", "手势", "男人", "男性", "先生", "人物", "男孩", "男士", "残障", "动", "上", "电", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍🦼‍➡️", name: "man in motorized wheelchair facing right", cn: "坐在电动轮椅上的男子面向右侧", kw: ["坐在电动轮椅上的男子面向右侧", "wheelchair", "motorized", "facing", "right", "man", "向上", "轮椅", "上面", "身体", "手势", "男人", "向右", "男性", "人物", "残障", "右边", "坐", "男", "子", "动", "上", "侧", "电", "人", "面", "向", "右", "手"], cat: "人物手势" },
+  { ch: "👨‍🦽", name: "man in manual wheelchair", cn: "手动轮椅上的男人", kw: ["wheelchair", "手动轮椅上的男人", "manual", "man", "向上", "手掌", "轮椅", "上面", "身体", "手势", "男人", "男性", "先生", "人物", "男孩", "男士", "残障", "手指", "动", "上", "人", "手"], cat: "人物手势" },
+  { ch: "👨‍🦽‍➡️", name: "man in manual wheelchair facing right", cn: "坐手动轮椅的男子面向右侧", kw: ["坐手动轮椅的男子面向右侧", "wheelchair", "manual", "facing", "right", "man", "手掌", "轮椅", "身体", "手势", "男人", "向右", "男性", "人物", "残障", "手指", "右边", "坐", "男", "子", "动", "侧", "人", "面", "向", "右", "手"], cat: "人物手势" },
+  { ch: "👩", name: "woman", cn: "女士", kw: ["woman", "女士", "手势", "女人", "女性", "身体", "人物", "女", "人", "士", "手"], cat: "人物手势" },
+  { ch: "👩‍⚕️", name: "woman health worker", cn: "女保健员", kw: ["health", "worker", "woman", "女保健员", "手势", "女人", "女性", "身体", "人物", "女", "健", "保", "人", "员", "手"], cat: "人物手势" },
+  { ch: "👩‍⚖️", name: "woman judge", cn: "女法官", kw: ["judge", "woman", "女法官", "手势", "女人", "女性", "身体", "人物", "女", "人", "官", "法", "手"], cat: "人物手势" },
+  { ch: "👩‍✈️", name: "woman pilot", cn: "女飞行员", kw: ["woman", "pilot", "女飞行员", "手势", "女人", "女性", "身体", "人物", "女", "飞", "人", "员", "行", "手"], cat: "人物手势" },
+  { ch: "👩‍❤️‍👨", name: "couple with heart: woman, man", cn: "有心的夫妻：女人、男人", kw: ["有心的夫妻：女人、男人", "couple", "heart:", "woman", "man", "女孩", "爱心", "喜欢", "夫妻", "身体", "女人", "小姐", "手势", "男人", "男性", "先生", "人物", "男孩", "男士", "女性", "女士", "心", "爱", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍❤️‍👩", name: "couple with heart: woman, woman", cn: "情侣与心: 女人, 女人", kw: ["情侣与心: 女人, 女人", "couple", "heart:", "woman", "女孩", "情侣", "爱心", "爱人", "恋人", "喜欢", "夫妻", "身体", "女人", "小姐", "手势", "人物", "女性", "女士", "心", "爱", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍❤️‍💋‍👨", name: "kiss: woman, man", cn: "接吻：女人、男人", kw: ["接吻：女人、男人", "kiss:", "woman", "man", "女孩", "身体", "女人", "小姐", "手势", "男人", "男性", "先生", "人物", "男孩", "男士", "接吻", "女性", "女士", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍❤️‍💋‍👩", name: "kiss: woman, woman", cn: "吻：女人，女人", kw: ["吻：女人，女人", "kiss:", "woman", "女孩", "小姐", "手势", "女人", "女性", "女士", "身体", "人物", "吻", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍🌾", name: "woman farmer", cn: "女农民", kw: ["farmer", "woman", "女农民", "手势", "女人", "务农", "女性", "农夫", "身体", "人物", "农民", "女", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍🍳", name: "woman cook", cn: "女厨师", kw: ["woman", "cook", "女厨师", "手势", "大厨", "厨师", "做饭", "女人", "女性", "烹饪", "身体", "人物", "女", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍🍼", name: "woman feeding baby", cn: "女人喂养婴儿", kw: ["feeding", "女人喂养婴儿", "woman", "baby", "女孩", "身体", "女人", "小姐", "手势", "宝宝", "小孩", "人物", "婴儿", "女性", "女士", "喂", "养", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍🎓", name: "woman student", cn: "女学生", kw: ["student", "woman", "女学生", "手势", "女人", "学生", "同学", "女性", "学子", "身体", "人物", "女", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍🎤", name: "woman singer", cn: "女歌手", kw: ["singer", "woman", "女歌手", "歌唱", "手势", "女人", "歌手", "女性", "演唱", "身体", "人物", "女", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍🎨", name: "woman artist", cn: "女艺术家", kw: ["artist", "woman", "女艺术家", "艺术家", "手势", "女人", "艺术", "画家", "女性", "身体", "人物", "女", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍🏫", name: "woman teacher", cn: "女老师", kw: ["teacher", "woman", "女老师", "导师", "老师", "手势", "教师", "女人", "先生", "女性", "身体", "人物", "女", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍🏭", name: "woman factory worker", cn: "女工厂工人", kw: ["factory", "worker", "女工厂工人", "woman", "劳动者", "工厂", "手势", "务工", "身体", "女人", "女性", "工人", "人物", "女", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍👦", name: "family: woman, boy", cn: "家庭成员： 女人、男孩", kw: ["家庭成员： 女人、男孩", "family:", "woman", "boy", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "家庭", "人物", "男孩", "家人", "女性", "女士", "成", "人", "员", "手"], cat: "人物手势" },
+  { ch: "👩‍👦‍👦", name: "family: woman, boy, boy", cn: "家庭：女人、男孩、男孩", kw: ["家庭：女人、男孩、男孩", "family:", "woman", "boy", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "家庭", "人物", "男孩", "家人", "女性", "女士", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍👧", name: "family: woman, girl", cn: "家庭成员： 女人、女孩", kw: ["家庭成员： 女人、女孩", "family:", "woman", "girl", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "家庭", "人物", "家人", "女性", "女士", "成", "人", "员", "手"], cat: "人物手势" },
+  { ch: "👩‍👧‍👦", name: "family: woman, girl, boy", cn: "家庭成员：女人、女孩、男孩", kw: ["家庭成员：女人、女孩、男孩", "family:", "woman", "girl", "boy", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "家庭", "人物", "男孩", "家人", "女性", "女士", "成", "人", "员", "手"], cat: "人物手势" },
+  { ch: "👩‍👧‍👧", name: "family: woman, girl, girl", cn: "家庭： 女人、女孩、女孩", kw: ["家庭： 女人、女孩、女孩", "family:", "woman", "girl", "亲属", "女孩", "小姐", "手势", "女人", "家人", "家庭", "亲戚", "女性", "女士", "身体", "人物", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍👩‍👦", name: "family: woman, woman, boy", cn: "家庭：女人、女人、男孩", kw: ["家庭：女人、女人、男孩", "family:", "woman", "boy", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "家庭", "人物", "男孩", "家人", "女性", "女士", "人", "手"], cat: "人物手势" },
+  { ch: "👩‍👩‍👦‍👦", name: "family: woman, woman, boy, boy", cn: "家庭：女人，女人，男孩，男孩", kw: ["家庭：女人，女人，男孩，男孩", "family:", "woman", "boy", "女孩", "亲属", "亲戚", "身体", "女人", "小姐", "手势", "家庭", "人物", "男孩", "家人", "女性", "女士", "人", "手"], cat: "人物手势" },
+  { ch: "☘️", name: "shamrock", cn: "三叶草", kw: ["shamrock", "三叶草", "植物", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🌱", name: "seedling", cn: "幼苗", kw: ["seedling", "植物", "自然", "动物", "幼苗", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🌲", name: "evergreen tree", cn: "常青树", kw: ["evergreen", "tree", "常青树", "植物", "自然", "树木", "大树", "动物", "宠物", "生物", "青", "树"], cat: "动物自然" },
+  { ch: "🌳", name: "deciduous tree", cn: "落叶树", kw: ["deciduous", "tree", "落叶树", "植物", "自然", "树木", "大树", "动物", "宠物", "生物", "落叶", "树"], cat: "动物自然" },
+  { ch: "🌴", name: "palm tree", cn: "棕榈树", kw: ["palm", "tree", "椰子树", "棕榈树", "植物", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🌵", name: "cactus", cn: "仙人掌", kw: ["cactus", "仙人掌", "植物", "自然", "动物", "宠物", "生物", "多肉"], cat: "动物自然" },
+  { ch: "🌷", name: "tulip", cn: "郁金香", kw: ["tulip", "郁金香", "植物", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🌸", name: "cherry blossom", cn: "樱花", kw: ["blossom", "cherry", "植物", "樱花", "自然", "动物", "宠物", "生物", "樱"], cat: "动物自然" },
+  { ch: "🌹", name: "rose", cn: "玫瑰", kw: ["rose", "玫瑰花", "植物", "爱情", "自然", "玫瑰", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🌺", name: "hibiscus", cn: "芙蓉", kw: ["hibiscus", "植物", "自然", "动物", "宠物", "生物", "芙蓉", "蓉", "芙"], cat: "动物自然" },
+  { ch: "🌻", name: "sunflower", cn: "向日葵", kw: ["sunflower", "向日葵", "太阳花", "植物", "自然", "动物", "宠物", "生物", "葵花"], cat: "动物自然" },
+  { ch: "🌼", name: "blossom", cn: "开花", kw: ["blossom", "植物", "花朵", "自然", "动物", "宠物", "生物", "鲜花", "开花", "开", "花"], cat: "动物自然" },
+  { ch: "🌾", name: "sheaf of rice", cn: "一捆米饭", kw: ["sheaf", "一捆米饭", "rice", "植物", "自然", "米饭", "动物", "宠物", "生物", "白饭", "一", "饭", "捆"], cat: "动物自然" },
+  { ch: "🌿", name: "herb", cn: "草本植物", kw: ["herb", "草本植物", "植物", "自然", "动物", "宠物", "生物", "草", "本"], cat: "动物自然" },
+  { ch: "🍀", name: "four leaf clover", cn: "四叶草", kw: ["clover", "leaf", "four", "四叶草", "幸运草", "植物", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🍁", name: "maple leaf", cn: "枫叶", kw: ["maple", "leaf", "植物", "自然", "动物", "枫叶", "宠物", "生物", "红叶"], cat: "动物自然" },
+  { ch: "🍂", name: "fallen leaf", cn: "落叶", kw: ["fallen", "leaf", "植物", "自然", "动物", "宠物", "生物", "落叶"], cat: "动物自然" },
+  { ch: "🍃", name: "leaf fluttering in wind", cn: "树叶在风中飘扬", kw: ["fluttering", "树叶在风中飘扬", "leaf", "wind", "植物", "自然", "树木", "动物", "大树", "飘扬", "宠物", "生物", "风", "叶", "树", "中"], cat: "动物自然" },
+  { ch: "🍄", name: "mushroom", cn: "蘑菇", kw: ["mushroom", "植物", "自然", "动物", "宠物", "生物", "蘑菇"], cat: "动物自然" },
+  { ch: "🏵️", name: "rosette", cn: "玫瑰花结", kw: ["rosette", "玫瑰花结", "玫瑰花", "植物", "爱情", "花朵", "自然", "玫瑰", "动物", "宠物", "生物", "鲜花", "花", "结"], cat: "动物自然" },
+  { ch: "🐀", name: "rat", cn: "鼠", kw: ["rat", "植物", "自然", "动物", "宠物", "生物", "鼠"], cat: "动物自然" },
+  { ch: "🐁", name: "mouse", cn: "老鼠", kw: ["mouse", "植物", "自然", "动物", "耗子", "宠物", "老鼠", "生物", "鼠"], cat: "动物自然" },
+  { ch: "🐂", name: "ox", cn: "牛", kw: ["植物", "自然", "动物", "奶牛", "宠物", "生物", "ox", "公牛", "牛"], cat: "动物自然" },
+  { ch: "🐃", name: "water buffalo", cn: "水牛", kw: ["buffalo", "water", "植物", "自然", "动物", "宠物", "水牛", "生物"], cat: "动物自然" },
+  { ch: "🐄", name: "cow", cn: "奶牛", kw: ["cow", "植物", "自然", "动物", "奶牛", "宠物", "生物", "公牛", "牛", "奶"], cat: "动物自然" },
+  { ch: "🐅", name: "tiger", cn: "老虎", kw: ["tiger", "植物", "自然", "动物", "猛兽", "宠物", "生物", "老虎", "虎"], cat: "动物自然" },
+  { ch: "🐆", name: "leopard", cn: "豹", kw: ["leopard", "植物", "自然", "动物", "宠物", "生物", "豹"], cat: "动物自然" },
+  { ch: "🐇", name: "rabbit", cn: "兔子", kw: ["rabbit", "玉兔", "植物", "自然", "动物", "兔子", "宠物", "生物", "兔"], cat: "动物自然" },
+  { ch: "🐈", name: "cat", cn: "猫", kw: ["cat", "植物", "自然", "动物", "宠物", "生物", "猫咪", "喵", "猫"], cat: "动物自然" },
+  { ch: "🐈‍⬛", name: "black cat", cn: "黑猫", kw: ["black", "cat", "植物", "自然", "动物", "宠物", "生物", "黑猫", "猫咪", "黑", "喵", "猫"], cat: "动物自然" },
+  { ch: "🐉", name: "dragon", cn: "龙", kw: ["dragon", "植物", "自然", "动物", "宠物", "生物", "龙"], cat: "动物自然" },
+  { ch: "🐊", name: "crocodile", cn: "鳄鱼", kw: ["crocodile", "植物", "自然", "动物", "鳄鱼", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🐋", name: "whale", cn: "鲸", kw: ["whale", "植物", "自然", "鲸鱼", "动物", "宠物", "生物", "鲸"], cat: "动物自然" },
+  { ch: "🐌", name: "snail", cn: "蜗牛", kw: ["snail", "植物", "自然", "动物", "宠物", "蜗牛", "生物"], cat: "动物自然" },
+  { ch: "🐍", name: "snake", cn: "蛇", kw: ["snake", "植物", "自然", "动物", "宠物", "生物", "蛇"], cat: "动物自然" },
+  { ch: "🐎", name: "horse", cn: "马", kw: ["horse", "植物", "自然", "小马", "动物", "宠物", "生物", "骏马", "马"], cat: "动物自然" },
+  { ch: "🐏", name: "ram", cn: "内存", kw: ["ram", "植物", "内存", "自然", "动物", "宠物", "生物", "存", "内"], cat: "动物自然" },
+  { ch: "🐐", name: "goat", cn: "山羊", kw: ["goat", "植物", "山羊", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🐑", name: "ewe", cn: "母羊", kw: ["ewe", "植物", "山羊", "母羊", "自然", "动物", "绵羊", "宠物", "生物", "羊", "母"], cat: "动物自然" },
+  { ch: "🐒", name: "monkey", cn: "猴", kw: ["monkey", "植物", "自然", "动物", "宠物", "生物", "猴"], cat: "动物自然" },
+  { ch: "🐓", name: "rooster", cn: "公鸡", kw: ["rooster", "植物", "自然", "公鸡", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🐔", name: "chicken", cn: "鸡", kw: ["chicken", "植物", "自然", "公鸡", "动物", "宠物", "生物", "母鸡", "鸡"], cat: "动物自然" },
+  { ch: "🐕", name: "dog", cn: "狗", kw: ["dog", "植物", "自然", "动物", "宠物", "生物", "犬", "汪", "狗"], cat: "动物自然" },
+  { ch: "🐕‍🦺", name: "service dog", cn: "服务犬", kw: ["service", "服务犬", "dog", "植物", "自然", "动物", "宠物", "生物", "犬", "服", "务"], cat: "动物自然" },
+  { ch: "🐖", name: "pig", cn: "猪", kw: ["pig", "植物", "自然", "动物", "小猪", "宠物", "生物", "野猪", "猪"], cat: "动物自然" },
+  { ch: "🐗", name: "boar", cn: "公猪", kw: ["boar", "植物", "自然", "公猪", "动物", "小猪", "宠物", "生物", "野猪", "公", "猪"], cat: "动物自然" },
+  { ch: "🐘", name: "elephant", cn: "大象", kw: ["elephant", "植物", "自然", "动物", "宠物", "生物", "大象", "象"], cat: "动物自然" },
+  { ch: "🐙", name: "octopus", cn: "章鱼", kw: ["octopus", "八爪鱼", "植物", "自然", "动物", "章鱼", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🐚", name: "spiral shell", cn: "螺", kw: ["spiral", "shell", "植物", "自然", "动物", "宠物", "生物", "螺"], cat: "动物自然" },
+  { ch: "🐛", name: "bug", cn: "漏洞", kw: ["bug", "植物", "自然", "漏洞", "动物", "宠物", "生物", "漏", "洞"], cat: "动物自然" },
+  { ch: "🐜", name: "ant", cn: "蚂蚁", kw: ["ant", "植物", "自然", "动物", "蚂蚁", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🐝", name: "honeybee", cn: "蜜蜂", kw: ["honeybee", "植物", "蜜蜂", "自然", "动物", "宠物", "生物", "蜂"], cat: "动物自然" },
+  { ch: "🐞", name: "lady beetle", cn: "瓢虫", kw: ["beetle", "lady", "甲壳虫", "植物", "自然", "动物", "瓢虫", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🐟", name: "fish", cn: "鱼", kw: ["fish", "植物", "自然", "动物", "宠物", "生物", "鱼类", "鱼"], cat: "动物自然" },
+  { ch: "🐠", name: "tropical fish", cn: "热带鱼", kw: ["tropical", "fish", "热带鱼", "植物", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🐡", name: "blowfish", cn: "河豚鱼", kw: ["blowfish", "河豚鱼", "植物", "自然", "动物", "宠物", "生物", "河豚", "鱼类", "鱼"], cat: "动物自然" },
+  { ch: "🐢", name: "turtle", cn: "龟", kw: ["turtle", "植物", "海龟", "自然", "动物", "宠物", "生物", "龟"], cat: "动物自然" },
+  { ch: "🐣", name: "hatching chick", cn: "孵化小鸡", kw: ["hatching", "chick", "孵化小鸡", "植物", "自然", "动物", "宠物", "小鸡", "生物", "孵", "化"], cat: "动物自然" },
+  { ch: "🐤", name: "baby chick", cn: "小鸡", kw: ["chick", "baby", "植物", "自然", "动物", "宠物", "小鸡", "生物"], cat: "动物自然" },
+  { ch: "🐥", name: "front-facing baby chick", cn: "正面朝前的小鸡", kw: ["正面朝前的小鸡", "facing", "front", "chick", "baby", "植物", "自然", "动物", "宠物", "小鸡", "生物", "前", "正", "朝", "面"], cat: "动物自然" },
+  { ch: "🐦", name: "bird", cn: "鸟", kw: ["bird", "鸟儿", "植物", "自然", "动物", "宠物", "飞鸟", "生物", "鸟"], cat: "动物自然" },
+  { ch: "🐦‍⬛", name: "black bird", cn: "黑鸟", kw: ["black", "bird", "鸟儿", "植物", "自然", "动物", "宠物", "飞鸟", "生物", "黑鸟", "黑", "鸟"], cat: "动物自然" },
+  { ch: "🐦‍🔥", name: "phoenix", cn: "凤凰", kw: ["phoenix", "植物", "自然", "动物", "凤凰", "宠物", "生物", "凤", "凰"], cat: "动物自然" },
+  { ch: "🐧", name: "penguin", cn: "企鹅", kw: ["penguin", "植物", "南极", "自然", "动物", "宠物", "企鹅", "生物"], cat: "动物自然" },
+  { ch: "🐨", name: "koala", cn: "考拉", kw: ["koala", "树袋熊", "植物", "考拉", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🐩", name: "poodle", cn: "贵宾犬", kw: ["poodle", "贵宾犬", "植物", "自然", "动物", "宠物", "生物", "犬", "贵", "宾"], cat: "动物自然" },
+  { ch: "🐪", name: "camel", cn: "骆驼", kw: ["camel", "植物", "自然", "动物", "宠物", "骆驼", "生物"], cat: "动物自然" },
+  { ch: "🐫", name: "two-hump camel", cn: "二驼峰骆驼", kw: ["二驼峰骆驼", "camel", "hump", "two", "植物", "自然", "动物", "宠物", "骆驼", "生物", "二", "峰", "驼"], cat: "动物自然" },
+  { ch: "🐬", name: "dolphin", cn: "海豚", kw: ["dolphin", "植物", "自然", "动物", "宠物", "生物", "海豚", "豚"], cat: "动物自然" },
+  { ch: "🐭", name: "mouse face", cn: "老鼠脸", kw: ["mouse", "老鼠脸", "植物", "自然", "动物", "耗子", "宠物", "老鼠", "生物", "鼠", "脸"], cat: "动物自然" },
+  { ch: "🐮", name: "cow face", cn: "牛脸", kw: ["cow", "植物", "自然", "动物", "奶牛", "宠物", "牛脸", "生物", "公牛", "牛", "脸"], cat: "动物自然" },
+  { ch: "🐯", name: "tiger face", cn: "虎脸", kw: ["tiger", "植物", "自然", "动物", "虎脸", "宠物", "生物", "脸", "虎"], cat: "动物自然" },
+  { ch: "🐰", name: "rabbit face", cn: "兔脸", kw: ["rabbit", "植物", "自然", "动物", "兔脸", "宠物", "生物", "兔", "脸"], cat: "动物自然" },
+  { ch: "🐱", name: "cat face", cn: "猫脸", kw: ["cat", "植物", "自然", "动物", "宠物", "生物", "猫脸", "猫咪", "喵", "猫", "脸"], cat: "动物自然" },
+  { ch: "🐲", name: "dragon face", cn: "龙脸", kw: ["dragon", "植物", "自然", "动物", "宠物", "龙脸", "生物", "龙", "脸"], cat: "动物自然" },
+  { ch: "🐳", name: "spouting whale", cn: "喷水鲸", kw: ["spouting", "whale", "喷水鲸", "饮用水", "植物", "自然", "鲸鱼", "动物", "宠物", "生物", "喷", "水", "鲸"], cat: "动物自然" },
+  { ch: "🐴", name: "horse face", cn: "马脸", kw: ["horse", "植物", "自然", "小马", "动物", "宠物", "马脸", "生物", "骏马", "马", "脸"], cat: "动物自然" },
+  { ch: "🐵", name: "monkey face", cn: "猴脸", kw: ["monkey", "植物", "自然", "动物", "宠物", "猴脸", "生物", "猴", "脸"], cat: "动物自然" },
+  { ch: "🐶", name: "dog face", cn: "狗脸", kw: ["dog", "植物", "自然", "动物", "宠物", "生物", "狗脸", "犬", "汪", "狗", "脸"], cat: "动物自然" },
+  { ch: "🐷", name: "pig face", cn: "猪脸", kw: ["pig", "植物", "自然", "猪脸", "动物", "小猪", "宠物", "生物", "野猪", "猪", "脸"], cat: "动物自然" },
+  { ch: "🐸", name: "frog", cn: "青蛙", kw: ["frog", "植物", "自然", "动物", "宠物", "生物", "青蛙"], cat: "动物自然" },
+  { ch: "🐹", name: "hamster", cn: "仓鼠", kw: ["hamster", "植物", "自然", "动物", "宠物", "生物", "仓鼠"], cat: "动物自然" },
+  { ch: "🐺", name: "wolf", cn: "狼", kw: ["wolf", "植物", "自然", "动物", "宠物", "生物", "狼"], cat: "动物自然" },
+  { ch: "🐻", name: "bear", cn: "熊", kw: ["bear", "北极熊", "植物", "自然", "动物", "宠物", "生物", "棕熊", "熊"], cat: "动物自然" },
+  { ch: "🐻‍❄️", name: "polar bear", cn: "北极熊", kw: ["polar", "bear", "北极熊", "植物", "自然", "动物", "宠物", "生物", "棕熊", "极", "熊", "北"], cat: "动物自然" },
+  { ch: "🐼", name: "panda", cn: "熊猫", kw: ["panda", "大熊猫", "植物", "自然", "动物", "宠物", "熊猫", "生物", "国宝"], cat: "动物自然" },
+  { ch: "🐽", name: "pig nose", cn: "猪鼻子", kw: ["nose", "猪鼻子", "pig", "植物", "自然", "动物", "小猪", "生物", "宠物", "野猪", "鼻", "猪", "子"], cat: "动物自然" },
+  { ch: "🐾", name: "paw prints", cn: "掌印", kw: ["prints", "paw", "植物", "自然", "掌印", "动物", "宠物", "生物", "印", "掌"], cat: "动物自然" },
+  { ch: "🐿️", name: "chipmunk", cn: "花栗鼠", kw: ["chipmunk", "花栗鼠", "植物", "花朵", "自然", "动物", "宠物", "生物", "鲜花", "栗", "花", "鼠"], cat: "动物自然" },
+  { ch: "💐", name: "bouquet", cn: "花束", kw: ["bouquet", "植物", "花束", "捧花", "自然", "动物", "宠物", "生物", "鲜花"], cat: "动物自然" },
+  { ch: "💮", name: "white flower", cn: "白色的花", kw: ["flower", "white", "白色的花", "植物", "花朵", "自然", "动物", "宠物", "生物", "鲜花", "色", "白", "花"], cat: "动物自然" },
+  { ch: "🕊️", name: "dove", cn: "鸽子", kw: ["dove", "和平鸽", "鸽子", "植物", "自然", "动物", "宠物", "生物", "鸽"], cat: "动物自然" },
+  { ch: "🕷️", name: "spider", cn: "蜘蛛", kw: ["spider", "植物", "蜘蛛", "自然", "动物", "宠物", "生物", "蛛"], cat: "动物自然" },
+  { ch: "🕸️", name: "spider web", cn: "蜘蛛网", kw: ["spider", "web", "蜘蛛网", "植物", "蜘蛛", "自然", "动物", "宠物", "生物", "蛛", "网"], cat: "动物自然" },
+  { ch: "🥀", name: "wilted flower", cn: "枯萎的花", kw: ["wilted", "flower", "枯萎的花", "植物", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🦁", name: "lion", cn: "狮子", kw: ["lion", "植物", "自然", "动物", "猛兽", "宠物", "生物", "狮子", "狮"], cat: "动物自然" },
+  { ch: "🦂", name: "scorpion", cn: "蝎", kw: ["scorpion", "植物", "自然", "动物", "宠物", "生物", "蝎"], cat: "动物自然" },
+  { ch: "🦃", name: "turkey", cn: "火鸡", kw: ["turkey", "植物", "自然", "公鸡", "动物", "宠物", "生物", "火鸡", "母鸡", "鸡", "火"], cat: "动物自然" },
+  { ch: "🦄", name: "unicorn", cn: "独角兽", kw: ["unicorn", "独角兽", "植物", "自然", "动物", "宠物", "生物", "兽", "独", "角"], cat: "动物自然" },
+  { ch: "🦅", name: "eagle", cn: "鹰", kw: ["eagle", "植物", "自然", "动物", "宠物", "生物", "鹰"], cat: "动物自然" },
+  { ch: "🦆", name: "duck", cn: "鸭子", kw: ["duck", "植物", "自然", "动物", "宠物", "生物", "鸭子", "鸭", "子"], cat: "动物自然" },
+  { ch: "🦇", name: "bat", cn: "蝙蝠", kw: ["bat", "植物", "自然", "动物", "宠物", "生物", "蝙蝠"], cat: "动物自然" },
+  { ch: "🦈", name: "shark", cn: "鲨鱼", kw: ["shark", "植物", "自然", "动物", "宠物", "生物", "鲨鱼", "鲨"], cat: "动物自然" },
+  { ch: "🦉", name: "owl", cn: "猫头鹰", kw: ["owl", "夜猫子", "猫头鹰", "植物", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🦊", name: "fox", cn: "狐狸", kw: ["fox", "植物", "自然", "动物", "宠物", "生物", "狐狸"], cat: "动物自然" },
+  { ch: "🦋", name: "butterfly", cn: "蝴蝶", kw: ["butterfly", "植物", "自然", "蝴蝶", "动物", "宠物", "彩蝶", "生物"], cat: "动物自然" },
+  { ch: "🦌", name: "deer", cn: "鹿", kw: ["deer", "植物", "自然", "动物", "宠物", "生物", "鹿"], cat: "动物自然" },
+  { ch: "🦍", name: "gorilla", cn: "大猩猩", kw: ["gorilla", "大猩猩", "植物", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🦎", name: "lizard", cn: "蜥蜴", kw: ["lizard", "植物", "自然", "蜥蜴", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🦏", name: "rhinoceros", cn: "犀牛", kw: ["rhinoceros", "植物", "犀牛", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "🦒", name: "giraffe", cn: "长颈鹿", kw: ["giraffe", "长颈鹿", "植物", "自然", "动物", "宠物", "生物", "鹿"], cat: "动物自然" },
+  { ch: "🦓", name: "zebra", cn: "斑马", kw: ["zebra", "植物", "自然", "动物", "宠物", "斑马", "生物"], cat: "动物自然" },
+  { ch: "🦔", name: "hedgehog", cn: "刺猬", kw: ["hedgehog", "植物", "自然", "动物", "宠物", "刺猬", "生物", "刺", "猬"], cat: "动物自然" },
+  { ch: "🦕", name: "sauropod", cn: "蜥脚类恐龙", kw: ["sauropod", "蜥脚类恐龙", "植物", "自然", "动物", "恐龙", "宠物", "生物", "类", "脚", "蜥"], cat: "动物自然" },
+  { ch: "🦖", name: "T-Rex", cn: "霸王龙", kw: ["霸王龙", "rex", "植物", "自然", "动物", "宠物", "生物", "霸", "王", "龙"], cat: "动物自然" },
+  { ch: "🦗", name: "cricket", cn: "蟋蟀", kw: ["cricket", "植物", "蟋蟀", "自然", "动物", "宠物", "生物", "蟀", "蟋"], cat: "动物自然" },
+  { ch: "🦘", name: "kangaroo", cn: "袋鼠", kw: ["kangaroo", "植物", "自然", "动物", "宠物", "生物", "袋鼠"], cat: "动物自然" },
+  { ch: "🦙", name: "llama", cn: "骆驼", kw: ["llama", "植物", "自然", "动物", "宠物", "骆驼", "生物"], cat: "动物自然" },
+  { ch: "🦚", name: "peacock", cn: "孔雀", kw: ["peacock", "植物", "自然", "动物", "宠物", "孔雀", "生物"], cat: "动物自然" },
+  { ch: "🦛", name: "hippopotamus", cn: "河马", kw: ["hippopotamus", "河马", "植物", "自然", "动物", "宠物", "生物"], cat: "动物自然" },
+  { ch: "☕", name: "hot beverage", cn: "热饮", kw: ["beverage", "hot", "食品", "食物", "饮料", "饮品", "热饮", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🌭", name: "hot dog", cn: "热狗", kw: ["dog", "hot", "食品", "食物", "热狗", "饮料", "饮品", "香肠", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🌮", name: "taco", cn: "炸玉米饼", kw: ["taco", "炸玉米饼", "玉米饼", "食品", "食物", "饮料", "饮品", "喝", "炸", "吃"], cat: "食物饮料" },
+  { ch: "🌯", name: "burrito", cn: "墨西哥卷饼", kw: ["burrito", "墨西哥卷饼", "墨西哥卷", "食品", "食物", "饮料", "饮品", "喝", "饼", "吃"], cat: "食物饮料" },
+  { ch: "🌰", name: "chestnut", cn: "板栗", kw: ["chestnut", "食品", "食物", "饮料", "板栗", "饮品", "喝", "栗", "板", "吃"], cat: "食物饮料" },
+  { ch: "🌶️", name: "hot pepper", cn: "辣椒", kw: ["pepper", "hot", "食品", "食物", "辣椒", "饮料", "饮品", "喝", "辣", "吃"], cat: "食物饮料" },
+  { ch: "🌽", name: "ear of corn", cn: "玉米穗", kw: ["corn", "ear", "玉米穗", "食品", "食物", "苞米", "玉米", "饮料", "饮品", "喝", "穗", "吃"], cat: "食物饮料" },
+  { ch: "🍄‍🟫", name: "brown mushroom", cn: "棕色蘑菇", kw: ["mushroom", "brown", "棕色蘑菇", "食品", "食物", "蘑菇", "饮料", "饮品", "喝", "色", "棕", "吃"], cat: "食物饮料" },
+  { ch: "🍅", name: "tomato", cn: "番茄", kw: ["tomato", "西红柿", "食品", "食物", "番茄", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍆", name: "eggplant", cn: "茄子", kw: ["eggplant", "食品", "食物", "饮料", "茄子", "饮品", "蔬菜", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍇", name: "grapes", cn: "葡萄", kw: ["grapes", "食品", "食物", "葡萄", "水果", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍈", name: "melon", cn: "瓜", kw: ["melon", "食品", "食物", "饮料", "饮品", "喝", "瓜", "吃"], cat: "食物饮料" },
+  { ch: "🍉", name: "watermelon", cn: "西瓜", kw: ["watermelon", "食品", "食物", "西瓜", "水果", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍊", name: "tangerine", cn: "柑橘", kw: ["tangerine", "食品", "食物", "饮料", "柑橘", "饮品", "喝", "柑", "橘", "吃"], cat: "食物饮料" },
+  { ch: "🍋", name: "lemon", cn: "柠檬", kw: ["lemon", "柠檬", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍋‍🟩", name: "lime", cn: "酸橙", kw: ["lime", "食品", "食物", "酸橙", "饮料", "饮品", "喝", "酸", "橙", "吃"], cat: "食物饮料" },
+  { ch: "🍌", name: "banana", cn: "香蕉", kw: ["banana", "食品", "食物", "水果", "饮料", "饮品", "香蕉", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍍", name: "pineapple", cn: "菠萝", kw: ["pineapple", "凤梨", "食品", "食物", "菠萝", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍎", name: "red apple", cn: "红苹果", kw: ["apple", "red", "红苹果", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍏", name: "green apple", cn: "青苹果", kw: ["apple", "green", "青苹果", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍐", name: "pear", cn: "梨", kw: ["pear", "食品", "食物", "饮料", "饮品", "喝", "吃", "梨"], cat: "食物饮料" },
+  { ch: "🍑", name: "peach", cn: "桃", kw: ["peach", "食品", "食物", "饮料", "饮品", "喝", "桃", "吃"], cat: "食物饮料" },
+  { ch: "🍒", name: "cherries", cn: "樱桃", kw: ["cherries", "食品", "食物", "樱桃", "水果", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍓", name: "strawberry", cn: "草莓", kw: ["strawberry", "食品", "草莓", "食物", "水果", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍔", name: "hamburger", cn: "汉堡包", kw: ["hamburger", "汉堡包", "袋子", "食品", "食物", "汉堡", "饮料", "饮品", "喝", "包", "吃"], cat: "食物饮料" },
+  { ch: "🍕", name: "pizza", cn: "比萨", kw: ["pizza", "食品", "食物", "比萨", "饮料", "饮品", "喝", "萨", "吃"], cat: "食物饮料" },
+  { ch: "🍖", name: "meat on bone", cn: "骨头上的肉", kw: ["骨头上的肉", "bone", "meat", "食品", "食物", "向上", "饮料", "上面", "饮品", "喝", "上", "吃", "头", "骨", "肉"], cat: "食物饮料" },
+  { ch: "🍗", name: "poultry leg", cn: "家禽腿", kw: ["poultry", "家禽腿", "leg", "食物", "食品", "家庭", "饮料", "饮品", "住所", "喝", "家", "腿", "禽", "吃"], cat: "食物饮料" },
+  { ch: "🍘", name: "rice cracker", cn: "米果", kw: ["cracker", "rice", "食品", "食物", "米果", "饮料", "饮品", "喝", "米", "吃"], cat: "食物饮料" },
+  { ch: "🍙", name: "rice ball", cn: "饭团", kw: ["rice", "ball", "食品", "食物", "饭团", "寿司", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍚", name: "cooked rice", cn: "熟米饭", kw: ["cooked", "rice", "熟米饭", "食品", "食物", "米饭", "饮料", "白饭", "饮品", "喝", "饭", "熟", "吃"], cat: "食物饮料" },
+  { ch: "🍛", name: "curry rice", cn: "咖喱饭", kw: ["curry", "rice", "印度料理", "咖喱饭", "咖喱", "食品", "食物", "饮料", "饮品", "喝", "饭", "吃"], cat: "食物饮料" },
+  { ch: "🍜", name: "steaming bowl", cn: "蒸碗", kw: ["steaming", "bowl", "食品", "食物", "蒸碗", "饮料", "饮品", "喝", "蒸", "碗", "吃"], cat: "食物饮料" },
+  { ch: "🍝", name: "spaghetti", cn: "意大利细面条", kw: ["spaghetti", "意大利细面条", "食品", "食物", "饮品", "面条", "饮料", "意面", "拉面", "利", "喝", "细", "意", "大", "吃"], cat: "食物饮料" },
+  { ch: "🍞", name: "bread", cn: "面包", kw: ["bread", "吐司", "食品", "食物", "面包", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍟", name: "french fries", cn: "炸薯条", kw: ["french", "fries", "炸土豆", "炸薯条", "食品", "薯条", "食物", "饮料", "饮品", "喝", "炸", "吃"], cat: "食物饮料" },
+  { ch: "🍠", name: "roasted sweet potato", cn: "烤红薯", kw: ["roasted", "potato", "sweet", "烤红薯", "食物", "食品", "饮料", "饮品", "喝", "红", "薯", "烤", "吃"], cat: "食物饮料" },
+  { ch: "🍡", name: "dango", cn: "团子", kw: ["dango", "食品", "食物", "饮料", "饮品", "团子", "喝", "团", "子", "吃"], cat: "食物饮料" },
+  { ch: "🍢", name: "oden", cn: "奥登", kw: ["oden", "食品", "食物", "奥登", "饮料", "饮品", "喝", "奥", "登", "吃"], cat: "食物饮料" },
+  { ch: "🍣", name: "sushi", cn: "寿司", kw: ["sushi", "日本料理", "食品", "食物", "寿司", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍤", name: "fried shrimp", cn: "炒虾仁", kw: ["shrimp", "fried", "炒虾仁", "食物", "食品", "饮品", "饮料", "喝", "炒", "虾", "仁", "吃"], cat: "食物饮料" },
+  { ch: "🍥", name: "fish cake with swirl", cn: "带漩涡的鱼饼", kw: ["带漩涡的鱼饼", "swirl", "cake", "fish", "食品", "食物", "饮料", "鱼类", "饮品", "喝", "漩", "带", "涡", "饼", "鱼", "吃"], cat: "食物饮料" },
+  { ch: "🍦", name: "soft ice cream", cn: "软冰淇淋", kw: ["cream", "soft", "软冰淇淋", "ice", "冰激凌", "冰淇淋", "雪糕", "食品", "食物", "饮料", "饮品", "喝", "软", "吃"], cat: "食物饮料" },
+  { ch: "🍧", name: "shaved ice", cn: "刨冰", kw: ["shaved", "ice", "食品", "食物", "刨冰", "饮料", "饮品", "喝", "刨", "吃", "冰"], cat: "食物饮料" },
+  { ch: "🍨", name: "ice cream", cn: "冰淇淋", kw: ["cream", "ice", "冰激凌", "冰淇淋", "雪糕", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍩", name: "doughnut", cn: "油炸圈饼", kw: ["doughnut", "油炸圈饼", "食品", "食物", "饮料", "饮品", "喝", "油", "圈", "炸", "饼", "吃"], cat: "食物饮料" },
+  { ch: "🍪", name: "cookie", cn: "曲奇饼", kw: ["cookie", "曲奇饼", "食品", "食物", "曲奇", "饮料", "饮品", "喝", "饼", "吃"], cat: "食物饮料" },
+  { ch: "🍫", name: "chocolate bar", cn: "巧克力吧", kw: ["chocolate", "巧克力吧", "bar", "巧克力", "朱古力", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍬", name: "candy", cn: "糖果", kw: ["candy", "食品", "食物", "甜食", "糖果", "饮料", "饮品", "喝", "糖", "吃"], cat: "食物饮料" },
+  { ch: "🍭", name: "lollipop", cn: "棒糖", kw: ["lollipop", "食品", "食物", "棒糖", "饮料", "饮品", "喝", "糖", "棒", "吃"], cat: "食物饮料" },
+  { ch: "🍮", name: "custard", cn: "卡仕达酱", kw: ["custard", "卡仕达酱", "食品", "食物", "饮料", "饮品", "喝", "酱", "吃", "仕", "卡", "达"], cat: "食物饮料" },
+  { ch: "🍯", name: "honey pot", cn: "蜜罐", kw: ["honey", "pot", "蜜罐", "食品", "食物", "饮料", "饮品", "喝", "蜜", "罐", "吃"], cat: "食物饮料" },
+  { ch: "🍰", name: "shortcake", cn: "脆饼", kw: ["shortcake", "食品", "食物", "饮料", "饮品", "脆饼", "喝", "脆", "饼", "吃"], cat: "食物饮料" },
+  { ch: "🍱", name: "bento box", cn: "便当盒", kw: ["bento", "便当盒", "box", "食品", "食物", "饮料", "饮品", "盒", "当", "便", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍲", name: "pot of food", cn: "一锅食物", kw: ["一锅食物", "food", "pot", "食品", "食物", "饮料", "饮品", "喝", "一", "食", "物", "锅", "吃"], cat: "食物饮料" },
+  { ch: "🍳", name: "cooking", cn: "烹饪", kw: ["cooking", "食品", "食物", "饮料", "烹饪", "饮品", "喝", "烹", "饪", "吃"], cat: "食物饮料" },
+  { ch: "🍴", name: "fork and knife", cn: "刀叉", kw: ["knife", "fork", "食品", "食物", "饮料", "刀叉", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍵", name: "teacup without handle", cn: "无柄茶杯", kw: ["without", "handle", "teacup", "无柄茶杯", "食品", "茶叶", "食物", "茶水", "饮料", "饮品", "喝", "杯", "柄", "无", "茶", "吃"], cat: "食物饮料" },
+  { ch: "🍶", name: "sake", cn: "清酒", kw: ["sake", "食品", "食物", "饮料", "清酒", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍷", name: "wine glass", cn: "红酒杯", kw: ["glass", "wine", "葡萄酒", "红酒杯", "食品", "红酒", "食物", "饮料", "饮品", "喝", "杯", "酒", "吃"], cat: "食物饮料" },
+  { ch: "🍸", name: "cocktail glass", cn: "鸡尾酒杯", kw: ["cocktail", "glass", "鸡尾酒杯", "鸡尾酒", "食品", "食物", "调酒", "饮料", "饮品", "喝", "杯", "酒", "吃"], cat: "食物饮料" },
+  { ch: "🍹", name: "tropical drink", cn: "热带饮料", kw: ["tropical", "drink", "热带饮料", "食品", "食物", "饮料", "饮品", "喝", "热", "带", "吃"], cat: "食物饮料" },
+  { ch: "🍺", name: "beer mug", cn: "啤酒杯", kw: ["beer", "mug", "啤酒杯", "食品", "食物", "啤酒", "麦酒", "饮料", "饮品", "喝", "杯", "酒", "吃"], cat: "食物饮料" },
+  { ch: "🍻", name: "clinking beer mugs", cn: "叮当作响的啤酒杯", kw: ["叮当作响的啤酒杯", "clinking", "mugs", "beer", "食物", "食品", "啤酒", "麦酒", "饮料", "饮品", "喝", "作", "当", "响", "杯", "酒", "叮", "吃"], cat: "食物饮料" },
+  { ch: "🍼", name: "baby bottle", cn: "婴儿奶瓶", kw: ["bottle", "baby", "婴儿奶瓶", "奶瓶", "食品", "食物", "宝宝", "婴儿", "饮料", "小孩", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🍽️", name: "fork and knife with plate", cn: "带盘子的叉子和刀子", kw: ["带盘子的叉子和刀子", "knife", "plate", "fork", "食品", "食物", "刀具", "饮料", "盘子", "饮品", "喝", "带", "叉", "子", "吃", "刀"], cat: "食物饮料" },
+  { ch: "🍾", name: "bottle with popping cork", cn: "软木塞爆开的瓶子", kw: ["软木塞爆开的瓶子", "popping", "bottle", "cork", "食品", "食物", "饮料", "饮品", "瓶", "喝", "开", "爆", "塞", "软", "子", "木", "吃"], cat: "食物饮料" },
+  { ch: "🍿", name: "popcorn", cn: "爆米花", kw: ["popcorn", "玉米花", "爆米花", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🎂", name: "birthday cake", cn: "生日蛋糕", kw: ["birthday", "cake", "生日蛋糕", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🏺", name: "amphora", cn: "双耳瓶", kw: ["amphora", "双耳瓶", "食物", "食品", "饮料", "饮品", "双", "瓶", "耳", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🔪", name: "kitchen knife", cn: "菜刀", kw: ["kitchen", "knife", "食品", "食物", "刀具", "菜刀", "饮料", "饮品", "喝", "菜", "吃", "刀"], cat: "食物饮料" },
+  { ch: "🥂", name: "clinking glasses", cn: "叮当作响的眼镜", kw: ["clinking", "叮当作响的眼镜", "glasses", "食物", "食品", "眼镜", "镜框", "饮料", "饮品", "喝", "当", "作", "响", "叮", "吃"], cat: "食物饮料" },
+  { ch: "🥃", name: "tumbler glass", cn: "玻璃杯", kw: ["tumbler", "glass", "玻璃杯", "食品", "食物", "饮料", "饮品", "喝", "杯", "璃", "玻", "吃"], cat: "食物饮料" },
+  { ch: "🥄", name: "spoon", cn: "勺子", kw: ["spoon", "食品", "食物", "勺子", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥐", name: "croissant", cn: "羊角面包", kw: ["croissant", "羊角面包", "吐司", "山羊", "食物", "食品", "绵羊", "面包", "饮料", "饮品", "喝", "羊", "角", "吃"], cat: "食物饮料" },
+  { ch: "🥑", name: "avocado", cn: "牛油果", kw: ["avocado", "牛油果", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥒", name: "cucumber", cn: "黄瓜", kw: ["cucumber", "食品", "食物", "饮料", "饮品", "黄瓜", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥓", name: "bacon", cn: "熏肉", kw: ["bacon", "食品", "食物", "饮料", "饮品", "熏肉", "喝", "熏", "肉", "吃"], cat: "食物饮料" },
+  { ch: "🥔", name: "potato", cn: "土豆", kw: ["potato", "马铃薯", "土豆", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥕", name: "carrot", cn: "胡萝卜", kw: ["carrot", "胡萝卜", "萝卜", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥖", name: "baguette bread", cn: "长棍面包", kw: ["baguette", "bread", "长棍面包", "吐司", "食品", "食物", "面包", "饮料", "饮品", "喝", "棍", "长", "吃"], cat: "食物饮料" },
+  { ch: "🥗", name: "green salad", cn: "绿色的沙拉", kw: ["salad", "绿色的沙拉", "green", "沙拉", "食品", "食物", "饮料", "饮品", "喝", "色", "绿", "吃"], cat: "食物饮料" },
+  { ch: "🥘", name: "shallow pan of food", cn: "浅盘食物", kw: ["shallow", "浅盘食物", "food", "pan", "食品", "食物", "饮料", "饮品", "喝", "食", "盘", "浅", "物", "吃"], cat: "食物饮料" },
+  { ch: "🥙", name: "stuffed flatbread", cn: "酿大饼", kw: ["flatbread", "stuffed", "酿大饼", "食品", "食物", "饮料", "饮品", "喝", "大", "酿", "饼", "吃"], cat: "食物饮料" },
+  { ch: "🥚", name: "egg", cn: "蛋", kw: ["egg", "食品", "食物", "饮料", "饮品", "喝", "蛋", "吃"], cat: "食物饮料" },
+  { ch: "🥛", name: "glass of milk", cn: "一杯牛奶", kw: ["glass", "milk", "一杯牛奶", "食物", "食品", "牛奶", "饮料", "牛乳", "饮品", "喝", "一", "杯", "奶", "吃"], cat: "食物饮料" },
+  { ch: "🥜", name: "peanuts", cn: "花生", kw: ["peanuts", "食品", "食物", "花朵", "饮品", "花生", "饮料", "鲜花", "喝", "花", "生", "吃"], cat: "食物饮料" },
+  { ch: "🥝", name: "kiwi fruit", cn: "奇异果", kw: ["fruit", "kiwi", "奇异果", "食品", "食物", "饮料", "饮品", "喝", "奇", "异", "吃"], cat: "食物饮料" },
+  { ch: "🥞", name: "pancakes", cn: "薄煎饼", kw: ["pancakes", "薄煎饼", "食品", "食物", "饮料", "饮品", "喝", "煎", "薄", "饼", "吃"], cat: "食物饮料" },
+  { ch: "🥟", name: "dumpling", cn: "饺子", kw: ["dumpling", "食品", "食物", "锅贴", "水饺", "饺子", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥠", name: "fortune cookie", cn: "幸运饼干", kw: ["fortune", "cookie", "幸运饼干", "食品", "食物", "饼干", "曲奇", "饮料", "饮品", "喝", "幸", "运", "吃"], cat: "食物饮料" },
+  { ch: "🥡", name: "takeout box", cn: "外卖盒", kw: ["takeout", "外卖盒", "box", "食品", "食物", "饮料", "饮品", "盒", "喝", "外", "卖", "吃"], cat: "食物饮料" },
+  { ch: "🥢", name: "chopsticks", cn: "筷子", kw: ["chopsticks", "食品", "食物", "筷子", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥣", name: "bowl with spoon", cn: "带勺子的碗", kw: ["带勺子的碗", "spoon", "bowl", "食品", "食物", "勺子", "饮料", "饮品", "喝", "带", "碗", "吃"], cat: "食物饮料" },
+  { ch: "🥤", name: "cup with straw", cn: "带吸管的杯子", kw: ["带吸管的杯子", "straw", "cup", "食品", "食物", "杯子", "水杯", "饮料", "茶杯", "饮品", "喝", "吸", "管", "带", "吃"], cat: "食物饮料" },
+  { ch: "🥥", name: "coconut", cn: "椰子", kw: ["coconut", "食品", "食物", "椰子", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥦", name: "broccoli", cn: "西兰花", kw: ["broccoli", "西兰花", "食品", "食物", "花菜", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥧", name: "pie", cn: "馅饼", kw: ["pie", "食品", "食物", "饮料", "馅饼", "饮品", "喝", "馅", "饼", "吃"], cat: "食物饮料" },
+  { ch: "🥨", name: "pretzel", cn: "椒盐卷饼", kw: ["pretzel", "椒盐卷饼", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥩", name: "cut of meat", cn: "切肉", kw: ["meat", "cut", "食品", "食物", "饮料", "切肉", "饮品", "喝", "切", "肉", "吃"], cat: "食物饮料" },
+  { ch: "🥪", name: "sandwich", cn: "三明治", kw: ["sandwich", "三文治", "三明治", "食品", "食物", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥫", name: "canned food", cn: "罐头食品", kw: ["canned", "罐头食品", "food", "食物", "食品", "饮料", "饮品", "喝", "食", "头", "罐", "品", "吃"], cat: "食物饮料" },
+  { ch: "🥬", name: "leafy green", cn: "绿叶", kw: ["leafy", "green", "食品", "食物", "绿叶", "饮料", "饮品", "喝", "叶", "绿", "吃"], cat: "食物饮料" },
+  { ch: "🥭", name: "mango", cn: "芒果", kw: ["mango", "食品", "食物", "饮料", "芒果", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "🥮", name: "moon cake", cn: "月饼", kw: ["cake", "moon", "食品", "月饼", "食物", "饮料", "饮品", "喝", "月", "饼", "吃"], cat: "食物饮料" },
+  { ch: "🥯", name: "bagel", cn: "百吉饼", kw: ["bagel", "百吉饼", "食品", "食物", "饮料", "饮品", "喝", "百", "吉", "饼", "吃"], cat: "食物饮料" },
+  { ch: "🦀", name: "crab", cn: "螃蟹", kw: ["crab", "食品", "食物", "螃蟹", "饮料", "饮品", "螃", "喝", "蟹", "吃"], cat: "食物饮料" },
+  { ch: "🦐", name: "shrimp", cn: "虾", kw: ["shrimp", "食品", "食物", "饮料", "饮品", "喝", "虾", "吃"], cat: "食物饮料" },
+  { ch: "🦑", name: "squid", cn: "乌贼", kw: ["squid", "食品", "食物", "乌贼", "饮料", "饮品", "喝", "贼", "乌", "吃"], cat: "食物饮料" },
+  { ch: "🦞", name: "lobster", cn: "龙虾", kw: ["lobster", "食品", "食物", "龙虾", "饮料", "饮品", "喝", "吃"], cat: "食物饮料" },
+  { ch: "♟️", name: "chess pawn", cn: "国际象棋棋子", kw: ["国际象棋棋子", "chess", "pawn", "活动", "运动", "体育", "游戏", "比赛", "象", "国", "际", "子", "棋"], cat: "活动运动" },
+  { ch: "♠️", name: "spade suit", cn: "黑桃花色", kw: ["spade", "黑桃花色", "suit", "花朵", "活动", "运动", "体育", "游戏", "比赛", "鲜花", "色", "桃", "黑", "花"], cat: "活动运动" },
+  { ch: "♣️", name: "club suit", cn: "俱乐部套装", kw: ["俱乐部套装", "club", "suit", "运动", "活动", "体育", "游戏", "比赛", "装", "部", "套", "俱", "乐"], cat: "活动运动" },
+  { ch: "♥️", name: "heart suit", cn: "心形套装", kw: ["heart", "suit", "心形套装", "喜欢", "运动", "活动", "爱心", "体育", "游戏", "比赛", "形", "装", "套", "心", "爱"], cat: "活动运动" },
+  { ch: "♦️", name: "diamond suit", cn: "钻石套装", kw: ["diamond", "钻石套装", "suit", "水晶", "钻石", "活动", "宝石", "运动", "体育", "游戏", "钻戒", "比赛", "装", "套"], cat: "活动运动" },
+  { ch: "⚽", name: "soccer ball", cn: "足球", kw: ["soccer", "ball", "活动", "足球", "运动", "体育", "游戏", "蹴鞠", "比赛", "球"], cat: "活动运动" },
+  { ch: "⚾", name: "baseball", cn: "棒球", kw: ["baseball", "运动", "活动", "棒球", "体育", "游戏", "比赛", "球"], cat: "活动运动" },
+  { ch: "⛳", name: "flag in hole", cn: "旗子插在洞里", kw: ["旗子插在洞里", "hole", "flag", "运动", "活动", "旗子", "体育", "游戏", "旗帜", "比赛", "插", "旗", "子", "里", "洞"], cat: "活动运动" },
+  { ch: "⛸️", name: "ice skate", cn: "滑冰", kw: ["skate", "ice", "运动", "活动", "滑冰", "体育", "游戏", "比赛"], cat: "活动运动" },
+  { ch: "✨", name: "sparkles", cn: "闪闪发光", kw: ["sparkles", "闪闪发光", "运动", "活动", "体育", "游戏", "比赛", "发", "闪", "光"], cat: "活动运动" },
+  { ch: "🀄", name: "mahjong red dragon", cn: "麻将红龙", kw: ["mahjong", "dragon", "麻将红龙", "red", "运动", "活动", "体育", "游戏", "麻将", "比赛", "红", "龙"], cat: "活动运动" },
+  { ch: "🃏", name: "joker", cn: "小丑", kw: ["joker", "运动", "活动", "体育", "滑稽", "游戏", "小丑", "马戏", "比赛"], cat: "活动运动" },
+  { ch: "🎀", name: "ribbon", cn: "丝带", kw: ["ribbon", "活动", "丝带", "运动", "体育", "游戏", "比赛", "带", "丝"], cat: "活动运动" },
+  { ch: "🎁", name: "wrapped gift", cn: "包装好的礼物", kw: ["wrapped", "包装好的礼物", "gift", "袋子", "运动", "活动", "体育", "游戏", "礼物", "礼盒", "比赛", "礼品", "赠送", "装", "包", "好"], cat: "活动运动" },
+  { ch: "🎃", name: "jack-o-lantern", cn: "南瓜灯", kw: ["lantern", "jack", "南瓜灯", "活动", "运动", "体育", "游戏", "比赛", "南", "瓜", "灯"], cat: "活动运动" },
+  { ch: "🎄", name: "Christmas tree", cn: "圣诞树", kw: ["christmas", "tree", "圣诞树", "运动", "活动", "体育", "游戏", "比赛"], cat: "活动运动" },
+  { ch: "🎆", name: "fireworks", cn: "烟花", kw: ["fireworks", "运动", "活动", "鞭炮", "体育", "游戏", "比赛", "烟花", "焰火", "庆祝"], cat: "活动运动" },
+  { ch: "🎇", name: "sparkler", cn: "烟花", kw: ["sparkler", "运动", "活动", "鞭炮", "体育", "游戏", "比赛", "烟花", "焰火", "庆祝"], cat: "活动运动" },
+  { ch: "🎈", name: "balloon", cn: "气球", kw: ["balloon", "派对", "运动", "活动", "体育", "游戏", "比赛", "气球", "庆祝"], cat: "活动运动" },
+  { ch: "🎉", name: "party popper", cn: "礼花", kw: ["popper", "party", "花朵", "活动", "礼花", "运动", "体育", "游戏", "比赛", "鲜花", "礼", "花"], cat: "活动运动" },
+  { ch: "🎊", name: "confetti ball", cn: "五彩纸屑球", kw: ["confetti", "五彩纸屑球", "ball", "运动", "活动", "体育", "游戏", "比赛", "球", "彩", "屑", "纸", "五"], cat: "活动运动" },
+  { ch: "🎋", name: "tanabata tree", cn: "七夕树", kw: ["tanabata", "tree", "七夕树", "运动", "活动", "树木", "大树", "体育", "游戏", "比赛", "树", "七", "夕"], cat: "活动运动" },
+  { ch: "🎍", name: "pine decoration", cn: "松木装饰", kw: ["decoration", "pine", "松木装饰", "运动", "活动", "体育", "游戏", "比赛", "装", "松", "饰", "木"], cat: "活动运动" },
+  { ch: "🎎", name: "Japanese dolls", cn: "日本娃娃", kw: ["japanese", "dolls", "日本娃娃", "运动", "活动", "体育", "游戏", "比赛", "娃", "日", "本"], cat: "活动运动" },
+  { ch: "🎏", name: "carp streamer", cn: "鲤鱼旗", kw: ["streamer", "carp", "鲤鱼旗", "运动", "活动", "旗子", "体育", "游戏", "旗帜", "比赛", "鱼类", "旗", "鲤", "鱼"], cat: "活动运动" },
+  { ch: "🎐", name: "wind chime", cn: "风铃", kw: ["chime", "wind", "运动", "活动", "风铃", "体育", "游戏", "比赛", "风", "铃"], cat: "活动运动" },
+  { ch: "🎑", name: "moon viewing ceremony", cn: "赏月仪式", kw: ["ceremony", "viewing", "赏月仪式", "moon", "活动", "运动", "体育", "游戏", "比赛", "式", "赏", "月", "仪"], cat: "活动运动" },
+  { ch: "🎖️", name: "military medal", cn: "军事奖章", kw: ["military", "medal", "军事奖章", "活动", "运动", "体育", "游戏", "比赛", "事", "章", "军", "奖"], cat: "活动运动" },
+  { ch: "🎗️", name: "reminder ribbon", cn: "提醒丝带", kw: ["reminder", "ribbon", "提醒丝带", "运动", "活动", "体育", "游戏", "比赛", "提", "带", "丝", "醒"], cat: "活动运动" },
+  { ch: "🎟️", name: "admission tickets", cn: "门票", kw: ["admission", "tickets", "运动", "活动", "体育", "游戏", "比赛", "门票", "门", "票"], cat: "活动运动" },
+  { ch: "🎣", name: "fishing pole", cn: "钓鱼竿", kw: ["fishing", "pole", "钓鱼竿", "运动", "活动", "体育", "游戏", "比赛", "钓鱼", "竿"], cat: "活动运动" },
+  { ch: "🎨", name: "artist palette", cn: "艺术家调色板", kw: ["palette", "artist", "艺术家调色板", "艺术家", "调色板", "调色", "运动", "活动", "体育", "艺术", "游戏", "画家", "比赛"], cat: "活动运动" },
+  { ch: "🎫", name: "ticket", cn: "票", kw: ["ticket", "运动", "活动", "体育", "游戏", "比赛", "票"], cat: "活动运动" },
+  { ch: "🎭", name: "performing arts", cn: "表演艺术", kw: ["performing", "arts", "表演艺术", "运动", "活动", "体育", "游戏", "表演", "比赛", "艺", "术"], cat: "活动运动" },
+  { ch: "🎮", name: "video game", cn: "视频游戏", kw: ["video", "视频游戏", "game", "运动", "活动", "电竞", "体育", "游戏", "电玩", "比赛", "频", "视"], cat: "活动运动" },
+  { ch: "🎯", name: "bullseye", cn: "靶心", kw: ["bullseye", "喜欢", "运动", "活动", "体育", "爱心", "靶心", "游戏", "比赛", "心", "靶", "爱"], cat: "活动运动" },
+  { ch: "🎰", name: "slot machine", cn: "老虎机", kw: ["machine", "slot", "老虎机", "运动", "活动", "体育", "猛兽", "游戏", "老虎", "比赛", "机", "虎"], cat: "活动运动" },
+  { ch: "🎱", name: "pool 8 ball", cn: "台球 8 球", kw: ["台球 8 球", "ball", "pool", "台球", "运动", "活动", "体育", "游戏", "比赛", "桌球", "球"], cat: "活动运动" },
+  { ch: "🎲", name: "game die", cn: "游戏死亡", kw: ["game", "游戏死亡", "die", "运动", "活动", "电竞", "体育", "游戏", "电玩", "比赛", "亡", "死"], cat: "活动运动" },
+  { ch: "🎳", name: "bowling", cn: "保龄球", kw: ["bowling", "保龄球", "运动", "活动", "体育", "游戏", "比赛"], cat: "活动运动" },
+  { ch: "🎴", name: "flower playing cards", cn: "花纸牌", kw: ["playing", "flower", "cards", "花纸牌", "花朵", "活动", "运动", "体育", "游戏", "比赛", "鲜花", "牌", "花", "纸"], cat: "活动运动" },
+  { ch: "🎽", name: "running shirt", cn: "跑步衬衫", kw: ["running", "shirt", "跑步衬衫", "跑步", "运动", "活动", "奔跑", "体育", "衬衫", "衬衣", "游戏", "比赛", "快跑"], cat: "活动运动" },
+  { ch: "🎾", name: "tennis", cn: "网球", kw: ["tennis", "运动", "活动", "体育", "游戏", "比赛", "网球", "球"], cat: "活动运动" },
+  { ch: "🎿", name: "skis", cn: "滑雪板", kw: ["雪上运动", "skis", "滑雪板", "运动", "活动", "滑雪", "体育", "游戏", "比赛", "板"], cat: "活动运动" },
+  { ch: "🏀", name: "basketball", cn: "篮球", kw: ["basketball", "nba", "篮球", "运动", "活动", "体育", "游戏", "比赛", "球"], cat: "活动运动" },
+  { ch: "🏅", name: "sports medal", cn: "体育奖牌", kw: ["sports", "medal", "体育奖牌", "铜牌", "银牌", "活动", "金牌", "运动", "体育", "奖牌", "游戏", "比赛", "育", "体"], cat: "活动运动" },
+  { ch: "🏆", name: "trophy", cn: "杯", kw: ["trophy", "运动", "活动", "体育", "游戏", "比赛", "杯"], cat: "活动运动" },
+  { ch: "🏈", name: "american football", cn: "美式足球", kw: ["american", "football", "美式足球", "足球", "活动", "运动", "体育", "游戏", "蹴鞠", "比赛", "球", "式", "美"], cat: "活动运动" },
+  { ch: "🏉", name: "rugby football", cn: "橄榄球", kw: ["football", "rugby", "橄榄球", "运动", "活动", "体育", "游戏", "比赛", "球"], cat: "活动运动" },
+  { ch: "🏏", name: "cricket game", cn: "板球比赛", kw: ["cricket", "game", "板球比赛", "活动", "运动", "体育", "游戏", "比赛", "球", "赛", "板"], cat: "活动运动" },
+  { ch: "🏐", name: "volleyball", cn: "排球", kw: ["volleyball", "运动", "活动", "排球", "体育", "游戏", "比赛", "球"], cat: "活动运动" },
+  { ch: "🏑", name: "field hockey", cn: "曲棍球", kw: ["hockey", "field", "曲棍球", "运动", "活动", "体育", "游戏", "比赛", "球"], cat: "活动运动" },
+  { ch: "🏒", name: "ice hockey", cn: "冰球", kw: ["hockey", "ice", "运动", "活动", "体育", "游戏", "冰球", "比赛", "球"], cat: "活动运动" },
+  { ch: "🏓", name: "ping pong", cn: "乒乓", kw: ["pong", "ping", "运动", "活动", "体育", "游戏", "比赛", "乒乓", "乓", "乒"], cat: "活动运动" },
+  { ch: "🏸", name: "badminton", cn: "羽毛球", kw: ["badminton", "羽毛球", "运动", "活动", "体育", "游戏", "比赛", "球"], cat: "活动运动" },
+  { ch: "🔫", name: "water pistol", cn: "水枪", kw: ["pistol", "water", "饮用水", "水枪", "运动", "活动", "体育", "游戏", "比赛", "水", "枪"], cat: "活动运动" },
+  { ch: "🔮", name: "crystal ball", cn: "水晶球", kw: ["crystal", "ball", "饮用水", "水晶球", "运动", "活动", "体育", "游戏", "比赛", "球", "水", "晶"], cat: "活动运动" },
+  { ch: "🕹️", name: "joystick", cn: "操纵杆", kw: ["joystick", "操纵杆", "运动", "活动", "体育", "游戏", "比赛", "纵", "杆", "操"], cat: "活动运动" },
+  { ch: "🖼️", name: "framed picture", cn: "带框的图片", kw: ["picture", "framed", "带框的图片", "运动", "活动", "体育", "游戏", "比赛", "图", "框", "带", "片"], cat: "活动运动" },
+  { ch: "🛷", name: "sled", cn: "雪橇", kw: ["sled", "雪花", "雪橇", "运动", "活动", "体育", "游戏", "比赛", "下雪", "橇", "雪"], cat: "活动运动" },
+  { ch: "🤿", name: "diving mask", cn: "潜水面具", kw: ["diving", "潜水面具", "mask", "运动", "活动", "体育", "游戏", "比赛", "潜水", "深潜", "面", "具"], cat: "活动运动" },
+  { ch: "🥅", name: "goal net", cn: "球门网", kw: ["goal", "球门网", "net", "运动", "活动", "体育", "游戏", "比赛", "门", "球", "网"], cat: "活动运动" },
+  { ch: "🥇", name: "1st place medal", cn: "第一名奖牌", kw: ["place", "第一名奖牌", "medal", "第一名", "1st", "铜牌", "银牌", "活动", "运动", "金牌", "体育", "奖牌", "游戏", "比赛"], cat: "活动运动" },
+  { ch: "🥈", name: "2nd place medal", cn: "第二名奖牌", kw: ["place", "medal", "第二名奖牌", "2nd", "铜牌", "银牌", "活动", "运动", "金牌", "体育", "奖牌", "游戏", "比赛", "二", "名", "第"], cat: "活动运动" },
+  { ch: "🥉", name: "3rd place medal", cn: "第三名奖牌", kw: ["place", "medal", "第三名奖牌", "3rd", "铜牌", "银牌", "活动", "运动", "金牌", "体育", "奖牌", "游戏", "比赛", "第", "名", "三"], cat: "活动运动" },
+  { ch: "🥊", name: "boxing glove", cn: "拳击手套", kw: ["boxing", "glove", "拳击手套", "运动", "活动", "手套", "体育", "游戏", "拳击", "手袜", "比赛", "拳"], cat: "活动运动" },
+  { ch: "🥋", name: "martial arts uniform", cn: "武术服", kw: ["uniform", "martial", "arts", "武术服", "活动", "运动", "武术", "体育", "游戏", "比赛", "功夫", "服"], cat: "活动运动" },
+  { ch: "🥌", name: "curling stone", cn: "冰壶石", kw: ["curling", "stone", "冰壶石", "运动", "活动", "体育", "游戏", "比赛", "石", "壶", "冰"], cat: "活动运动" },
+  { ch: "🥍", name: "lacrosse", cn: "长曲棍球", kw: ["lacrosse", "长曲棍球", "曲棍球", "运动", "活动", "体育", "游戏", "比赛", "球", "长"], cat: "活动运动" },
+  { ch: "🥎", name: "softball", cn: "垒球", kw: ["softball", "运动", "活动", "体育", "游戏", "比赛", "垒球", "球", "垒"], cat: "活动运动" },
+  { ch: "🥏", name: "flying disc", cn: "飞盘", kw: ["flying", "disc", "运动", "活动", "体育", "飞盘", "游戏", "比赛"], cat: "活动运动" },
+  { ch: "🧧", name: "red envelope", cn: "红信封", kw: ["envelope", "red", "红信封", "信件", "信封", "活动", "运动", "体育", "游戏", "比赛", "红"], cat: "活动运动" },
+  { ch: "🧨", name: "firecracker", cn: "鞭炮", kw: ["firecracker", "运动", "活动", "鞭炮", "体育", "游戏", "比赛", "鞭", "炮"], cat: "活动运动" },
+  { ch: "🧩", name: "puzzle piece", cn: "一块拼图", kw: ["puzzle", "piece", "一块拼图", "运动", "活动", "体育", "游戏", "比赛", "拼图", "一", "块"], cat: "活动运动" },
+  { ch: "🧵", name: "thread", cn: "线", kw: ["thread", "运动", "活动", "体育", "游戏", "比赛", "线"], cat: "活动运动" },
+  { ch: "🧶", name: "yarn", cn: "纱", kw: ["yarn", "运动", "活动", "体育", "游戏", "比赛", "纱"], cat: "活动运动" },
+  { ch: "🧸", name: "teddy bear", cn: "玩具熊", kw: ["teddy", "bear", "北极熊", "玩具熊", "活动", "运动", "体育", "游戏", "比赛", "棕熊", "熊", "玩", "具"], cat: "活动运动" },
+  { ch: "🪀", name: "yo-yo", cn: "悠悠球", kw: ["悠悠球", "yo", "活动", "运动", "体育", "游戏", "比赛"], cat: "活动运动" },
+  { ch: "🪁", name: "kite", cn: "风筝", kw: ["kite", "运动", "活动", "风筝", "体育", "放飞", "游戏", "比赛"], cat: "活动运动" },
+  { ch: "🪄", name: "magic wand", cn: "魔法棒", kw: ["magic", "wand", "魔法棒", "运动", "活动", "体育", "游戏", "比赛", "魔", "法", "棒"], cat: "活动运动" },
+  { ch: "⌚", name: "watch", cn: "手表", kw: ["watch", "手表", "地点", "地方", "腕表", "建筑", "旅行", "旅游"], cat: "旅行地点" },
+  { ch: "⌛", name: "hourglass done", cn: "沙漏完成", kw: ["hourglass", "done", "沙漏完成", "地点", "沙漏", "地方", "建筑", "旅行", "旅游", "成", "完"], cat: "旅行地点" },
+  { ch: "⏰", name: "alarm clock", cn: "闹钟", kw: ["alarm", "clock", "闹钟", "地点", "地方", "建筑", "旅行", "旅游"], cat: "旅行地点" },
+  { ch: "⏱️", name: "stopwatch", cn: "跑表", kw: ["stopwatch", "地点", "地方", "建筑", "旅行", "跑表", "旅游", "跑", "表"], cat: "旅行地点" },
+  { ch: "⏲️", name: "timer clock", cn: "定时器时钟", kw: ["timer", "定时器时钟", "clock", "地点", "地方", "建筑", "时钟", "旅行", "旅游", "时", "钟", "定", "器"], cat: "旅行地点" },
+  { ch: "⏳", name: "hourglass not done", cn: "沙漏未完成", kw: ["hourglass", "沙漏未完成", "done", "地点", "沙漏", "地方", "建筑", "旅行", "旅游", "成", "完", "未"], cat: "旅行地点" },
+  { ch: "☀️", name: "sun", cn: "太阳", kw: ["sun", "太阳", "地点", "地方", "建筑", "旅行", "旅游", "阳", "太"], cat: "旅行地点" },
+  { ch: "☁️", name: "cloud", cn: "云", kw: ["cloud", "云朵", "地点", "地方", "建筑", "旅行", "旅游", "云"], cat: "旅行地点" },
+  { ch: "☂️", name: "umbrella", cn: "伞", kw: ["umbrella", "地点", "地方", "建筑", "旅行", "旅游", "伞"], cat: "旅行地点" },
+  { ch: "☃️", name: "snowman", cn: "雪人", kw: ["snowman", "人类", "雪花", "下雪", "地点", "地方", "建筑", "旅行", "旅游", "人物", "雪人", "有人", "人", "雪"], cat: "旅行地点" },
+  { ch: "☄️", name: "comet", cn: "彗星", kw: ["comet", "地点", "地方", "建筑", "旅行", "旅游", "彗星", "星", "彗"], cat: "旅行地点" },
+  { ch: "☔", name: "umbrella with rain drops", cn: "有雨滴的雨伞", kw: ["umbrella", "有雨滴的雨伞", "drops", "rain", "雨伞", "雨天", "地点", "地方", "建筑", "旅行", "旅游", "下雨", "雨", "伞", "滴"], cat: "旅行地点" },
+  { ch: "♨️", name: "hot springs", cn: "温泉", kw: ["springs", "hot", "温泉", "地点", "地方", "建筑", "旅行", "旅游"], cat: "旅行地点" },
+  { ch: "⚓", name: "anchor", cn: "锚", kw: ["anchor", "地点", "地方", "建筑", "旅行", "旅游", "锚"], cat: "旅行地点" },
+  { ch: "⚡", name: "high voltage", cn: "高压", kw: ["voltage", "high", "高压", "地点", "地方", "建筑", "旅行", "旅游", "压", "高"], cat: "旅行地点" },
+  { ch: "⛄", name: "snowman without snow", cn: "没有雪的雪人", kw: ["without", "snowman", "没有雪的雪人", "snow", "人类", "雪花", "下雪", "地点", "地方", "建筑", "旅行", "旅游", "人物", "有人", "人", "雪", "没"], cat: "旅行地点" },
+  { ch: "⛅", name: "sun behind cloud", cn: "云层后面的太阳", kw: ["云层后面的太阳", "behind", "cloud", "sun", "云朵", "地点", "地方", "建筑", "旅行", "旅游", "阳", "面", "层", "太", "云", "后"], cat: "旅行地点" },
+  { ch: "⛈️", name: "cloud with lightning and rain", cn: "云与闪电和雨", kw: ["lightning", "云与闪电和雨", "cloud", "rain", "雨天", "云朵", "地点", "地方", "建筑", "雷电", "闪电", "旅行", "旅游", "下雨", "雨", "云"], cat: "旅行地点" },
+  { ch: "⛩️", name: "shinto shrine", cn: "神社", kw: ["shrine", "shinto", "日本神社", "地点", "地方", "建筑", "旅行", "神社", "旅游"], cat: "旅行地点" },
+  { ch: "⛪", name: "church", cn: "教会", kw: ["church", "地点", "地方", "建筑", "教会", "旅行", "旅游", "教"], cat: "旅行地点" },
+  { ch: "⛰️", name: "mountain", cn: "山", kw: ["mountain", "地点", "地方", "山峰", "建筑", "山脉", "旅行", "旅游", "山"], cat: "旅行地点" },
+  { ch: "⛱️", name: "umbrella on ground", cn: "地上的伞", kw: ["umbrella", "ground", "地上的伞", "地点", "向上", "地方", "建筑", "旅行", "上面", "旅游", "上", "伞"], cat: "旅行地点" },
+  { ch: "⛲", name: "fountain", cn: "喷泉", kw: ["fountain", "地点", "地方", "建筑", "喷泉", "旅行", "旅游"], cat: "旅行地点" },
+  { ch: "⛴️", name: "ferry", cn: "渡船", kw: ["ferry", "地点", "地方", "建筑", "渡船", "旅行", "轮船", "旅游", "舟", "船", "渡"], cat: "旅行地点" },
+  { ch: "⛵", name: "sailboat", cn: "帆船", kw: ["sailboat", "帆船", "地点", "地方", "建筑", "旅行", "旅游"], cat: "旅行地点" },
+  { ch: "⛺", name: "tent", cn: "帐篷", kw: ["tent", "帐篷", "地点", "地方", "建筑", "旅行", "旅游"], cat: "旅行地点" },
+  { ch: "⛽", name: "fuel pump", cn: "燃油泵", kw: ["fuel", "pump", "燃油泵", "地点", "地方", "建筑", "旅行", "旅游", "油", "燃", "泵"], cat: "旅行地点" },
+  { ch: "✈️", name: "airplane", cn: "飞机", kw: ["airplane", "飞行", "航班", "地点", "地方", "建筑", "旅行", "飞机", "旅游"], cat: "旅行地点" },
+  { ch: "❄️", name: "snowflake", cn: "雪花", kw: ["snowflake", "雪花", "花朵", "地点", "地方", "建筑", "旅行", "鲜花", "旅游", "下雪", "花", "雪"], cat: "旅行地点" },
+  { ch: "⭐", name: "star", cn: "星星", kw: ["star", "地点", "地方", "建筑", "旅行", "星光", "星星", "旅游", "星"], cat: "旅行地点" },
+  { ch: "🌀", name: "cyclone", cn: "气旋", kw: ["cyclone", "气旋", "地点", "地方", "建筑", "旅行", "旅游", "旋", "气"], cat: "旅行地点" },
+  { ch: "🌁", name: "foggy", cn: "有雾", kw: ["foggy", "地点", "地方", "建筑", "有雾", "旅行", "旅游", "雾"], cat: "旅行地点" },
+  { ch: "🌂", name: "closed umbrella", cn: "闭合的伞", kw: ["umbrella", "closed", "闭合的伞", "地点", "地方", "建筑", "旅行", "旅游", "合", "闭", "伞"], cat: "旅行地点" },
+  { ch: "🌃", name: "night with stars", cn: "有星星的夜晚", kw: ["有星星的夜晚", "night", "stars", "地点", "地方", "建筑", "星光", "旅行", "星星", "旅游", "星", "晚", "夜"], cat: "旅行地点" },
+  { ch: "🌄", name: "sunrise over mountains", cn: "山上的日出", kw: ["mountains", "sunrise", "山上的日出", "日出", "地点", "向上", "山峰", "地方", "建筑", "山脉", "旅行", "上面", "旅游", "朝阳", "上", "山"], cat: "旅行地点" },
+  { ch: "🌅", name: "sunrise", cn: "日出", kw: ["sunrise", "日出", "地点", "地方", "建筑", "旅行", "旅游", "朝阳"], cat: "旅行地点" },
+  { ch: "🌆", name: "cityscape at dusk", cn: "黄昏时的城市景观", kw: ["cityscape", "黄昏时的城市景观", "dusk", "地点", "地方", "建筑", "旅行", "旅游", "黄", "城", "时", "昏", "市", "观", "景"], cat: "旅行地点" },
+  { ch: "🌇", name: "sunset", cn: "日落", kw: ["sunset", "夕阳", "地点", "地方", "建筑", "旅行", "旅游", "日落"], cat: "旅行地点" },
+  { ch: "🌈", name: "rainbow", cn: "彩虹", kw: ["rainbow", "彩虹", "地点", "地方", "建筑", "旅行", "旅游", "虹"], cat: "旅行地点" },
+  { ch: "🌉", name: "bridge at night", cn: "晚上的桥", kw: ["bridge", "night", "晚上的桥", "地点", "向上", "地方", "建筑", "旅行", "上面", "旅游", "桥梁", "上", "桥", "晚"], cat: "旅行地点" },
+  { ch: "🌊", name: "water wave", cn: "水波", kw: ["water", "wave", "饮用水", "水波", "地点", "地方", "建筑", "旅行", "旅游", "波", "水"], cat: "旅行地点" },
+  { ch: "🌋", name: "volcano", cn: "火山", kw: ["volcano", "地点", "地方", "建筑", "喷发", "旅行", "火山", "旅游"], cat: "旅行地点" },
+  { ch: "🌌", name: "milky way", cn: "银河系", kw: ["milky", "way", "银河系", "地点", "地方", "建筑", "银河", "旅行", "旅游", "系"], cat: "旅行地点" },
+  { ch: "🌍", name: "globe showing Europe-Africa", cn: "显示欧洲-非洲的地球仪", kw: ["显示欧洲-非洲的地球仪", "showing", "europe", "africa", "globe", "地点", "地球", "地方", "建筑", "非洲", "旅行", "旅游", "洲", "欧", "仪", "示", "显"], cat: "旅行地点" },
+  { ch: "🌎", name: "globe showing Americas", cn: "显示美洲的地球仪", kw: ["显示美洲的地球仪", "americas", "showing", "globe", "美洲", "地点", "地球", "地方", "建筑", "旅行", "旅游", "仪", "示", "显"], cat: "旅行地点" },
+  { ch: "🌏", name: "globe showing Asia-Australia", cn: "显示亚洲-澳大利亚的地球仪", kw: ["显示亚洲-澳大利亚的地球仪", "australia", "showing", "globe", "asia", "地点", "旅游", "地方", "旅行", "亚洲", "地球", "建筑", "仪", "亚", "大", "利", "澳", "示", "显"], cat: "旅行地点" },
+  { ch: "🌐", name: "globe with meridians", cn: "有经络的地球仪", kw: ["meridians", "有经络的地球仪", "globe", "地点", "地球", "地方", "建筑", "旅行", "旅游", "仪", "络", "经"], cat: "旅行地点" },
+  { ch: "🌑", name: "new moon", cn: "新月", kw: ["moon", "new", "新月", "地点", "地方", "建筑", "旅行", "旅游", "新", "月"], cat: "旅行地点" },
+  { ch: "🌒", name: "waxing crescent moon", cn: "上弦月", kw: ["crescent", "waxing", "moon", "上弦月", "地点", "向上", "地方", "建筑", "旅行", "上面", "旅游", "上", "月", "弦"], cat: "旅行地点" },
+  { ch: "🌓", name: "first quarter moon", cn: "上弦月", kw: ["quarter", "first", "moon", "上弦月", "地点", "向上", "地方", "建筑", "旅行", "上面", "旅游", "上", "月", "弦"], cat: "旅行地点" },
+  { ch: "🌔", name: "waxing gibbous moon", cn: "凸月", kw: ["gibbous", "waxing", "moon", "地点", "地方", "建筑", "凸月", "旅行", "旅游", "月", "凸"], cat: "旅行地点" },
+  { ch: "🌕", name: "full moon", cn: "满月", kw: ["full", "moon", "满月", "地点", "地方", "建筑", "旅行", "旅游", "月", "满"], cat: "旅行地点" },
+  { ch: "🌖", name: "waning gibbous moon", cn: "亏凸月", kw: ["gibbous", "waning", "moon", "亏凸月", "地点", "地方", "建筑", "旅行", "旅游", "亏", "月", "凸"], cat: "旅行地点" },
+  { ch: "🌗", name: "last quarter moon", cn: "下弦月", kw: ["quarter", "last", "moon", "下弦月", "地点", "地方", "建筑", "向下", "旅行", "下面", "旅游", "月", "下", "弦"], cat: "旅行地点" },
+  { ch: "🌘", name: "waning crescent moon", cn: "残月", kw: ["crescent", "waning", "moon", "地点", "地方", "建筑", "残月", "旅行", "旅游", "残", "月"], cat: "旅行地点" },
+  { ch: "🌙", name: "crescent moon", cn: "新月", kw: ["crescent", "moon", "新月", "地点", "地方", "建筑", "旅行", "旅游", "新", "月"], cat: "旅行地点" },
+  { ch: "🌚", name: "new moon face", cn: "新月脸", kw: ["moon", "new", "新月脸", "地点", "地方", "建筑", "旅行", "旅游", "新", "月", "脸"], cat: "旅行地点" },
+  { ch: "🌛", name: "first quarter moon face", cn: "上弦月脸", kw: ["quarter", "first", "moon", "上弦月脸", "地点", "向上", "地方", "建筑", "旅行", "上面", "旅游", "上", "月", "弦", "脸"], cat: "旅行地点" },
+  { ch: "🌜", name: "last quarter moon face", cn: "下弦月脸", kw: ["quarter", "moon", "last", "下弦月脸", "地点", "地方", "建筑", "向下", "旅行", "下面", "旅游", "月", "下", "弦", "脸"], cat: "旅行地点" },
+  { ch: "🌝", name: "full moon face", cn: "满月脸", kw: ["moon", "full", "满月脸", "地点", "地方", "建筑", "旅行", "旅游", "月", "脸", "满"], cat: "旅行地点" },
+  { ch: "🌞", name: "sun with face", cn: "太阳与脸", kw: ["太阳与脸", "sun", "地点", "地方", "建筑", "旅行", "旅游", "阳", "太", "脸"], cat: "旅行地点" },
+  { ch: "🌟", name: "glowing star", cn: "发光的星星", kw: ["glowing", "发光的星星", "star", "地点", "地方", "建筑", "星光", "旅行", "星星", "旅游", "发", "光", "星"], cat: "旅行地点" },
+  { ch: "🌠", name: "shooting star", cn: "流星", kw: ["shooting", "star", "地点", "地方", "建筑", "旅行", "流星", "旅游", "星", "流"], cat: "旅行地点" },
+  { ch: "🌡️", name: "thermometer", cn: "温度计", kw: ["thermometer", "温度计", "地点", "地方", "建筑", "旅行", "旅游"], cat: "旅行地点" },
+  { ch: "🌤️", name: "sun behind small cloud", cn: "小云朵后面的太阳", kw: ["小云朵后面的太阳", "behind", "small", "cloud", "sun", "云朵", "地点", "地方", "建筑", "旅行", "旅游", "小", "朵", "阳", "面", "太", "云", "后"], cat: "旅行地点" },
+  { ch: "🌥️", name: "sun behind large cloud", cn: "太阳在大云后面", kw: ["太阳在大云后面", "behind", "cloud", "large", "sun", "云朵", "地点", "地方", "建筑", "旅行", "旅游", "阳", "面", "太", "云", "后", "大"], cat: "旅行地点" },
+  { ch: "🌦️", name: "sun behind rain cloud", cn: "太阳在雨云后面", kw: ["太阳在雨云后面", "behind", "cloud", "rain", "sun", "下雨", "云朵", "地点", "旅游", "雨天", "地方", "旅行", "建筑", "阳", "后", "雨", "云", "太", "面"], cat: "旅行地点" },
+  { ch: "🌧️", name: "cloud with rain", cn: "云有雨", kw: ["cloud", "rain", "云有雨", "雨天", "云朵", "地点", "地方", "建筑", "旅行", "旅游", "下雨", "雨", "云"], cat: "旅行地点" },
+  { ch: "🌨️", name: "cloud with snow", cn: "云与雪", kw: ["cloud", "snow", "云与雪", "雪花", "云朵", "地点", "地方", "建筑", "旅行", "旅游", "下雪", "雪", "云"], cat: "旅行地点" },
+  { ch: "🌩️", name: "cloud with lightning", cn: "云与闪电", kw: ["lightning", "cloud", "云与闪电", "云朵", "地点", "地方", "建筑", "雷电", "闪电", "旅行", "旅游", "云"], cat: "旅行地点" },
+  { ch: "🌪️", name: "tornado", cn: "龙卷风", kw: ["tornado", "龙卷风", "地点", "地方", "旋风", "建筑", "旅行", "旅游"], cat: "旅行地点" },
+  { ch: "🌫️", name: "fog", cn: "多雾路段", kw: ["多雾路段", "fog", "地点", "地方", "建筑", "旅行", "旅游", "段", "路", "雾"], cat: "旅行地点" },
+  { ch: "🌬️", name: "wind face", cn: "风脸", kw: ["wind", "风脸", "地点", "地方", "建筑", "旅行", "旅游", "风", "脸"], cat: "旅行地点" },
+  { ch: "🎠", name: "carousel horse", cn: "旋转木马", kw: ["carousel", "horse", "旋转木马", "地点", "小马", "地方", "建筑", "旅行", "骏马", "旅游", "旋", "马", "转", "木"], cat: "旅行地点" },
+  { ch: "🎡", name: "ferris wheel", cn: "摩天轮", kw: ["ferris", "wheel", "摩天轮", "地点", "地方", "建筑", "旅行", "旅游", "天", "摩", "轮"], cat: "旅行地点" },
+  { ch: "🎢", name: "roller coaster", cn: "过山车", kw: ["coaster", "roller", "过山车", "地点", "地方", "山峰", "建筑", "山脉", "旅行", "旅游", "车", "山"], cat: "旅行地点" },
+  { ch: "🎪", name: "circus tent", cn: "马戏团帐篷", kw: ["circus", "马戏团帐篷", "tent", "帐篷", "地点", "地方", "建筑", "马戏", "旅行", "旅游", "团"], cat: "旅行地点" },
+  { ch: "🏍️", name: "motorcycle", cn: "摩托车", kw: ["motorcycle", "摩托车", "地点", "地方", "建筑", "机车", "旅行", "旅游"], cat: "旅行地点" },
+  { ch: "🏎️", name: "racing car", cn: "赛车", kw: ["racing", "car", "赛车", "地点", "地方", "建筑", "旅行", "旅游", "赛", "车"], cat: "旅行地点" },
+  { ch: "🏔️", name: "snow-capped mountain", cn: "雪山", kw: ["mountain", "capped", "snow", "地点", "雪山", "地方", "建筑", "雪峰", "旅行", "旅游"], cat: "旅行地点" },
+  { ch: "⌨️", name: "keyboard", cn: "键盘", kw: ["keyboard", "工具", "物品", "用具", "键盘", "东西", "按键"], cat: "物品工具" },
+  { ch: "☎️", name: "telephone", cn: "电话", kw: ["telephone", "固定电话", "工具", "物品", "用具", "东西", "电话"], cat: "物品工具" },
+  { ch: "⚒️", name: "hammer and pick", cn: "锤子和镐", kw: ["hammer", "pick", "锤子和镐", "工具", "物品", "用具", "东西", "锤子", "锤", "镐"], cat: "物品工具" },
+  { ch: "⚔️", name: "crossed swords", cn: "交叉的剑", kw: ["crossed", "swords", "交叉的剑", "工具", "物品", "用具", "东西", "交", "叉", "剑"], cat: "物品工具" },
+  { ch: "⚖️", name: "balance scale", cn: "天平秤", kw: ["balance", "scale", "天平秤", "工具", "物品", "用具", "东西", "平", "秤", "天"], cat: "物品工具" },
+  { ch: "⚗️", name: "alembic", cn: "蒸馏器", kw: ["alembic", "蒸馏器", "工具", "物品", "用具", "东西", "馏", "蒸", "器"], cat: "物品工具" },
+  { ch: "⚙️", name: "gear", cn: "齿轮", kw: ["gear", "工具", "物品", "用具", "齿轮", "东西", "齿", "轮"], cat: "物品工具" },
+  { ch: "⚰️", name: "coffin", cn: "棺材", kw: ["coffin", "工具", "物品", "用具", "东西", "棺材", "棺", "材"], cat: "物品工具" },
+  { ch: "⚱️", name: "funeral urn", cn: "骨灰盒", kw: ["funeral", "urn", "骨灰盒", "工具", "物品", "用具", "东西", "盒", "灰", "骨"], cat: "物品工具" },
+  { ch: "⛏️", name: "pick", cn: "挑选", kw: ["pick", "工具", "物品", "用具", "东西", "挑选", "选", "挑"], cat: "物品工具" },
+  { ch: "⛑️", name: "rescue worker’s helmet", cn: "救援人员的头盔", kw: ["worker’s", "救援人员的头盔", "rescue", "helmet", "人类", "工具", "物品", "用具", "东西", "人物", "有人", "盔", "援", "救", "人", "员", "头"], cat: "物品工具" },
+  { ch: "⛓️", name: "chains", cn: "链条", kw: ["chains", "工具", "链条", "物品", "用具", "东西", "链", "条"], cat: "物品工具" },
+  { ch: "⛓️‍💥", name: "broken chain", cn: "断链", kw: ["broken", "chain", "工具", "物品", "断链", "用具", "东西", "链", "断"], cat: "物品工具" },
+  { ch: "✂️", name: "scissors", cn: "剪刀", kw: ["scissors", "工具", "物品", "用具", "东西", "剪刀", "剪"], cat: "物品工具" },
+  { ch: "✉️", name: "envelope", cn: "信封", kw: ["envelope", "信件", "工具", "信封", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "✏️", name: "pencil", cn: "铅笔", kw: ["pencil", "工具", "物品", "用具", "铅笔", "东西", "笔"], cat: "物品工具" },
+  { ch: "✒️", name: "black nib", cn: "黑色笔尖", kw: ["black", "黑色笔尖", "nib", "工具", "物品", "用具", "东西", "色", "黑", "笔", "尖"], cat: "物品工具" },
+  { ch: "🎒", name: "backpack", cn: "背包", kw: ["backpack", "双肩包", "工具", "物品", "用具", "背包", "东西"], cat: "物品工具" },
+  { ch: "🎓", name: "graduation cap", cn: "毕业帽", kw: ["graduation", "毕业帽", "cap", "工具", "物品", "用具", "东西", "帽", "业", "毕"], cat: "物品工具" },
+  { ch: "🎙️", name: "studio microphone", cn: "录音室麦克风", kw: ["microphone", "studio", "录音室麦克风", "麦克风", "工具", "物品", "用具", "录制", "录音", "东西", "k歌", "话筒", "室"], cat: "物品工具" },
+  { ch: "🎚️", name: "level slider", cn: "水平滑块", kw: ["slider", "level", "水平滑块", "饮用水", "工具", "物品", "用具", "东西", "块", "平", "水", "滑"], cat: "物品工具" },
+  { ch: "🎛️", name: "control knobs", cn: "控制旋钮", kw: ["control", "knobs", "控制旋钮", "工具", "物品", "用具", "东西", "旋", "控", "制", "钮"], cat: "物品工具" },
+  { ch: "🎞️", name: "film frames", cn: "胶片帧", kw: ["frames", "film", "胶片帧", "工具", "物品", "用具", "东西", "胶", "帧", "片"], cat: "物品工具" },
+  { ch: "🎤", name: "microphone", cn: "麦克风", kw: ["microphone", "麦克风", "工具", "物品", "用具", "东西", "k歌", "话筒"], cat: "物品工具" },
+  { ch: "🎥", name: "movie camera", cn: "电影摄影机", kw: ["camera", "movie", "电影摄影机", "工具", "物品", "用具", "东西", "机", "影", "电", "摄"], cat: "物品工具" },
+  { ch: "🎧", name: "headphone", cn: "耳机", kw: ["headphone", "工具", "耳机", "物品", "用具", "东西", "耳塞"], cat: "物品工具" },
+  { ch: "🎩", name: "top hat", cn: "高顶礼帽", kw: ["高顶礼帽", "top", "hat", "工具", "物品", "用具", "东西", "帽", "礼", "高", "顶"], cat: "物品工具" },
+  { ch: "🎬", name: "clapper board", cn: "场记板", kw: ["clapper", "board", "场记板", "工具", "物品", "用具", "东西", "场", "记", "板"], cat: "物品工具" },
+  { ch: "🎵", name: "musical note", cn: "音符", kw: ["musical", "note", "工具", "物品", "用具", "东西", "音符", "符", "音"], cat: "物品工具" },
+  { ch: "🎶", name: "musical notes", cn: "音符", kw: ["musical", "notes", "工具", "物品", "用具", "东西", "音符", "符", "音"], cat: "物品工具" },
+  { ch: "🎷", name: "saxophone", cn: "萨克斯管", kw: ["saxophone", "萨克斯管", "萨克斯", "工具", "乐器", "物品", "用具", "东西", "管"], cat: "物品工具" },
+  { ch: "🎸", name: "guitar", cn: "吉他", kw: ["guitar", "工具", "吉他", "乐器", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "🎹", name: "musical keyboard", cn: "音乐键盘", kw: ["keyboard", "musical", "音乐键盘", "工具", "物品", "键盘", "用具", "东西", "音乐", "按键"], cat: "物品工具" },
+  { ch: "🎺", name: "trumpet", cn: "喇叭", kw: ["trumpet", "工具", "喇叭", "乐器", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "🎻", name: "violin", cn: "小提琴", kw: ["violin", "小提琴", "工具", "乐器", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "🎼", name: "musical score", cn: "乐谱", kw: ["musical", "score", "工具", "物品", "用具", "东西", "乐谱", "谱", "乐"], cat: "物品工具" },
+  { ch: "🏮", name: "red paper lantern", cn: "红纸灯笼", kw: ["lantern", "paper", "红纸灯笼", "red", "工具", "物品", "用具", "东西", "灯笼", "红", "纸", "灯"], cat: "物品工具" },
+  { ch: "🏷️", name: "label", cn: "标签", kw: ["label", "标价签", "工具", "物品", "用具", "标签", "东西"], cat: "物品工具" },
+  { ch: "🏹", name: "bow and arrow", cn: "弓箭", kw: ["arrow", "bow", "工具", "物品", "用具", "弓箭", "东西", "箭", "弓"], cat: "物品工具" },
+  { ch: "👑", name: "crown", cn: "王冠", kw: ["crown", "工具", "物品", "用具", "东西", "皇冠", "王冠"], cat: "物品工具" },
+  { ch: "👒", name: "woman’s hat", cn: "女人的帽子", kw: ["woman’s", "女人的帽子", "hat", "工具", "女孩", "小姐", "物品", "用具", "东西", "女性", "帽子", "女士", "女人", "帽"], cat: "物品工具" },
+  { ch: "👓", name: "glasses", cn: "眼镜", kw: ["glasses", "工具", "物品", "用具", "镜框", "眼镜", "东西"], cat: "物品工具" },
+  { ch: "👔", name: "necktie", cn: "领带", kw: ["necktie", "工具", "物品", "领带", "用具", "东西", "领结"], cat: "物品工具" },
+  { ch: "👕", name: "t-shirt", cn: "T恤", kw: ["shirt", "工具", "物品", "用具", "东西", "t恤", "短袖"], cat: "物品工具" },
+  { ch: "👖", name: "jeans", cn: "牛仔裤", kw: ["jeans", "牛仔裤", "工具", "物品", "用具", "奶牛", "东西", "公牛", "牛", "裤", "仔"], cat: "物品工具" },
+  { ch: "👗", name: "dress", cn: "裙子", kw: ["dress", "裙子", "工具", "物品", "用具", "东西", "裙装"], cat: "物品工具" },
+  { ch: "👘", name: "kimono", cn: "和服", kw: ["kimono", "工具", "物品", "用具", "和服", "东西", "服"], cat: "物品工具" },
+  { ch: "👙", name: "bikini", cn: "比基尼", kw: ["bikini", "比基尼", "工具", "物品", "用具", "东西", "尼", "基"], cat: "物品工具" },
+  { ch: "👚", name: "woman’s clothes", cn: "女人的衣服", kw: ["woman’s", "clothes", "女人的衣服", "工具", "女孩", "小姐", "物品", "用具", "东西", "女性", "女士", "女人", "服", "衣"], cat: "物品工具" },
+  { ch: "👛", name: "purse", cn: "钱包", kw: ["purse", "钱夹", "工具", "钱包", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "👜", name: "handbag", cn: "手提包", kw: ["handbag", "手提包", "工具", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "👝", name: "clutch bag", cn: "手抓包", kw: ["clutch", "手抓包", "bag", "袋子", "工具", "物品", "手势", "用具", "手掌", "东西", "手指", "包", "手", "抓"], cat: "物品工具" },
+  { ch: "👞", name: "man’s shoe", cn: "男鞋", kw: ["man’s", "shoe", "工具", "男鞋", "物品", "男人", "用具", "东西", "男性", "鞋", "男"], cat: "物品工具" },
+  { ch: "👟", name: "running shoe", cn: "跑鞋", kw: ["running", "shoe", "工具", "物品", "用具", "东西", "跑鞋", "跑", "鞋"], cat: "物品工具" },
+  { ch: "👠", name: "high-heeled shoe", cn: "高跟鞋", kw: ["heeled", "shoe", "high", "高跟鞋", "工具", "物品", "用具", "东西", "高跟"], cat: "物品工具" },
+  { ch: "👡", name: "woman’s sandal", cn: "女式凉鞋", kw: ["woman’s", "sandal", "女式凉鞋", "工具", "物品", "用具", "东西", "女性", "凉鞋", "女人", "式", "女"], cat: "物品工具" },
+  { ch: "👢", name: "woman’s boot", cn: "女式靴子", kw: ["woman’s", "女式靴子", "boot", "工具", "物品", "用具", "长靴", "东西", "靴子", "女性", "女人", "式", "女"], cat: "物品工具" },
+  { ch: "💄", name: "lipstick", cn: "口红", kw: ["lipstick", "工具", "物品", "用具", "唇膏", "口红", "东西"], cat: "物品工具" },
+  { ch: "💉", name: "syringe", cn: "注射器", kw: ["syringe", "注射器", "工具", "针筒", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "💊", name: "pill", cn: "丸", kw: ["pill", "工具", "物品", "用具", "东西", "丸"], cat: "物品工具" },
+  { ch: "💍", name: "ring", cn: "戒指", kw: ["ring", "婚戒", "工具", "物品", "戒指", "用具", "东西", "首饰", "钻戒"], cat: "物品工具" },
+  { ch: "💎", name: "gem stone", cn: "宝石", kw: ["stone", "gem", "工具", "宝石", "物品", "用具", "东西", "珠宝"], cat: "物品工具" },
+  { ch: "💡", name: "light bulb", cn: "灯泡", kw: ["light", "bulb", "工具", "物品", "用具", "东西", "灯泡", "灯"], cat: "物品工具" },
+  { ch: "💣", name: "bomb", cn: "炸弹", kw: ["bomb", "工具", "物品", "炸弹", "用具", "东西", "弹", "炸"], cat: "物品工具" },
+  { ch: "💰", name: "money bag", cn: "钱袋子", kw: ["money", "钱袋子", "bag", "工具", "货币", "物品", "用具", "金钱", "东西", "袋", "子", "钱"], cat: "物品工具" },
+  { ch: "💳", name: "credit card", cn: "信用卡", kw: ["credit", "card", "银行卡", "信用卡", "工具", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "💴", name: "yen banknote", cn: "日元钞票", kw: ["banknote", "日元钞票", "yen", "钞票", "工具", "纸币", "物品", "用具", "东西", "元", "日", "钱"], cat: "物品工具" },
+  { ch: "💵", name: "dollar banknote", cn: "美元钞票", kw: ["banknote", "dollar", "美元钞票", "钞票", "工具", "物品", "纸币", "用具", "东西", "元", "美", "钱"], cat: "物品工具" },
+  { ch: "💶", name: "euro banknote", cn: "欧元纸币", kw: ["banknote", "euro", "欧元纸币", "工具", "物品", "用具", "东西", "欧", "币", "元", "纸"], cat: "物品工具" },
+  { ch: "💷", name: "pound banknote", cn: "英镑钞票", kw: ["banknote", "pound", "英镑钞票", "钞票", "工具", "物品", "纸币", "用具", "东西", "镑", "英", "钱"], cat: "物品工具" },
+  { ch: "💸", name: "money with wings", cn: "带翅膀的钱", kw: ["money", "wings", "带翅膀的钱", "工具", "货币", "物品", "用具", "金钱", "东西", "膀", "带", "钱", "翅"], cat: "物品工具" },
+  { ch: "💹", name: "chart increasing with yen", cn: "随日元增加的图表", kw: ["increasing", "随日元增加的图表", "chart", "yen", "工具", "相加", "物品", "用具", "东西", "增加", "图表", "元", "日", "增", "加", "随"], cat: "物品工具" },
+  { ch: "💻", name: "laptop", cn: "笔记本电脑", kw: ["laptop", "笔记本电脑", "计算机", "笔记本", "工具", "物品", "用具", "电脑", "东西"], cat: "物品工具" },
+  { ch: "💼", name: "briefcase", cn: "公文包", kw: ["briefcase", "公文包", "袋子", "工具", "物品", "用具", "东西", "公", "文", "包"], cat: "物品工具" },
+  { ch: "💽", name: "computer disk", cn: "电脑磁盘", kw: ["computer", "电脑磁盘", "disk", "计算机", "工具", "物品", "用具", "电脑", "东西", "磁", "盘"], cat: "物品工具" },
+  { ch: "💾", name: "floppy disk", cn: "软盘", kw: ["floppy", "disk", "工具", "物品", "用具", "软盘", "东西", "盘", "软"], cat: "物品工具" },
+  { ch: "💿", name: "optical disk", cn: "光盘", kw: ["optical", "disk", "工具", "物品", "用具", "东西", "光盘", "光", "盘"], cat: "物品工具" },
+  { ch: "📀", name: "dvd", cn: "DVD", kw: ["dvd", "工具", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "📁", name: "file folder", cn: "文件夹", kw: ["folder", "file", "档案夹", "文件夹", "工具", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "📂", name: "open file folder", cn: "打开文件夹", kw: ["folder", "打开文件夹", "file", "open", "档案夹", "文件夹", "工具", "物品", "用具", "东西", "开", "打"], cat: "物品工具" },
+  { ch: "📃", name: "page with curl", cn: "有卷曲的页面", kw: ["有卷曲的页面", "page", "curl", "工具", "物品", "用具", "东西", "曲", "面", "卷", "页"], cat: "物品工具" },
+  { ch: "📄", name: "page facing up", cn: "页面朝上", kw: ["facing", "page", "页面朝上", "工具", "物品", "向上", "用具", "东西", "up", "上面", "上", "朝", "页", "面"], cat: "物品工具" },
+  { ch: "📅", name: "calendar", cn: "日历", kw: ["calendar", "日程", "工具", "物品", "用具", "东西", "日历"], cat: "物品工具" },
+  { ch: "📆", name: "tear-off calendar", cn: "可撕式日历", kw: ["calendar", "可撕式日历", "tear", "off", "日程", "工具", "物品", "用具", "东西", "日历", "撕", "式"], cat: "物品工具" },
+  { ch: "📇", name: "card index", cn: "卡片索引", kw: ["index", "card", "卡片索引", "工具", "物品", "用具", "东西", "引", "索", "片", "卡"], cat: "物品工具" },
+  { ch: "📈", name: "chart increasing", cn: "图表增加", kw: ["increasing", "chart", "图表增加", "工具", "相加", "物品", "用具", "东西", "增加", "图表", "增", "加"], cat: "物品工具" },
+  { ch: "📉", name: "chart decreasing", cn: "图表递减", kw: ["decreasing", "chart", "图表递减", "工具", "物品", "相减", "用具", "减少", "东西", "图表", "减", "递"], cat: "物品工具" },
+  { ch: "📊", name: "bar chart", cn: "条形图", kw: ["chart", "bar", "条形图", "工具", "物品", "用具", "东西", "图", "形", "条"], cat: "物品工具" },
+  { ch: "📋", name: "clipboard", cn: "剪贴板", kw: ["clipboard", "剪贴板", "工具", "物品", "用具", "东西", "剪", "贴", "板"], cat: "物品工具" },
+  { ch: "📌", name: "pushpin", cn: "图钉", kw: ["pushpin", "工具", "按钉", "物品", "用具", "东西", "图钉"], cat: "物品工具" },
+  { ch: "📍", name: "round pushpin", cn: "圆形图钉", kw: ["pushpin", "round", "圆形图钉", "工具", "按钉", "物品", "用具", "东西", "图钉", "形", "圆"], cat: "物品工具" },
+  { ch: "📎", name: "paperclip", cn: "回形针", kw: ["paperclip", "回形针", "曲别针", "工具", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "📏", name: "straight ruler", cn: "直尺", kw: ["straight", "ruler", "工具", "物品", "用具", "直尺", "东西", "尺", "直"], cat: "物品工具" },
+  { ch: "📐", name: "triangular ruler", cn: "三角尺", kw: ["triangular", "ruler", "三角尺", "工具", "物品", "用具", "东西", "尺", "角", "三"], cat: "物品工具" },
+  { ch: "📑", name: "bookmark tabs", cn: "书签标签", kw: ["bookmark", "tabs", "书签标签", "标价签", "工具", "物品", "用具", "标签", "东西", "书", "签"], cat: "物品工具" },
+  { ch: "📒", name: "ledger", cn: "分类帐", kw: ["ledger", "分类帐", "工具", "物品", "用具", "东西", "分", "类", "帐"], cat: "物品工具" },
+  { ch: "📓", name: "notebook", cn: "笔记本", kw: ["notebook", "笔记本电脑", "笔记本", "工具", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "📔", name: "notebook with decorative cover", cn: "带装饰封面的笔记本", kw: ["decorative", "带装饰封面的笔记本", "notebook", "cover", "笔记本电脑", "笔记本", "工具", "物品", "用具", "东西", "装", "封", "带", "面", "饰"], cat: "物品工具" },
+  { ch: "📕", name: "closed book", cn: "合上的书", kw: ["closed", "book", "合上的书", "工具", "物品", "用具", "向上", "东西", "上面", "上", "书", "合"], cat: "物品工具" },
+  { ch: "📖", name: "open book", cn: "打开书", kw: ["book", "open", "打开书", "工具", "物品", "用具", "东西", "打", "开", "书"], cat: "物品工具" },
+  { ch: "📗", name: "green book", cn: "绿皮书", kw: ["green", "book", "绿皮书", "工具", "物品", "用具", "东西", "书", "绿", "皮"], cat: "物品工具" },
+  { ch: "📘", name: "blue book", cn: "蓝皮书", kw: ["book", "blue", "蓝皮书", "工具", "物品", "用具", "东西", "书", "皮", "蓝"], cat: "物品工具" },
+  { ch: "📙", name: "orange book", cn: "橙皮书", kw: ["orange", "book", "橙皮书", "工具", "物品", "用具", "东西", "书", "橙", "皮"], cat: "物品工具" },
+  { ch: "📚", name: "books", cn: "图书", kw: ["books", "工具", "图书", "物品", "用具", "东西", "图", "书"], cat: "物品工具" },
+  { ch: "📜", name: "scroll", cn: "滚动", kw: ["scroll", "工具", "物品", "用具", "东西", "滚动", "动", "滚"], cat: "物品工具" },
+  { ch: "📝", name: "memo", cn: "备忘录", kw: ["memo", "备忘录", "工具", "物品", "用具", "东西", "忘", "录", "备"], cat: "物品工具" },
+  { ch: "📞", name: "telephone receiver", cn: "电话听筒", kw: ["telephone", "receiver", "电话听筒", "固定电话", "工具", "物品", "用具", "东西", "电话", "筒", "听"], cat: "物品工具" },
+  { ch: "📟", name: "pager", cn: "寻呼机", kw: ["pager", "寻呼机", "工具", "物品", "用具", "东西", "呼", "机", "寻"], cat: "物品工具" },
+  { ch: "📠", name: "fax machine", cn: "传真机", kw: ["machine", "传真机", "fax", "工具", "物品", "用具", "东西"], cat: "物品工具" },
+  { ch: "📡", name: "satellite antenna", cn: "卫星天线", kw: ["satellite", "antenna", "卫星天线", "工具", "物品", "用具", "东西", "卫", "星", "天", "线"], cat: "物品工具" },
+  { ch: "#️⃣", name: "keycap: #", cn: "键帽：#", kw: ["keycap:", "键帽：#", "符号", "记号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "*️⃣", name: "keycap: *", cn: "键帽：*", kw: ["keycap:", "键帽：*", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "0️⃣", name: "keycap: 0", cn: "键帽：0", kw: ["keycap:", "键帽：0", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "1️⃣", name: "keycap: 1", cn: "键帽：1", kw: ["keycap:", "键帽：1", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "2️⃣", name: "keycap: 2", cn: "键帽：2", kw: ["keycap:", "键帽：2", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "3️⃣", name: "keycap: 3", cn: "键帽：3", kw: ["keycap:", "键帽：3", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "4️⃣", name: "keycap: 4", cn: "键帽：4", kw: ["keycap:", "键帽：4", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "5️⃣", name: "keycap: 5", cn: "键帽：5", kw: ["keycap:", "键帽：5", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "6️⃣", name: "keycap: 6", cn: "键帽：6", kw: ["keycap:", "键帽：6", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "7️⃣", name: "keycap: 7", cn: "键帽：7", kw: ["keycap:", "键帽：7", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "8️⃣", name: "keycap: 8", cn: "键帽：8", kw: ["keycap:", "键帽：8", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "9️⃣", name: "keycap: 9", cn: "键帽：9", kw: ["keycap:", "键帽：9", "记号", "符号", "标识", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "©️", name: "copyright", cn: "版权", kw: ["copyright", "著作权", "记号", "版权", "符号", "标识", "标志"], cat: "符号标志" },
+  { ch: "®️", name: "registered", cn: "挂号的", kw: ["registered", "挂号的", "记号", "符号", "标识", "标志", "挂", "号"], cat: "符号标志" },
+  { ch: "‼️", name: "double exclamation mark", cn: "双感叹号", kw: ["exclamation", "double", "mark", "双感叹号", "感叹号", "记号", "符号", "标识", "注意", "惊叹", "标志", "双"], cat: "符号标志" },
+  { ch: "⁉️", name: "exclamation question mark", cn: "感叹号问号", kw: ["exclamation", "question", "感叹号问号", "mark", "感叹号", "记号", "符号", "标识", "疑问", "注意", "惊叹", "标志", "问题", "问号"], cat: "符号标志" },
+  { ch: "™️", name: "trade mark", cn: "商标", kw: ["trade", "mark", "记号", "符号", "标识", "品牌", "标志", "商标"], cat: "符号标志" },
+  { ch: "ℹ️", name: "information", cn: "信息", kw: ["information", "记号", "符号", "标识", "信息", "提示", "标志", "消息"], cat: "符号标志" },
+  { ch: "↔️", name: "left-right arrow", cn: "左右箭头", kw: ["arrow", "right", "左右箭头", "left", "记号", "符号", "标识", "左右", "指向", "方向", "标志", "箭头"], cat: "符号标志" },
+  { ch: "↕️", name: "up-down arrow", cn: "上下箭头", kw: ["arrow", "上下箭头", "down", "记号", "符号", "标识", "指向", "方向", "上下", "标志", "up", "箭头"], cat: "符号标志" },
+  { ch: "↖️", name: "up-left arrow", cn: "左上箭头", kw: ["arrow", "左上箭头", "left", "记号", "符号", "标识", "向上", "指向", "方向", "左边", "向左", "标志", "up", "上面", "箭头", "上", "左"], cat: "符号标志" },
+  { ch: "↗️", name: "up-right arrow", cn: "右上箭头", kw: ["arrow", "right", "右上箭头", "记号", "符号", "标识", "指向", "向上", "向右", "方向", "右边", "标志", "up", "上面", "箭头", "上", "右"], cat: "符号标志" },
+  { ch: "↘️", name: "down-right arrow", cn: "右下箭头", kw: ["arrow", "right", "down", "右下箭头", "记号", "符号", "标识", "指向", "向右", "方向", "向下", "标志", "下面", "右边", "箭头", "下", "右"], cat: "符号标志" },
+  { ch: "↙️", name: "down-left arrow", cn: "左下箭头", kw: ["arrow", "left", "左下箭头", "down", "记号", "符号", "标识", "指向", "向下", "方向", "左边", "向左", "标志", "下面", "箭头", "左", "下"], cat: "符号标志" },
+  { ch: "↩️", name: "right arrow curving left", cn: "右箭头向左弯曲", kw: ["右箭头向左弯曲", "curving", "right", "arrow", "left", "左边", "记号", "标识", "指向", "方向", "箭头", "符号", "向右", "标志", "向左", "右边", "曲", "弯", "左", "向", "右"], cat: "符号标志" },
+  { ch: "↪️", name: "left arrow curving right", cn: "左箭头向右弯曲", kw: ["左箭头向右弯曲", "curving", "right", "arrow", "left", "左边", "记号", "标识", "指向", "方向", "箭头", "符号", "向右", "标志", "向左", "右边", "曲", "弯", "左", "向", "右"], cat: "符号标志" },
+  { ch: "⏏️", name: "eject button", cn: "弹出按钮", kw: ["button", "eject", "弹出按钮", "记号", "符号", "标识", "标志", "弹", "出", "钮", "按"], cat: "符号标志" },
+  { ch: "⏩", name: "fast-forward button", cn: "快进按钮", kw: ["forward", "button", "快进按钮", "fast", "记号", "符号", "标识", "标志", "进", "快", "钮", "按"], cat: "符号标志" },
+  { ch: "⏪", name: "fast reverse button", cn: "快退按钮", kw: ["reverse", "button", "fast", "快退按钮", "记号", "符号", "标识", "标志", "快", "退", "钮", "按"], cat: "符号标志" },
+  { ch: "⏫", name: "fast up button", cn: "快速向上按钮", kw: ["button", "快速向上按钮", "fast", "记号", "符号", "标识", "向上", "标志", "up", "上面", "上", "快", "速", "向", "钮", "按"], cat: "符号标志" },
+  { ch: "⏬", name: "fast down button", cn: "快速向下按钮", kw: ["button", "快速向下按钮", "fast", "down", "记号", "符号", "标识", "向下", "标志", "下面", "快", "速", "向", "下", "钮", "按"], cat: "符号标志" },
+  { ch: "⏭️", name: "next track button", cn: "下一曲目按钮", kw: ["button", "下一曲目按钮", "track", "next", "记号", "符号", "标识", "向下", "标志", "下面", "目", "一", "曲", "下", "钮", "按"], cat: "符号标志" },
+  { ch: "⏮️", name: "last track button", cn: "最后一首曲目按钮", kw: ["最后一首曲目按钮", "button", "track", "last", "记号", "符号", "标识", "标志", "目", "一", "后", "曲", "钮", "首", "按"], cat: "符号标志" },
+  { ch: "⏯️", name: "play or pause button", cn: "播放或暂停按钮", kw: ["播放或暂停按钮", "button", "pause", "play", "记号", "暂停", "播放", "符号", "标识", "停止", "开始", "标志", "钮", "按"], cat: "符号标志" },
+  { ch: "⏸️", name: "pause button", cn: "暂停按钮", kw: ["button", "pause", "暂停按钮", "记号", "暂停", "符号", "标识", "停止", "标志", "钮", "按"], cat: "符号标志" },
+  { ch: "⏹️", name: "stop button", cn: "停止按钮", kw: ["button", "stop", "停止按钮", "记号", "暂停", "符号", "标识", "停止", "标志", "钮", "按"], cat: "符号标志" },
+  { ch: "⏺️", name: "record button", cn: "录音按钮", kw: ["button", "record", "录音按钮", "记号", "符号", "标识", "录制", "录音", "标志", "钮", "按"], cat: "符号标志" },
+  { ch: "Ⓜ️", name: "circled M", cn: "圆圈中的M", kw: ["circled", "圆圈中的m", "记号", "符号", "标识", "标志", "圈", "圆", "中"], cat: "符号标志" },
+  { ch: "▪️", name: "black small square", cn: "黑色小方块", kw: ["square", "黑色小方块", "small", "black", "记号", "符号", "标识", "标志", "块", "小", "色", "黑", "方"], cat: "符号标志" },
+  { ch: "▫️", name: "white small square", cn: "白色小方块", kw: ["square", "white", "白色小方块", "small", "记号", "符号", "标识", "标志", "块", "色", "小", "白", "方"], cat: "符号标志" },
+  { ch: "▶️", name: "play button", cn: "播放按钮", kw: ["button", "play", "播放按钮", "记号", "播放", "符号", "标识", "开始", "标志", "钮", "按"], cat: "符号标志" },
+  { ch: "◀️", name: "reverse button", cn: "反向按钮", kw: ["reverse", "button", "反向按钮", "记号", "符号", "标识", "标志", "反", "向", "钮", "按"], cat: "符号标志" },
+  { ch: "◻️", name: "white medium square", cn: "白色中方形", kw: ["medium", "square", "white", "白色中方形", "符号", "记号", "标识", "标志", "色", "形", "白", "方", "中"], cat: "符号标志" },
+  { ch: "◼️", name: "black medium square", cn: "黑色中方形", kw: ["medium", "square", "黑色中方形", "black", "记号", "符号", "标识", "标志", "色", "形", "黑", "方", "中"], cat: "符号标志" },
+  { ch: "◽", name: "white medium-small square", cn: "白色中小正方形", kw: ["白色中小正方形", "medium", "square", "white", "small", "记号", "符号", "标识", "标志", "色", "小", "正", "白", "形", "方", "中"], cat: "符号标志" },
+  { ch: "◾", name: "black medium-small square", cn: "黑色中小方块", kw: ["medium", "黑色中小方块", "square", "small", "black", "记号", "符号", "标识", "标志", "块", "色", "小", "黑", "方", "中"], cat: "符号标志" },
+  { ch: "☑️", name: "check box with check", cn: "带复选标记的复选框", kw: ["带复选标记的复选框", "check", "box", "记号", "符号", "标识", "标志", "标", "记", "复", "框", "带", "选"], cat: "符号标志" },
+  { ch: "☢️", name: "radioactive", cn: "放射性的", kw: ["radioactive", "放射性的", "记号", "符号", "标识", "标志", "性", "射", "放"], cat: "符号标志" },
+  { ch: "☣️", name: "biohazard", cn: "生物危害", kw: ["biohazard", "生物危害", "记号", "符号", "标识", "危险", "生化", "标志"], cat: "符号标志" },
+  { ch: "☦️", name: "orthodox cross", cn: "东正教十字架", kw: ["orthodox", "东正教十字架", "cross", "红十字", "十字", "记号", "符号", "标识", "标志", "医疗", "架", "正", "教", "东"], cat: "符号标志" },
+  { ch: "☪️", name: "star and crescent", cn: "星星和新月", kw: ["crescent", "星星和新月", "star", "记号", "符号", "标识", "标志", "星光", "星星", "新", "星", "月"], cat: "符号标志" },
+  { ch: "☮️", name: "peace symbol", cn: "和平象征", kw: ["symbol", "peace", "和平象征", "记号", "符号", "标识", "标志", "征", "平", "象"], cat: "符号标志" },
+  { ch: "☯️", name: "yin yang", cn: "阴阳", kw: ["yang", "yin", "记号", "符号", "太极", "标识", "标志", "阴阳"], cat: "符号标志" },
+  { ch: "☸️", name: "wheel of dharma", cn: "法轮", kw: ["dharma", "wheel", "记号", "符号", "标识", "法轮", "标志", "轮", "法"], cat: "符号标志" },
+  { ch: "♀️", name: "female sign", cn: "女性标志", kw: ["female", "女性标志", "sign", "记号", "符号", "标识", "标志", "女性", "女人", "性", "女"], cat: "符号标志" },
+  { ch: "♂️", name: "male sign", cn: "男性标志", kw: ["male", "男性标志", "sign", "记号", "符号", "标识", "男人", "男性", "标志", "性", "男"], cat: "符号标志" },
+  { ch: "♈", name: "Aries", cn: "白羊座", kw: ["aries", "白羊座", "记号", "山羊", "符号", "标识", "绵羊", "标志", "白", "羊", "座"], cat: "符号标志" },
+  { ch: "♉", name: "Taurus", cn: "金牛座", kw: ["taurus", "金牛座", "记号", "符号", "标识", "奶牛", "标志", "公牛", "牛", "金", "座"], cat: "符号标志" },
+  { ch: "♊", name: "Gemini", cn: "双子座", kw: ["gemini", "双子座", "记号", "符号", "标识", "标志", "双", "子", "座"], cat: "符号标志" },
+  { ch: "♋", name: "Cancer", cn: "癌症", kw: ["cancer", "记号", "符号", "标识", "癌症", "标志", "症", "癌"], cat: "符号标志" },
+  { ch: "♌", name: "Leo", cn: "狮子座", kw: ["leo", "狮子座", "记号", "符号", "标识", "狮子", "猛兽", "标志", "狮", "座"], cat: "符号标志" },
+  { ch: "♍", name: "Virgo", cn: "处女座", kw: ["virgo", "处女座", "记号", "符号", "标识", "标志", "女性", "女人", "处", "女", "座"], cat: "符号标志" },
+  { ch: "♎", name: "Libra", cn: "天秤座", kw: ["libra", "天秤座", "记号", "符号", "标识", "标志", "秤", "天", "座"], cat: "符号标志" },
+  { ch: "♏", name: "Scorpio", cn: "天蝎座", kw: ["scorpio", "天蝎座", "记号", "符号", "标识", "标志", "蝎", "天", "座"], cat: "符号标志" },
+  { ch: "♐", name: "Sagittarius", cn: "射手座", kw: ["sagittarius", "射手座", "记号", "符号", "标识", "手势", "手掌", "手指", "标志", "手", "射", "座"], cat: "符号标志" },
+  { ch: "♑", name: "Capricorn", cn: "摩羯座", kw: ["capricorn", "摩羯座", "记号", "符号", "标识", "标志", "羯", "摩", "座"], cat: "符号标志" },
+  { ch: "♒", name: "Aquarius", cn: "水瓶座", kw: ["aquarius", "饮用水", "水瓶座", "记号", "符号", "标识", "标志", "瓶", "水", "座"], cat: "符号标志" },
+  { ch: "♓", name: "Pisces", cn: "双鱼座", kw: ["pisces", "双鱼座", "符号", "记号", "标识", "标志", "鱼类", "双", "鱼", "座"], cat: "符号标志" },
+  { ch: "♻️", name: "recycling symbol", cn: "回收符号", kw: ["recycling", "symbol", "回收符号", "记号", "符号", "标识", "回收", "环保", "标志", "循环"], cat: "符号标志" },
+  { ch: "♾️", name: "infinity", cn: "无穷", kw: ["infinity", "记号", "符号", "无穷", "标识", "标志"], cat: "符号标志" },
+  { ch: "♿", name: "wheelchair symbol", cn: "轮椅符号", kw: ["wheelchair", "symbol", "轮椅符号", "记号", "符号", "标识", "残障", "标志", "轮椅"], cat: "符号标志" },
+  { ch: "⚕️", name: "medical symbol", cn: "医学符号", kw: ["medical", "symbol", "医学符号", "记号", "符号", "标识", "标志", "学", "医"], cat: "符号标志" },
+  { ch: "⚛️", name: "atom symbol", cn: "原子符号", kw: ["symbol", "atom", "原子符号", "记号", "符号", "标识", "标志", "子", "原"], cat: "符号标志" },
+  { ch: "⚜️", name: "fleur-de-lis", cn: "百合花", kw: ["fleur", "百合花", "lis", "记号", "符号", "花朵", "标识", "de", "标志", "鲜花", "百", "合", "花"], cat: "符号标志" },
+  { ch: "⚠️", name: "warning", cn: "警告", kw: ["warning", "记号", "符号", "警告", "标识", "提醒", "标志", "警示"], cat: "符号标志" },
+  { ch: "⚧️", name: "transgender symbol", cn: "跨性别符号", kw: ["transgender", "symbol", "跨性别符号", "记号", "符号", "标识", "标志", "别", "性", "跨"], cat: "符号标志" },
+  { ch: "⚪", name: "white circle", cn: "白色圆圈", kw: ["circle", "white", "白色圆圈", "记号", "符号", "标识", "标志", "色", "圈", "白", "圆"], cat: "符号标志" },
+  { ch: "⚫", name: "black circle", cn: "黑色圆圈", kw: ["circle", "black", "黑色圆圈", "记号", "符号", "标识", "标志", "圈", "色", "黑", "圆"], cat: "符号标志" },
+  { ch: "⛎", name: "Ophiuchus", cn: "蛇夫座", kw: ["ophiuchus", "蛇夫座", "记号", "符号", "标识", "标志", "蛇", "夫", "座"], cat: "符号标志" },
+  { ch: "⛔", name: "no entry", cn: "禁止驶入", kw: ["entry", "禁止驶入", "记号", "符号", "不准", "标识", "不许", "标志", "禁止", "驶", "入"], cat: "符号标志" },
+  { ch: "✅", name: "check mark button", cn: "复选标记按钮", kw: ["button", "复选标记按钮", "check", "mark", "记号", "符号", "标识", "标志", "标", "记", "复", "选", "钮", "按"], cat: "符号标志" },
+  { ch: "✔️", name: "check mark", cn: "复选标记", kw: ["check", "mark", "复选标记", "记号", "符号", "标识", "标志", "标", "记", "复", "选"], cat: "符号标志" },
+  { ch: "✖️", name: "multiply", cn: "乘", kw: ["multiply", "记号", "符号", "标识", "相乘", "乘以", "标志", "乘"], cat: "符号标志" },
+  { ch: "✝️", name: "latin cross", cn: "拉丁十字", kw: ["latin", "cross", "拉丁十字", "红十字", "十字", "记号", "符号", "标识", "标志", "医疗", "丁", "拉"], cat: "符号标志" },
+  { ch: "✡️", name: "star of David", cn: "大卫之星", kw: ["david", "star", "大卫之星", "记号", "符号", "标识", "标志", "卫", "星", "大"], cat: "符号标志" },
+  { ch: "✳️", name: "eight-spoked asterisk", cn: "八辐星号", kw: ["asterisk", "spoked", "eight", "八辐星号", "记号", "符号", "标识", "标志", "星", "号", "八", "辐"], cat: "符号标志" },
+  { ch: "✴️", name: "eight-pointed star", cn: "八角星", kw: ["pointed", "eight", "star", "八角星", "记号", "符号", "标识", "标志", "星", "角", "八"], cat: "符号标志" },
+  { ch: "❇️", name: "sparkle", cn: "火花", kw: ["sparkle", "记号", "符号", "标识", "标志", "火星", "火花"], cat: "符号标志" },
+  { ch: "❌", name: "cross mark", cn: "十字标记", kw: ["cross", "十字标记", "mark", "红十字", "十字", "记号", "符号", "标识", "标志", "医疗", "标", "记"], cat: "符号标志" },
+  { ch: "❎", name: "cross mark button", cn: "十字标记按钮", kw: ["button", "十字标记按钮", "cross", "mark", "红十字", "十字", "记号", "符号", "标识", "标志", "医疗", "标", "记", "钮", "按"], cat: "符号标志" },
+  { ch: "❓", name: "red question mark", cn: "红色问号", kw: ["question", "红色问号", "mark", "red", "记号", "符号", "标识", "疑问", "标志", "问题", "问号", "红", "色"], cat: "符号标志" },
+  { ch: "❔", name: "white question mark", cn: "白色问号", kw: ["question", "white", "mark", "白色问号", "记号", "符号", "标识", "疑问", "标志", "问题", "问号", "色", "白"], cat: "符号标志" },
+  { ch: "❕", name: "white exclamation mark", cn: "白色感叹号", kw: ["exclamation", "white", "白色感叹号", "mark", "感叹号", "记号", "符号", "标识", "注意", "惊叹", "标志", "色", "白"], cat: "符号标志" },
+  { ch: "❗", name: "red exclamation mark", cn: "红色感叹号", kw: ["exclamation", "红色感叹号", "mark", "red", "感叹号", "记号", "符号", "标识", "注意", "惊叹", "标志", "红", "色"], cat: "符号标志" },
+  { ch: "➕", name: "plus", cn: "加", kw: ["plus", "记号", "符号", "相加", "标识", "标志", "增加", "加"], cat: "符号标志" },
+  { ch: "➖", name: "minus", cn: "减", kw: ["minus", "记号", "符号", "标识", "相减", "减少", "标志", "减"], cat: "符号标志" },
+  { ch: "➗", name: "divide", cn: "划分", kw: ["divide", "记号", "符号", "标识", "标志", "划分", "分", "划"], cat: "符号标志" },
+  { ch: "➡️", name: "right arrow", cn: "右箭头", kw: ["arrow", "right", "右箭头", "记号", "符号", "标识", "指向", "向右", "方向", "标志", "右边", "箭头", "右"], cat: "符号标志" },
+  { ch: "➰", name: "curly loop", cn: "卷曲环", kw: ["curly", "loop", "卷曲环", "记号", "符号", "标识", "标志", "环", "曲", "卷"], cat: "符号标志" },
+  { ch: "➿", name: "double curly loop", cn: "双卷曲环", kw: ["double", "curly", "loop", "双卷曲环", "记号", "符号", "标识", "标志", "双", "环", "曲", "卷"], cat: "符号标志" },
+  { ch: "⤴️", name: "right arrow curving up", cn: "右箭头向上弯曲", kw: ["curving", "右箭头向上弯曲", "right", "arrow", "向上", "记号", "标识", "指向", "方向", "up", "上面", "箭头", "符号", "向右", "标志", "右边", "曲", "弯", "上", "向", "右"], cat: "符号标志" },
+  { ch: "⤵️", name: "right arrow curving down", cn: "右箭头向下弯曲", kw: ["curving", "右箭头向下弯曲", "right", "arrow", "down", "记号", "标识", "指向", "方向", "下面", "箭头", "符号", "向右", "向下", "标志", "右边", "曲", "弯", "下", "向", "右"], cat: "符号标志" },
+  { ch: "⬅️", name: "left arrow", cn: "左箭头", kw: ["arrow", "left", "左箭头", "记号", "符号", "标识", "指向", "方向", "左边", "向左", "标志", "箭头", "左"], cat: "符号标志" },
+  { ch: "⬆️", name: "up arrow", cn: "向上箭头", kw: ["arrow", "向上箭头", "记号", "符号", "标识", "指向", "向上", "方向", "标志", "up", "上面", "箭头", "上", "向"], cat: "符号标志" },
+  { ch: "⬇️", name: "down arrow", cn: "向下箭头", kw: ["arrow", "向下箭头", "down", "记号", "符号", "标识", "指向", "方向", "向下", "标志", "下面", "箭头", "向", "下"], cat: "符号标志" },
+  { ch: "⬛", name: "black large square", cn: "黑色大方块", kw: ["square", "black", "黑色大方块", "large", "记号", "符号", "标识", "标志", "块", "色", "黑", "方", "大"], cat: "符号标志" },
+  { ch: "⬜", name: "white large square", cn: "白色大正方形", kw: ["square", "白色大正方形", "white", "large", "记号", "符号", "标识", "标志", "色", "形", "正", "白", "方", "大"], cat: "符号标志" },
+  { ch: "⭕", name: "hollow red circle", cn: "空心红色圆圈", kw: ["circle", "hollow", "空心红色圆圈", "red", "记号", "喜欢", "符号", "标识", "爱心", "标志", "红", "色", "圈", "空", "心", "爱", "圆"], cat: "符号标志" },
+  { ch: "〰️", name: "wavy dash", cn: "波浪破折号", kw: ["波浪破折号", "dash", "wavy", "记号", "符号", "标识", "波浪", "标志", "海浪", "破", "折", "号"], cat: "符号标志" },
+  { ch: "〽️", name: "part alternation mark", cn: "零件交替标记", kw: ["alternation", "零件交替标记", "part", "mark", "记号", "符号", "标识", "标志", "标", "交", "记", "替", "件", "零"], cat: "符号标志" },
+  { ch: "㊗️", name: "Japanese “congratulations” button", cn: "日语“恭喜”按钮", kw: ["“congratulations”", "日语“恭喜”按钮", "japanese", "button", "记号", "符号", "标识", "标志", "日", "语", "钮", "喜", "恭", "按"], cat: "符号标志" },
+  { ch: "㊙️", name: "Japanese “secret” button", cn: "日语“秘密”按钮", kw: ["“secret”", "日语“秘密”按钮", "japanese", "button", "隐秘", "记号", "符号", "标识", "秘密", "标志", "日", "语", "钮", "按"], cat: "符号标志" },
+  { ch: "🅰️", name: "A button (blood type)", cn: "A按钮（血型）", kw: ["a按钮（血型）", "button", "blood", "type", "记号", "符号", "标识", "标志", "血型", "钮", "按"], cat: "符号标志" },
+  { ch: "🅱️", name: "B button (blood type)", cn: "B按钮（血型）", kw: ["b按钮（血型）", "button", "blood", "type", "记号", "符号", "标识", "标志", "血型", "钮", "按"], cat: "符号标志" },
+  { ch: "🅾️", name: "O button (blood type)", cn: "O型按钮（血型）", kw: ["o型按钮（血型）", "button", "blood", "type", "记号", "符号", "标识", "标志", "血型", "型", "钮", "按"], cat: "符号标志" },
+  { ch: "🅿️", name: "P button", cn: "P按钮", kw: ["button", "p按钮", "记号", "符号", "标识", "标志", "钮", "按"], cat: "符号标志" },
+  { ch: "🆎", name: "AB button (blood type)", cn: "AB 按钮（血型）", kw: ["ab 按钮（血型）", "button", "blood", "type", "记号", "符号", "标识", "ab", "标志", "血型", "钮", "按"], cat: "符号标志" },
+  { ch: "🆑", name: "CL button", cn: "CL按钮", kw: ["button", "cl按钮", "记号", "符号", "标识", "cl", "标志", "钮", "按"], cat: "符号标志" },
+  { ch: "🆒", name: "COOL button", cn: "酷按钮", kw: ["button", "cool", "酷按钮", "记号", "符号", "标识", "标志", "钮", "酷", "按"], cat: "符号标志" },
+  { ch: "🆓", name: "FREE button", cn: "免费按钮", kw: ["button", "免费按钮", "free", "记号", "符号", "标识", "标志", "钮", "免", "费", "按"], cat: "符号标志" },
+  { ch: "🆔", name: "ID button", cn: "身份识别按钮", kw: ["button", "身份识别按钮", "记号", "符号", "标识", "标志", "id", "身", "份", "别", "识", "钮", "按"], cat: "符号标志" },
+  { ch: "🆕", name: "NEW button", cn: "新按钮", kw: ["button", "new", "新按钮", "记号", "符号", "标识", "标志", "新", "钮", "按"], cat: "符号标志" },
+  { ch: "🆖", name: "NG button", cn: "不合格按钮", kw: ["button", "不合格按钮", "记号", "符号", "标识", "ng", "标志", "合", "钮", "不", "格", "按"], cat: "符号标志" },
+  { ch: "🆗", name: "OK button", cn: "确定按钮", kw: ["button", "确定按钮", "记号", "符号", "标识", "标志", "ok", "钮", "确", "定", "按"], cat: "符号标志" },
+  { ch: "🆘", name: "SOS button", cn: "求救按钮", kw: ["button", "求救按钮", "sos", "记号", "符号", "标识", "标志", "求", "救", "钮", "按"], cat: "符号标志" },
+  { ch: "🆙", name: "UP! button", cn: "向上！ 按钮", kw: ["button", "向上！ 按钮", "up!", "记号", "符号", "标识", "向上", "标志", "上面", "上", "向", "钮", "按"], cat: "符号标志" },
+  { ch: "🆚", name: "VS button", cn: "VS按钮", kw: ["button", "vs按钮", "记号", "符号", "标识", "vs", "标志", "钮", "按"], cat: "符号标志" },
+  { ch: "🈁", name: "Japanese “here” button", cn: "日语“此处”按钮", kw: ["日语“此处”按钮", "japanese", "button", "“here”", "记号", "符号", "标识", "标志", "此", "日", "语", "处", "钮", "按"], cat: "符号标志" },
+  { ch: "🈂️", name: "Japanese “service charge” button", cn: "日语“服务费”按钮", kw: ["日语“服务费”按钮", "“service", "japanese", "charge”", "button", "记号", "符号", "标识", "标志", "服", "日", "语", "钮", "务", "费", "按"], cat: "符号标志" },
+  { ch: "🈚", name: "Japanese “free of charge” button", cn: "日语“免费”按钮", kw: ["日语“免费”按钮", "japanese", "charge”", "button", "“free", "记号", "符号", "标识", "标志", "日", "语", "钮", "免", "费", "按"], cat: "符号标志" },
+  { ch: "🈯", name: "Japanese “reserved” button", cn: "日语“保留”按钮", kw: ["“reserved”", "日语“保留”按钮", "japanese", "button", "记号", "符号", "标识", "标志", "留", "日", "语", "保", "钮", "按"], cat: "符号标志" },
+  { ch: "🈲", name: "Japanese “prohibited” button", cn: "日语“禁止”按钮", kw: ["“prohibited”", "日语“禁止”按钮", "japanese", "button", "记号", "符号", "不准", "标识", "不许", "标志", "禁止", "日", "语", "钮", "按"], cat: "符号标志" },
+  { ch: "🈳", name: "Japanese “vacancy” button", cn: "日语“空缺”按钮", kw: ["“vacancy”", "日语“空缺”按钮", "japanese", "button", "记号", "符号", "标识", "标志", "空", "日", "缺", "语", "钮", "按"], cat: "符号标志" },
+  { ch: "🈴", name: "Japanese “passing grade” button", cn: "日语“及格”按钮", kw: ["日语“及格”按钮", "“passing", "japanese", "button", "grade”", "记号", "符号", "标识", "标志", "日", "语", "钮", "格", "按"], cat: "符号标志" },
+  { ch: "🈵", name: "Japanese “no vacancy” button", cn: "日语“无空缺”按钮", kw: ["日语“无空缺”按钮", "vacancy”", "japanese", "button", "“no", "记号", "符号", "标识", "标志", "日", "无", "空", "缺", "语", "钮", "按"], cat: "符号标志" },
+  { ch: "🈶", name: "Japanese “not free of charge” button", cn: "日语“不免费”按钮", kw: ["日语“不免费”按钮", "japanese", "charge”", "button", "“not", "free", "记号", "符号", "标识", "标志", "日", "语", "钮", "免", "不", "费", "按"], cat: "符号标志" },
+  { ch: "🈷️", name: "Japanese “monthly amount” button", cn: "日语“每月金额”按钮", kw: ["日语“每月金额”按钮", "“monthly", "japanese", "amount”", "button", "记号", "符号", "标识", "标志", "每", "日", "语", "月", "钮", "额", "金", "按"], cat: "符号标志" },
+  { ch: "🈸", name: "Japanese “application” button", cn: "日语“申请”按钮", kw: ["“application”", "日语“申请”按钮", "japanese", "button", "记号", "符号", "标识", "标志", "日", "语", "钮", "申", "请", "按"], cat: "符号标志" },
+  { ch: "🈹", name: "Japanese “discount” button", cn: "日语“折扣”按钮", kw: ["“discount”", "日语“折扣”按钮", "japanese", "button", "记号", "符号", "标识", "标志", "日", "语", "折", "钮", "扣", "按"], cat: "符号标志" },
+  { ch: "🈺", name: "Japanese “open for business” button", cn: "日语“开门营业”按钮", kw: ["日语“开门营业”按钮", "business”", "japanese", "button", "“open", "记号", "符号", "标识", "标志", "门", "开", "日", "语", "业", "钮", "营", "按"], cat: "符号标志" },
+  { ch: "🉐", name: "Japanese “bargain” button", cn: "日本的“讨价还价”按钮", kw: ["日本的“讨价还价”按钮", "“bargain”", "japanese", "button", "记号", "符号", "标识", "标志", "讨", "日", "价", "钮", "本", "按"], cat: "符号标志" },
+  { ch: "🉑", name: "Japanese “acceptable” button", cn: "日语“可接受”按钮", kw: ["“acceptable”", "日语“可接受”按钮", "japanese", "button", "记号", "符号", "标识", "标志", "接", "日", "语", "钮", "受", "按"], cat: "符号标志" },
+  { ch: "🎦", name: "cinema", cn: "电影", kw: ["cinema", "记号", "符号", "标识", "标志", "电影", "影", "电"], cat: "符号标志" },
+  { ch: "🏧", name: "ATM sign", cn: "自动取款机标志", kw: ["自动取款机标志", "sign", "atm", "记号", "符号", "标识", "标志", "动", "款", "自", "取", "机"], cat: "符号标志" },
+  { ch: "💠", name: "diamond with a dot", cn: "带点的钻石", kw: ["diamond", "带点的钻石", "dot", "记号", "水晶", "钻石", "符号", "标识", "宝石", "标志", "钻戒", "点", "带"], cat: "符号标志" },
+  { ch: "💱", name: "currency exchange", cn: "货币兑换", kw: ["currency", "exchange", "货币兑换", "记号", "汇率", "符号", "标识", "货币", "钱币", "标志", "换汇", "兑换", "钱"], cat: "符号标志" },
+  { ch: "💲", name: "heavy dollar sign", cn: "重美元符号", kw: ["dollar", "重美元符号", "heavy", "sign", "记号", "符号", "标识", "标志", "元", "重", "美"], cat: "符号标志" },
+  { ch: "📛", name: "name badge", cn: "名卡", kw: ["badge", "name", "记号", "符号", "名卡", "标识", "标志", "卡", "名"], cat: "符号标志" },
+  { ch: "📳", name: "vibration mode", cn: "振动模式", kw: ["vibration", "mode", "振动模式", "记号", "符号", "标识", "标志", "动", "振", "式", "模"], cat: "符号标志" },
+  { ch: "📴", name: "mobile phone off", cn: "手机关机", kw: ["mobile", "phone", "手机关机", "移动电话", "off", "记号", "符号", "标识", "手机", "标志", "关", "机"], cat: "符号标志" },
+  { ch: "📵", name: "no mobile phones", cn: "没有手机", kw: ["phones", "mobile", "移动电话", "没有手机", "记号", "符号", "标识", "手机", "标志", "没"], cat: "符号标志" },
+  { ch: "📶", name: "antenna bars", cn: "天线棒", kw: ["antenna", "bars", "天线棒", "记号", "符号", "标识", "标志", "线", "天", "棒"], cat: "符号标志" },
+  { ch: "🔀", name: "shuffle tracks button", cn: "随机播放曲目按钮", kw: ["随机播放曲目按钮", "shuffle", "button", "tracks", "记号", "播放", "符号", "标识", "开始", "标志", "目", "曲", "机", "钮", "随", "按"], cat: "符号标志" },
+  { ch: "🔁", name: "repeat button", cn: "重复按钮", kw: ["button", "repeat", "重复按钮", "记号", "符号", "标识", "标志", "复", "重", "钮", "按"], cat: "符号标志" },
+  { ch: "🔂", name: "repeat single button", cn: "重复单个按钮", kw: ["button", "repeat", "重复单个按钮", "single", "记号", "符号", "标识", "标志", "复", "单", "重", "钮", "按"], cat: "符号标志" },
+  { ch: "🔃", name: "clockwise vertical arrows", cn: "顺时针垂直箭头", kw: ["clockwise", "vertical", "顺时针垂直箭头", "arrows", "符号", "记号", "标识", "指向", "方向", "标志", "箭头", "顺", "针", "时", "垂", "直"], cat: "符号标志" },
+  { ch: "🔄", name: "counterclockwise arrows button", cn: "逆时针箭头按钮", kw: ["counterclockwise", "逆时针箭头按钮", "button", "arrows", "记号", "符号", "标识", "指向", "方向", "标志", "箭头", "针", "时", "逆", "钮", "按"], cat: "符号标志" },
+  { ch: "🔅", name: "dim button", cn: "调暗按钮", kw: ["button", "调暗按钮", "dim", "记号", "符号", "标识", "标志", "暗", "调", "钮", "按"], cat: "符号标志" },
+  { ch: "🔆", name: "bright button", cn: "明亮的按钮", kw: ["button", "bright", "明亮的按钮", "记号", "符号", "标识", "标志", "钮", "明", "亮", "按"], cat: "符号标志" },
+  { ch: "🔘", name: "radio button", cn: "单选按钮", kw: ["button", "radio", "单选按钮", "记号", "符号", "标识", "标志", "单", "选", "钮", "按"], cat: "符号标志" },
+  { ch: "🔙", name: "BACK arrow", cn: "返回箭头", kw: ["arrow", "back", "返回箭头", "记号", "符号", "标识", "指向", "方向", "标志", "返回", "箭头"], cat: "符号标志" },
+  { ch: "🔚", name: "END arrow", cn: "结束箭头", kw: ["arrow", "结束箭头", "end", "记号", "符号", "标识", "指向", "方向", "标志", "箭头", "结", "束"], cat: "符号标志" },
+  { ch: "🔛", name: "ON! arrow", cn: "在！ 箭", kw: ["arrow", "在！ 箭", "on!", "记号", "符号", "标识", "标志", "箭"], cat: "符号标志" },
+  { ch: "🔜", name: "SOON arrow", cn: "很快箭头", kw: ["arrow", "很快箭头", "soon", "记号", "符号", "标识", "指向", "方向", "标志", "箭头", "快"], cat: "符号标志" },
+  { ch: "🔝", name: "TOP arrow", cn: "顶部箭头", kw: ["arrow", "顶部箭头", "top", "记号", "符号", "标识", "指向", "方向", "标志", "箭头", "部", "顶"], cat: "符号标志" },
+  { ch: "🔞", name: "no one under eighteen", cn: "没有十八岁以下的人", kw: ["没有十八岁以下的人", "eighteen", "one", "人类", "记号", "符号", "标识", "向下", "标志", "下面", "人物", "有人", "人", "下", "八", "十", "没", "岁"], cat: "符号标志" },
+  { ch: "🔟", name: "keycap: 10", cn: "键帽：10", kw: ["keycap:", "键帽：10", "记号", "符号", "标识", "10", "标志", "帽", "键"], cat: "符号标志" },
+  { ch: "🔠", name: "input latin uppercase", cn: "输入拉丁大写字母", kw: ["uppercase", "输入拉丁大写字母", "latin", "input", "记号", "符号", "标识", "写字", "标志", "丁", "输", "母", "入", "大", "拉"], cat: "符号标志" },
+  { ch: "🔡", name: "input latin lowercase", cn: "输入拉丁小写字母", kw: ["lowercase", "输入拉丁小写字母", "latin", "input", "记号", "符号", "标识", "写字", "标志", "丁", "小", "输", "母", "入", "拉"], cat: "符号标志" },
+  { ch: "🔢", name: "input numbers", cn: "输入数字", kw: ["numbers", "input", "输入数字", "记号", "符号", "标识", "标志", "数字", "输", "入"], cat: "符号标志" },
+  { ch: "🔣", name: "input symbols", cn: "输入符号", kw: ["symbols", "input", "输入符号", "记号", "符号", "标识", "标志", "输", "入"], cat: "符号标志" },
+  { ch: "🔤", name: "input latin letters", cn: "输入拉丁字母", kw: ["letters", "输入拉丁字母", "latin", "input", "记号", "符号", "标识", "字母", "标志", "丁", "输", "入", "拉"], cat: "符号标志" },
+  { ch: "🔯", name: "dotted six-pointed star", cn: "虚线六角星", kw: ["pointed", "dotted", "虚线六角星", "star", "six", "记号", "符号", "标识", "标志", "六", "星", "角", "虚", "线"], cat: "符号标志" },
+  { ch: "🔰", name: "Japanese symbol for beginner", cn: "初学者的日语符号", kw: ["beginner", "japanese", "初学者的日语符号", "symbol", "记号", "符号", "标识", "标志", "学", "日", "语", "初"], cat: "符号标志" },
+  { ch: "🔱", name: "trident emblem", cn: "三叉戟徽章", kw: ["trident", "emblem", "三叉戟徽章", "记号", "符号", "标识", "标志", "章", "叉", "戟", "徽", "三"], cat: "符号标志" },
+  { ch: "🔲", name: "black square button", cn: "黑色方形按钮", kw: ["黑色方形按钮", "button", "square", "black", "记号", "符号", "标识", "标志", "色", "形", "黑", "方", "钮", "按"], cat: "符号标志" },
+  { ch: "🔳", name: "white square button", cn: "白色方形按钮", kw: ["button", "白色方形按钮", "square", "white", "记号", "符号", "标识", "标志", "色", "形", "白", "方", "钮", "按"], cat: "符号标志" },
+  { ch: "🔴", name: "red circle", cn: "红色圆圈", kw: ["circle", "红色圆圈", "red", "记号", "符号", "标识", "标志", "红", "色", "圈", "圆"], cat: "符号标志" },
+  { ch: "🔵", name: "blue circle", cn: "蓝色圆圈", kw: ["circle", "蓝色圆圈", "blue", "记号", "符号", "标识", "标志", "圈", "色", "蓝", "圆"], cat: "符号标志" },
+  { ch: "🔶", name: "large orange diamond", cn: "大橙色钻石", kw: ["diamond", "orange", "大橙色钻石", "large", "记号", "符号", "水晶", "钻石", "宝石", "标识", "标志", "钻戒", "色", "橙", "大"], cat: "符号标志" },
+  { ch: "🇦🇨", name: "flag: Ascension Island", cn: "旗: 阿森松岛", kw: ["ascension", "旗: 阿森松岛", "island", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "岛", "阿", "松", "森"], cat: "旗帜" },
+  { ch: "🇦🇩", name: "flag: Andorra", cn: "旗: 安道尔", kw: ["andorra", "旗: 安道尔", "flag:", "旗子", "国旗", "旗帜", "国家", "旗", "道", "安", "尔"], cat: "旗帜" },
+  { ch: "🇦🇪", name: "flag: United Arab Emirates", cn: "旗: 阿拉伯联合酋长国", kw: ["旗: 阿拉伯联合酋长国", "emirates", "united", "flag:", "arab", "旗子", "国旗", "国家", "旗帜", "旗", "联", "伯", "长", "国", "合", "阿", "酋", "拉"], cat: "旗帜" },
+  { ch: "🇦🇫", name: "flag: Afghanistan", cn: "旗: 阿富汗", kw: ["afghanistan", "旗: 阿富汗", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "阿", "富", "汗"], cat: "旗帜" },
+  { ch: "🇦🇬", name: "flag: Antigua & Barbuda", cn: "旗: 安提瓜和巴布达", kw: ["旗: 安提瓜和巴布达", "barbuda", "antigua", "flag:", "旗子", "国旗", "国家", "旗帜", "提", "旗", "布", "巴", "安", "瓜", "达"], cat: "旗帜" },
+  { ch: "🇦🇮", name: "flag: Anguilla", cn: "旗: 安圭拉", kw: ["anguilla", "旗: 安圭拉", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "安", "圭", "拉"], cat: "旗帜" },
+  { ch: "🇦🇱", name: "flag: Albania", cn: "旗: 阿尔巴尼亚", kw: ["旗: 阿尔巴尼亚", "albania", "flag:", "旗子", "国旗", "国家", "旗帜", "尼", "旗", "阿", "巴", "亚", "尔"], cat: "旗帜" },
+  { ch: "🇦🇲", name: "flag: Armenia", cn: "旗: 亚美尼亚", kw: ["旗: 亚美尼亚", "armenia", "flag:", "国旗", "旗子", "国家", "旗帜", "尼", "旗", "美", "亚"], cat: "旗帜" },
+  { ch: "🇦🇴", name: "flag: Angola", cn: "旗: 安哥拉", kw: ["angola", "旗: 安哥拉", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "哥", "安", "拉"], cat: "旗帜" },
+  { ch: "🇦🇶", name: "flag: Antarctica", cn: "旗: 南极洲", kw: ["antarctica", "旗: 南极洲", "flag:", "南极洲", "旗子", "国旗", "国家", "旗帜", "旗"], cat: "旗帜" },
+  { ch: "🇦🇷", name: "flag: Argentina", cn: "旗: 阿根廷", kw: ["argentina", "旗: 阿根廷", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "廷", "阿", "根"], cat: "旗帜" },
+  { ch: "🇦🇸", name: "flag: American Samoa", cn: "旗: 美属萨摩亚", kw: ["american", "旗: 美属萨摩亚", "samoa", "flag:", "旗子", "国旗", "国家", "旗帜", "萨", "旗", "美", "摩", "亚", "属"], cat: "旗帜" },
+  { ch: "🇦🇹", name: "flag: Austria", cn: "旗: 奥地利", kw: ["austria", "旗: 奥地利", "flag:", "旗子", "国旗", "国家", "旗帜", "利", "奥", "旗"], cat: "旗帜" },
+  { ch: "🇦🇺", name: "flag: Australia", cn: "旗: 澳大利亚", kw: ["australia", "旗: 澳大利亚", "flag:", "旗子", "国旗", "国家", "旗帜", "利", "旗", "亚", "澳", "大"], cat: "旗帜" },
+  { ch: "🇦🇼", name: "flag: Aruba", cn: "旗: 阿鲁巴岛", kw: ["旗: 阿鲁巴岛", "flag:", "aruba", "旗子", "国旗", "国家", "旗帜", "旗", "岛", "鲁", "阿", "巴"], cat: "旗帜" },
+  { ch: "🇦🇽", name: "flag: Åland Islands", cn: "旗: 奥兰群岛", kw: ["islands", "旗: 奥兰群岛", "åland", "flag:", "旗子", "国旗", "国家", "旗帜", "奥", "兰", "旗", "岛", "群"], cat: "旗帜" },
+  { ch: "🇦🇿", name: "flag: Azerbaijan", cn: "旗: 阿塞拜疆", kw: ["azerbaijan", "旗: 阿塞拜疆", "flag:", "旗子", "国旗", "国家", "旗帜", "疆", "旗", "塞", "阿", "拜"], cat: "旗帜" },
+  { ch: "🇧🇦", name: "flag: Bosnia & Herzegovina", cn: "旗: 波斯尼亚和黑塞哥维那", kw: ["旗: 波斯尼亚和黑塞哥维那", "herzegovina", "bosnia", "flag:", "旗子", "国旗", "旗帜", "国家", "斯", "尼", "维", "旗", "波", "塞", "黑", "哥", "亚", "那"], cat: "旗帜" },
+  { ch: "🇧🇧", name: "flag: Barbados", cn: "旗: 巴巴多斯", kw: ["barbados", "旗: 巴巴多斯", "flag:", "旗子", "国旗", "国家", "旗帜", "斯", "旗", "巴"], cat: "旗帜" },
+  { ch: "🇧🇩", name: "flag: Bangladesh", cn: "旗: 孟加拉国", kw: ["bangladesh", "旗: 孟加拉国", "flag:", "相加", "旗子", "国旗", "国家", "旗帜", "增加", "孟", "旗", "国", "加", "拉"], cat: "旗帜" },
+  { ch: "🇧🇪", name: "flag: Belgium", cn: "旗: 比利时", kw: ["belgium", "旗: 比利时", "flag:", "旗子", "国旗", "国家", "旗帜", "利", "时", "旗"], cat: "旗帜" },
+  { ch: "🇧🇫", name: "flag: Burkina Faso", cn: "旗: 布基纳法索", kw: ["旗: 布基纳法索", "burkina", "flag:", "faso", "旗子", "国旗", "旗帜", "国家", "旗", "布", "索", "纳", "基", "法"], cat: "旗帜" },
+  { ch: "🇧🇬", name: "flag: Bulgaria", cn: "旗: 保加利亚", kw: ["bulgaria", "旗: 保加利亚", "flag:", "相加", "旗子", "国旗", "国家", "旗帜", "增加", "利", "旗", "保", "亚", "加"], cat: "旗帜" },
+  { ch: "🇧🇭", name: "flag: Bahrain", cn: "旗: 巴林", kw: ["bahrain", "flag:", "旗: 巴林", "旗子", "国旗", "国家", "旗帜", "林", "旗", "巴"], cat: "旗帜" },
+  { ch: "🇧🇮", name: "flag: Burundi", cn: "旗: 布隆迪", kw: ["burundi", "旗: 布隆迪", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "布", "隆", "迪"], cat: "旗帜" },
+  { ch: "🇧🇯", name: "flag: Benin", cn: "旗: 贝宁", kw: ["旗: 贝宁", "flag:", "benin", "旗子", "国旗", "国家", "旗帜", "旗", "贝", "宁"], cat: "旗帜" },
+  { ch: "🇧🇱", name: "flag: St. Barthélemy", cn: "旗: 圣巴泰勒米", kw: ["barthélemy", "旗: 圣巴泰勒米", "flag:", "st.", "旗子", "国旗", "国家", "旗帜", "泰", "勒", "旗", "圣", "米", "巴"], cat: "旗帜" },
+  { ch: "🇧🇲", name: "flag: Bermuda", cn: "旗: 百慕大", kw: ["bermuda", "旗: 百慕大", "flag:", "旗子", "国旗", "国家", "旗帜", "慕", "旗", "百", "大"], cat: "旗帜" },
+  { ch: "🇧🇳", name: "flag: Brunei", cn: "旗: 文莱", kw: ["brunei", "旗: 文莱", "flag:", "旗子", "国旗", "国家", "旗帜", "莱", "旗", "文"], cat: "旗帜" },
+  { ch: "🇧🇴", name: "flag: Bolivia", cn: "旗: 玻利维亚", kw: ["bolivia", "旗: 玻利维亚", "flag:", "旗子", "国旗", "国家", "旗帜", "利", "旗", "维", "亚", "玻"], cat: "旗帜" },
+  { ch: "🇧🇶", name: "flag: Caribbean Netherlands", cn: "旗: 加勒比海荷兰", kw: ["netherlands", "旗: 加勒比海荷兰", "caribbean", "flag:", "相加", "旗子", "国旗", "国家", "旗帜", "增加", "兰", "勒", "旗", "荷", "海", "加"], cat: "旗帜" },
+  { ch: "🇧🇷", name: "flag: Brazil", cn: "旗: 巴西", kw: ["brazil", "flag:", "旗: 巴西", "旗子", "国旗", "国家", "旗帜", "旗", "巴", "西"], cat: "旗帜" },
+  { ch: "🇧🇸", name: "flag: Bahamas", cn: "旗: 巴哈马", kw: ["bahamas", "旗: 巴哈马", "flag:", "小马", "旗子", "国旗", "国家", "旗帜", "骏马", "旗", "马", "哈", "巴"], cat: "旗帜" },
+  { ch: "🇧🇹", name: "flag: Bhutan", cn: "旗: 不丹", kw: ["bhutan", "flag:", "旗: 不丹", "旗子", "国旗", "国家", "旗帜", "旗", "丹", "不"], cat: "旗帜" },
+  { ch: "🇧🇻", name: "flag: Bouvet Island", cn: "旗: 布维岛", kw: ["bouvet", "旗: 布维岛", "island", "flag:", "旗子", "国旗", "国家", "旗帜", "维", "旗", "岛", "布"], cat: "旗帜" },
+  { ch: "🇧🇼", name: "flag: Botswana", cn: "旗: 博茨瓦纳", kw: ["botswana", "旗: 博茨瓦纳", "flag:", "旗子", "国旗", "国家", "旗帜", "茨", "旗", "纳", "瓦", "博"], cat: "旗帜" },
+  { ch: "🇧🇾", name: "flag: Belarus", cn: "旗: 白俄罗斯", kw: ["旗: 白俄罗斯", "belarus", "flag:", "旗子", "国旗", "国家", "旗帜", "斯", "旗", "白", "罗", "俄"], cat: "旗帜" },
+  { ch: "🇧🇿", name: "flag: Belize", cn: "旗: 伯利兹", kw: ["旗: 伯利兹", "belize", "flag:", "旗子", "国旗", "旗帜", "国家", "利", "旗", "兹", "伯"], cat: "旗帜" },
+  { ch: "🇨🇦", name: "flag: Canada", cn: "旗: 加拿大", kw: ["旗: 加拿大", "canada", "flag:", "相加", "旗子", "国旗", "国家", "旗帜", "增加", "旗", "拿", "大", "加"], cat: "旗帜" },
+  { ch: "🇨🇨", name: "flag: Cocos (Keeling) Islands", cn: "旗: 科科斯（基林）群岛", kw: ["旗: 科科斯（基林）群岛", "keeling", "islands", "flag:", "cocos", "旗子", "国旗", "旗帜", "国家", "斯", "林", "旗", "岛", "科", "基", "群"], cat: "旗帜" },
+  { ch: "🇨🇩", name: "flag: Congo - Kinshasa", cn: "旗: 刚果 - 金沙萨", kw: ["旗: 刚果 - 金沙萨", "kinshasa", "flag:", "congo", "旗子", "国旗", "国家", "旗帜", "萨", "旗", "刚", "沙", "金"], cat: "旗帜" },
+  { ch: "🇨🇫", name: "flag: Central African Republic", cn: "旗: 中非共和国", kw: ["republic", "旗: 中非共和国", "african", "central", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "国", "共", "中"], cat: "旗帜" },
+  { ch: "🇨🇬", name: "flag: Congo - Brazzaville", cn: "旗: 刚果 - 布拉柴维尔", kw: ["旗: 刚果 - 布拉柴维尔", "brazzaville", "flag:", "congo", "旗子", "国旗", "国家", "旗帜", "布", "旗", "刚", "维", "拉", "柴", "尔"], cat: "旗帜" },
+  { ch: "🇨🇭", name: "flag: Switzerland", cn: "旗: 瑞士", kw: ["switzerland", "旗: 瑞士", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "瑞", "士"], cat: "旗帜" },
+  { ch: "🇨🇮", name: "flag: Côte d’Ivoire", cn: "旗: 科特迪瓦", kw: ["d’ivoire", "旗: 科特迪瓦", "flag:", "côte", "旗子", "国旗", "旗帜", "国家", "旗", "科", "特", "瓦", "迪"], cat: "旗帜" },
+  { ch: "🇨🇰", name: "flag: Cook Islands", cn: "旗: 库克群岛", kw: ["旗: 库克群岛", "islands", "flag:", "cook", "旗子", "国旗", "国家", "旗帜", "旗", "库", "岛", "群", "克"], cat: "旗帜" },
+  { ch: "🇨🇱", name: "flag: Chile", cn: "旗: 智利", kw: ["旗: 智利", "chile", "flag:", "旗子", "国旗", "国家", "旗帜", "利", "旗", "智"], cat: "旗帜" },
+  { ch: "🇨🇲", name: "flag: Cameroon", cn: "旗: 喀麦隆", kw: ["cameroon", "旗: 喀麦隆", "flag:", "国旗", "旗子", "国家", "旗帜", "旗", "隆", "麦", "喀"], cat: "旗帜" },
+  { ch: "🇨🇳", name: "flag: China", cn: "旗: 中国", kw: ["旗: 中国", "flag:", "china", "旗子", "国旗", "国家", "旗帜", "旗", "国", "中"], cat: "旗帜" },
+  { ch: "🇨🇴", name: "flag: Colombia", cn: "旗: 哥伦比亚", kw: ["colombia", "旗: 哥伦比亚", "flag:", "旗子", "国旗", "国家", "旗帜", "伦", "旗", "哥", "亚"], cat: "旗帜" },
+  { ch: "🇨🇵", name: "flag: Clipperton Island", cn: "旗: 克利珀顿岛", kw: ["clipperton", "旗: 克利珀顿岛", "island", "flag:", "旗子", "国旗", "国家", "旗帜", "利", "旗", "岛", "顿", "珀", "克"], cat: "旗帜" },
+  { ch: "🇨🇷", name: "flag: Costa Rica", cn: "旗: 哥斯达黎加", kw: ["旗: 哥斯达黎加", "costa", "flag:", "rica", "相加", "旗子", "国旗", "国家", "旗帜", "增加", "斯", "旗", "哥", "加", "黎", "达"], cat: "旗帜" },
+  { ch: "🇨🇺", name: "flag: Cuba", cn: "旗: 古巴", kw: ["旗: 古巴", "flag:", "cuba", "旗子", "国旗", "国家", "旗帜", "旗", "巴", "古"], cat: "旗帜" },
+  { ch: "🇨🇻", name: "flag: Cape Verde", cn: "旗: 佛得角", kw: ["旗: 佛得角", "verde", "flag:", "cape", "旗子", "国旗", "国家", "旗帜", "佛", "旗", "角"], cat: "旗帜" },
+  { ch: "🇨🇼", name: "flag: Curaçao", cn: "旗: 库拉索岛", kw: ["curaçao", "旗: 库拉索岛", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "库", "索", "岛", "拉"], cat: "旗帜" },
+  { ch: "🇨🇽", name: "flag: Christmas Island", cn: "旗: 圣诞岛", kw: ["christmas", "旗: 圣诞岛", "island", "flag:", "圣诞老人", "圣诞节", "圣诞", "旗子", "国旗", "礼物", "旗帜", "国家", "旗", "岛"], cat: "旗帜" },
+  { ch: "🇨🇾", name: "flag: Cyprus", cn: "旗: 塞浦路斯", kw: ["旗: 塞浦路斯", "cyprus", "flag:", "旗子", "国旗", "国家", "旗帜", "斯", "旗", "塞", "路", "浦"], cat: "旗帜" },
+  { ch: "🇨🇿", name: "flag: Czechia", cn: "旗: 捷克", kw: ["czechia", "旗: 捷克", "flag:", "国旗", "旗子", "国家", "旗帜", "旗", "捷", "克"], cat: "旗帜" },
+  { ch: "🇩🇪", name: "flag: Germany", cn: "旗: 德国", kw: ["germany", "旗: 德国", "flag:", "国旗", "旗子", "旗帜", "国家", "旗", "国", "德"], cat: "旗帜" },
+  { ch: "🇩🇬", name: "flag: Diego Garcia", cn: "旗: 迪戈加西亚岛", kw: ["旗: 迪戈加西亚岛", "garcia", "flag:", "diego", "相加", "旗子", "国旗", "国家", "旗帜", "增加", "戈", "旗", "岛", "迪", "加", "西", "亚"], cat: "旗帜" },
+  { ch: "🇩🇯", name: "flag: Djibouti", cn: "旗: 吉布提", kw: ["djibouti", "旗: 吉布提", "flag:", "旗子", "国旗", "国家", "旗帜", "提", "旗", "布", "吉"], cat: "旗帜" },
+  { ch: "🇩🇰", name: "flag: Denmark", cn: "旗: 丹麦", kw: ["denmark", "旗: 丹麦", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "丹", "麦"], cat: "旗帜" },
+  { ch: "🇩🇲", name: "flag: Dominica", cn: "旗: 多米尼克", kw: ["dominica", "旗: 多米尼克", "flag:", "旗子", "国旗", "国家", "旗帜", "尼", "旗", "米", "克"], cat: "旗帜" },
+  { ch: "🇩🇴", name: "flag: Dominican Republic", cn: "旗: 多米尼加共和国", kw: ["旗: 多米尼加共和国", "dominican", "republic", "flag:", "相加", "旗子", "国旗", "国家", "旗帜", "增加", "尼", "旗", "国", "米", "共", "加"], cat: "旗帜" },
+  { ch: "🇩🇿", name: "flag: Algeria", cn: "旗: 阿尔及利亚", kw: ["旗: 阿尔及利亚", "algeria", "flag:", "旗子", "国旗", "国家", "旗帜", "利", "旗", "阿", "亚", "尔"], cat: "旗帜" },
+  { ch: "🇪🇦", name: "flag: Ceuta & Melilla", cn: "旗: 休达和梅利利亚", kw: ["旗: 休达和梅利利亚", "melilla", "ceuta", "flag:", "旗子", "国旗", "旗帜", "国家", "利", "旗", "梅", "亚", "休", "达"], cat: "旗帜" },
+  { ch: "🇪🇨", name: "flag: Ecuador", cn: "旗: 厄瓜多尔", kw: ["旗: 厄瓜多尔", "ecuador", "flag:", "国旗", "旗子", "国家", "旗帜", "旗", "厄", "瓜", "尔"], cat: "旗帜" },
+  { ch: "🇪🇪", name: "flag: Estonia", cn: "旗: 爱沙尼亚", kw: ["旗: 爱沙尼亚", "estonia", "flag:", "喜欢", "热爱", "旗子", "爱心", "国旗", "国家", "旗帜", "喜爱", "尼", "旗", "心", "爱", "沙", "亚"], cat: "旗帜" },
+  { ch: "🇪🇬", name: "flag: Egypt", cn: "旗: 埃及", kw: ["egypt", "flag:", "旗: 埃及", "旗子", "国旗", "国家", "旗帜", "旗", "埃"], cat: "旗帜" },
+  { ch: "🇪🇭", name: "flag: Western Sahara", cn: "旗: 西撒哈拉", kw: ["western", "旗: 西撒哈拉", "sahara", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "哈", "撒", "西", "拉"], cat: "旗帜" },
+  { ch: "🇪🇷", name: "flag: Eritrea", cn: "旗: 厄立特里亚", kw: ["旗: 厄立特里亚", "eritrea", "flag:", "旗子", "国旗", "旗帜", "国家", "立", "旗", "厄", "里", "特", "亚"], cat: "旗帜" },
+  { ch: "🇪🇸", name: "flag: Spain", cn: "旗: 西班牙", kw: ["旗: 西班牙", "flag:", "spain", "旗子", "国旗", "国家", "旗帜", "旗", "牙", "西", "班"], cat: "旗帜" },
+  { ch: "🇪🇹", name: "flag: Ethiopia", cn: "旗: 埃塞俄比亚", kw: ["ethiopia", "旗: 埃塞俄比亚", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "埃", "塞", "俄", "亚"], cat: "旗帜" },
+  { ch: "🇪🇺", name: "flag: European Union", cn: "旗帜: 欧盟", kw: ["european", "旗帜: 欧盟", "union", "flag:", "欧盟", "旗子", "国旗", "国家", "旗帜", "eu", "旗"], cat: "旗帜" },
+  { ch: "🇫🇮", name: "flag: Finland", cn: "旗: 芬兰", kw: ["finland", "旗: 芬兰", "flag:", "旗子", "国旗", "国家", "旗帜", "兰", "芬", "旗"], cat: "旗帜" },
+  { ch: "🇫🇯", name: "flag: Fiji", cn: "旗: 斐济", kw: ["旗: 斐济", "flag:", "fiji", "旗子", "国旗", "国家", "旗帜", "斐", "旗", "济"], cat: "旗帜" },
+  { ch: "🇫🇰", name: "flag: Falkland Islands", cn: "旗: 福克兰群岛", kw: ["falkland", "旗: 福克兰群岛", "islands", "flag:", "旗子", "国旗", "国家", "旗帜", "福", "兰", "旗", "岛", "群", "克"], cat: "旗帜" },
+  { ch: "🇫🇲", name: "flag: Micronesia", cn: "旗: 密克罗尼西亚", kw: ["micronesia", "旗: 密克罗尼西亚", "flag:", "旗子", "国旗", "国家", "旗帜", "尼", "旗", "罗", "亚", "西", "密", "克"], cat: "旗帜" },
+  { ch: "🇫🇴", name: "flag: Faroe Islands", cn: "旗: 法罗群岛", kw: ["旗: 法罗群岛", "islands", "faroe", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "岛", "罗", "群", "法"], cat: "旗帜" },
+  { ch: "🇫🇷", name: "flag: France", cn: "旗: 法国", kw: ["france", "flag:", "旗: 法国", "旗子", "国旗", "国家", "旗帜", "旗", "国", "法"], cat: "旗帜" },
+  { ch: "🇬🇦", name: "flag: Gabon", cn: "旗: 加蓬", kw: ["旗: 加蓬", "flag:", "gabon", "相加", "旗子", "国旗", "国家", "旗帜", "增加", "旗", "加", "蓬"], cat: "旗帜" },
+  { ch: "🇬🇧", name: "flag: United Kingdom", cn: "旗: 英国", kw: ["kingdom", "united", "flag:", "旗: 英国", "旗子", "国旗", "旗帜", "国家", "旗", "国", "英"], cat: "旗帜" },
+  { ch: "🇬🇩", name: "flag: Grenada", cn: "旗: 格林纳达", kw: ["旗: 格林纳达", "grenada", "flag:", "旗子", "国旗", "旗帜", "国家", "林", "旗", "纳", "格", "达"], cat: "旗帜" },
+  { ch: "🇬🇪", name: "flag: Georgia", cn: "旗: 格鲁吉亚", kw: ["旗: 格鲁吉亚", "georgia", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "鲁", "吉", "亚", "格"], cat: "旗帜" },
+  { ch: "🇬🇫", name: "flag: French Guiana", cn: "旗: 法属圭亚那", kw: ["旗: 法属圭亚那", "guiana", "french", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "亚", "法", "圭", "属", "那"], cat: "旗帜" },
+  { ch: "🇬🇬", name: "flag: Guernsey", cn: "旗: 根西岛", kw: ["guernsey", "旗: 根西岛", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "岛", "根", "西"], cat: "旗帜" },
+  { ch: "🇬🇭", name: "flag: Ghana", cn: "旗: 加纳", kw: ["ghana", "flag:", "旗: 加纳", "相加", "旗子", "国旗", "国家", "旗帜", "增加", "旗", "纳", "加"], cat: "旗帜" },
+  { ch: "🇬🇮", name: "flag: Gibraltar", cn: "旗: 直布罗陀", kw: ["gibraltar", "旗: 直布罗陀", "flag:", "旗子", "国旗", "国家", "旗帜", "旗", "布", "罗", "陀", "直"], cat: "旗帜" },
+  { ch: "🇬🇱", name: "flag: Greenland", cn: "旗: 格陵兰岛", kw: ["greenland", "旗: 格陵兰岛", "flag:", "旗子", "国旗", "国家", "旗帜", "兰", "旗", "陵", "岛", "格"], cat: "旗帜" },
+  { ch: "🇬🇲", name: "flag: Gambia", cn: "旗: 冈比亚", kw: ["gambia", "旗: 冈比亚", "flag:", "旗子", "国旗", "国家", "旗帜", "冈", "旗", "亚"], cat: "旗帜" },
+];
+
+const SKIN_EMOJI = new Set([
+  "☝",
+  "⛹",
+  "⛹‍♀",
+  "⛹‍♀️",
+  "⛹‍♂",
+  "⛹‍♂️",
+  "✊",
+  "✋",
+  "✌",
+  "✍",
+  "🎅",
+  "🏂",
+  "🏃",
+  "🏃‍♀",
+  "🏃‍♀‍➡",
+  "🏃‍♀‍➡️",
+  "🏃‍♀️",
+  "🏃‍♀️‍➡",
+  "🏃‍♀️‍➡️",
+  "🏃‍♂",
+  "🏃‍♂‍➡",
+  "🏃‍♂‍➡️",
+  "🏃‍♂️",
+  "🏃‍♂️‍➡",
+  "🏃‍♂️‍➡️",
+  "🏃‍➡",
+  "🏃‍➡️",
+  "🏄",
+  "🏄‍♀",
+  "🏄‍♀️",
+  "🏄‍♂",
+  "🏄‍♂️",
+  "🏇",
+  "🏊",
+  "🏊‍♀",
+  "🏊‍♀️",
+  "🏊‍♂",
+  "🏊‍♂️",
+  "🏋",
+  "🏋‍♀",
+  "🏋‍♀️",
+  "🏋‍♂",
+  "🏋‍♂️",
+  "🏌",
+  "🏌‍♀",
+  "🏌‍♀️",
+  "🏌‍♂",
+  "🏌‍♂️",
+  "👂",
+  "👃",
+  "👆",
+  "👇",
+  "👈",
+  "👉",
+  "👊",
+  "👋",
+  "👌",
+  "👍",
+  "👎",
+  "👏",
+  "👐",
+  "👦",
+  "👧",
+  "👨",
+  "👨‍⚕",
+  "👨‍⚕️",
+  "👨‍⚖",
+  "👨‍⚖️",
+  "👨‍✈",
+  "👨‍✈️",
+  "👨‍❤‍👨",
+  "👨‍❤‍💋‍👨",
+  "👨‍❤️‍👨",
+  "👨‍❤️‍💋‍👨",
+  "👨‍🌾",
+  "👨‍🍳",
+  "👨‍🍼",
+  "👨‍🎓",
+  "👨‍🎤",
+  "👨‍🎨",
+  "👨‍🏫",
+  "👨‍🏭",
+  "👨‍💻",
+  "👨‍💼",
+  "👨‍🔧",
+  "👨‍🔬",
+  "👨‍🚀",
+  "👨‍🚒",
+  "👨‍🤝‍👨",
+  "👨‍🦯",
+  "👨‍🦯‍➡",
+  "👨‍🦯‍➡️",
+  "👨‍🦰",
+  "👨‍🦱",
+  "👨‍🦲",
+  "👨‍🦳",
+  "👨‍🦼",
+  "👨‍🦼‍➡",
+  "👨‍🦼‍➡️",
+  "👨‍🦽",
+  "👨‍🦽‍➡",
+  "👨‍🦽‍➡️",
+  "👩",
+  "👩‍⚕",
+  "👩‍⚕️",
+  "👩‍⚖",
+  "👩‍⚖️",
+  "👩‍✈",
+  "👩‍✈️",
+  "👩‍❤‍👨",
+  "👩‍❤‍👩",
+  "👩‍❤‍💋‍👨",
+  "👩‍❤‍💋‍👩",
+  "👩‍❤️‍👨",
+  "👩‍❤️‍👩",
+  "👩‍❤️‍💋‍👨",
+  "👩‍❤️‍💋‍👩",
+  "👩‍🌾",
+  "👩‍🍳",
+  "👩‍🍼",
+  "👩‍🎓",
+  "👩‍🎤",
+  "👩‍🎨",
+  "👩‍🏫",
+  "👩‍🏭",
+  "👩‍💻",
+  "👩‍💼",
+  "👩‍🔧",
+  "👩‍🔬",
+  "👩‍🚀",
+  "👩‍🚒",
+  "👩‍🤝‍👨",
+  "👩‍🤝‍👩",
+  "👩‍🦯",
+  "👩‍🦯‍➡",
+  "👩‍🦯‍➡️",
+  "👩‍🦰",
+  "👩‍🦱",
+  "👩‍🦲",
+  "👩‍🦳",
+  "👩‍🦼",
+  "👩‍🦼‍➡",
+  "👩‍🦼‍➡️",
+  "👩‍🦽",
+  "👩‍🦽‍➡",
+  "👩‍🦽‍➡️",
+  "👫",
+  "👬",
+  "👭",
+  "👮",
+  "👮‍♀",
+  "👮‍♀️",
+  "👮‍♂",
+  "👮‍♂️",
+  "👰",
+  "👰‍♀",
+  "👰‍♀️",
+  "👰‍♂",
+  "👰‍♂️",
+  "👱",
+  "👱‍♀",
+  "👱‍♀️",
+  "👱‍♂",
+  "👱‍♂️",
+  "👲",
+  "👳",
+  "👳‍♀",
+  "👳‍♀️",
+  "👳‍♂",
+  "👳‍♂️",
+  "👴",
+  "👵",
+  "👶",
+  "👷",
+  "👷‍♀",
+  "👷‍♀️",
+  "👷‍♂",
+  "👷‍♂️",
+  "👸",
+  "👼",
+  "💁",
+  "💁‍♀",
+  "💁‍♀️",
+  "💁‍♂",
+  "💁‍♂️",
+  "💂",
+  "💂‍♀",
+  "💂‍♀️",
+  "💂‍♂",
+  "💂‍♂️",
+  "💃",
+  "💅",
+  "💆",
+  "💆‍♀",
+  "💆‍♀️",
+  "💆‍♂",
+  "💆‍♂️",
+  "💇",
+  "💇‍♀",
+  "💇‍♀️",
+  "💇‍♂",
+  "💇‍♂️",
+  "💏",
+  "💑",
+  "💪",
+  "🕴",
+  "🕵",
+  "🕵‍♀",
+  "🕵‍♀️",
+  "🕵‍♂",
+  "🕵‍♂️",
+  "🕺",
+  "🖐",
+  "🖕",
+  "🖖",
+  "🙅",
+  "🙅‍♀",
+  "🙅‍♀️",
+  "🙅‍♂",
+  "🙅‍♂️",
+  "🙆",
+  "🙆‍♀",
+  "🙆‍♀️",
+  "🙆‍♂",
+  "🙆‍♂️",
+  "🙇",
+  "🙇‍♀",
+  "🙇‍♀️",
+  "🙇‍♂",
+  "🙇‍♂️",
+  "🙋",
+  "🙋‍♀",
+  "🙋‍♀️",
+  "🙋‍♂",
+  "🙋‍♂️",
+  "🙌",
+  "🙍",
+  "🙍‍♀",
+  "🙍‍♀️",
+  "🙍‍♂",
+  "🙍‍♂️",
+  "🙎",
+  "🙎‍♀",
+  "🙎‍♀️",
+  "🙎‍♂",
+  "🙎‍♂️",
+  "🙏",
+  "🚣",
+  "🚣‍♀",
+  "🚣‍♀️",
+  "🚣‍♂",
+  "🚣‍♂️",
+  "🚴",
+  "🚴‍♀",
+  "🚴‍♀️",
+  "🚴‍♂",
+  "🚴‍♂️",
+  "🚵",
+  "🚵‍♀",
+  "🚵‍♀️",
+  "🚵‍♂",
+  "🚵‍♂️",
+  "🚶",
+  "🚶‍♀",
+  "🚶‍♀‍➡",
+  "🚶‍♀‍➡️",
+  "🚶‍♀️",
+  "🚶‍♀️‍➡",
+  "🚶‍♀️‍➡️",
+  "🚶‍♂",
+  "🚶‍♂‍➡",
+  "🚶‍♂‍➡️",
+  "🚶‍♂️",
+  "🚶‍♂️‍➡",
+  "🚶‍♂️‍➡️",
+  "🚶‍➡",
+  "🚶‍➡️",
+  "🛀",
+  "🛌",
+  "🤌",
+  "🤏",
+  "🤘",
+  "🤙",
+  "🤚",
+  "🤛",
+  "🤜",
+  "🤝",
+  "🤞",
+  "🤟",
+  "🤦",
+  "🤦‍♀",
+  "🤦‍♀️",
+  "🤦‍♂",
+  "🤦‍♂️",
+  "🤰",
+  "🤱",
+  "🤲",
+  "🤳",
+  "🤴",
+  "🤵",
+  "🤵‍♀",
+  "🤵‍♀️",
+  "🤵‍♂",
+  "🤵‍♂️",
+  "🤶",
+  "🤷",
+  "🤷‍♀",
+  "🤷‍♀️",
+  "🤷‍♂",
+  "🤷‍♂️",
+  "🤸",
+  "🤸‍♀",
+  "🤸‍♀️",
+  "🤸‍♂",
+  "🤸‍♂️",
+  "🤹",
+  "🤹‍♀",
+  "🤹‍♀️",
+  "🤹‍♂",
+  "🤹‍♂️",
+  "🤽",
+  "🤽‍♀",
+  "🤽‍♀️",
+  "🤽‍♂",
+  "🤽‍♂️",
+  "🤾",
+  "🤾‍♀",
+  "🤾‍♀️",
+  "🤾‍♂",
+  "🤾‍♂️",
+  "🥷",
+  "🦵",
+  "🦶",
+  "🦸",
+  "🦸‍♀",
+  "🦸‍♀️",
+  "🦸‍♂",
+  "🦸‍♂️",
+  "🦹",
+  "🦹‍♀",
+  "🦹‍♀️",
+  "🦹‍♂",
+  "🦹‍♂️",
+  "🦻",
+  "🧍",
+  "🧍‍♀",
+  "🧍‍♀️",
+  "🧍‍♂",
+  "🧍‍♂️",
+  "🧎",
+  "🧎‍♀",
+  "🧎‍♀‍➡",
+  "🧎‍♀‍➡️",
+  "🧎‍♀️",
+  "🧎‍♀️‍➡",
+  "🧎‍♀️‍➡️",
+  "🧎‍♂",
+  "🧎‍♂‍➡",
+  "🧎‍♂‍➡️",
+  "🧎‍♂️",
+  "🧎‍♂️‍➡",
+  "🧎‍♂️‍➡️",
+  "🧎‍➡",
+  "🧎‍➡️",
+  "🧏",
+  "🧏‍♀",
+  "🧏‍♀️",
+  "🧏‍♂",
+  "🧏‍♂️",
+  "🧑",
+  "🧑‍⚕",
+  "🧑‍⚕️",
+  "🧑‍⚖",
+  "🧑‍⚖️",
+  "🧑‍✈",
+  "🧑‍✈️",
+  "🧑‍❤‍💋‍🧑",
+  "🧑‍❤‍🧑",
+  "🧑‍❤️‍💋‍🧑",
+  "🧑‍❤️‍🧑",
+  "🧑‍🌾",
+  "🧑‍🍳",
+  "🧑‍🍼",
+  "🧑‍🎄",
+  "🧑‍🎓",
+  "🧑‍🎤",
+  "🧑‍🎨",
+  "🧑‍🏫",
+  "🧑‍🏭",
+  "🧑‍💻",
+  "🧑‍💼",
+  "🧑‍🔧",
+  "🧑‍🔬",
+  "🧑‍🚀",
+  "🧑‍🚒",
+  "🧑‍🤝‍🧑",
+  "🧑‍🦯",
+  "🧑‍🦯‍➡",
+  "🧑‍🦯‍➡️",
+  "🧑‍🦰",
+  "🧑‍🦱",
+  "🧑‍🦲",
+  "🧑‍🦳",
+  "🧑‍🦼",
+  "🧑‍🦼‍➡",
+  "🧑‍🦼‍➡️",
+  "🧑‍🦽",
+  "🧑‍🦽‍➡",
+  "🧑‍🦽‍➡️",
+  "🧒",
+  "🧓",
+  "🧔",
+  "🧔‍♀",
+  "🧔‍♀️",
+  "🧔‍♂",
+  "🧔‍♂️",
+  "🧕",
+  "🧖",
+  "🧖‍♀",
+  "🧖‍♀️",
+  "🧖‍♂",
+  "🧖‍♂️",
+  "🧗",
+  "🧗‍♀",
+  "🧗‍♀️",
+  "🧗‍♂",
+  "🧗‍♂️",
+  "🧘",
+  "🧘‍♀",
+  "🧘‍♀️",
+  "🧘‍♂",
+  "🧘‍♂️",
+  "🧙",
+  "🧙‍♀",
+  "🧙‍♀️",
+  "🧙‍♂",
+  "🧙‍♂️",
+  "🧚",
+  "🧚‍♀",
+  "🧚‍♀️",
+  "🧚‍♂",
+  "🧚‍♂️",
+  "🧛",
+  "🧛‍♀",
+  "🧛‍♀️",
+  "🧛‍♂",
+  "🧛‍♂️",
+  "🧜",
+  "🧜‍♀",
+  "🧜‍♀️",
+  "🧜‍♂",
+  "🧜‍♂️",
+  "🧝",
+  "🧝‍♀",
+  "🧝‍♀️",
+  "🧝‍♂",
+  "🧝‍♂️",
+  "🫃",
+  "🫄",
+  "🫅",
+  "🫰",
+  "🫱",
+  "🫱‍🫲",
+  "🫲",
+  "🫳",
+  "🫴",
+  "🫵",
+  "🫶",
+  "🫷",
+  "🫸",
+]);
+
+
+const CATEGORIES = ['笑脸情感', '人物手势', '动物自然', '食物饮料', '活动运动', '旅行地点', '物品工具', '符号标志', '旗帜'];
+const THEME_KEY = 'emoji-theme';
+const RECENT_KEY = 'emoji-recent';
+const SKIN_TONES = ['', '🏻', '🏼', '🏽', '🏾', '🏿'];
+
+const state = {
+  query: '',
+  activeCat: '全部',   // '全部' 或 '最近使用' 或某个分类
+  recent: [],
+  selected: null,
+};
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+/* ---------- 通用工具 ---------- */
+
+// 判断字符是否为 BMP 内（码点 <= 0xFFFF）
+function isBMP(cp) { return cp <= 0xFFFF; }
+
+// 获取 emoji 的所有 Unicode 码点
+function getCodePoints(ch) {
+  const out = [];
+  for (const cp of ch) {
+    out.push(cp.codePointAt(0));
+  }
+  return out;
+}
+
+// Unicode 码点字符串：U+1F600
+function toCodePointString(ch) {
+  return getCodePoints(ch).map(cp => 'U+' + cp.toString(16).toUpperCase().padStart(4, '0')).join(' ');
+}
+
+// UTF-8 字节串：F0 9F 98 80
+function toUtf8Bytes(ch) {
+  const encoder = new TextEncoder();
+  const buf = encoder.encode(ch);
+  return Array.from(buf).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+}
+
+// HTML 实体：&#x1F600;
+function toHtmlEntities(ch) {
+  return getCodePoints(ch).map(cp => `&#x${cp.toString(16).toUpperCase()};`).join('');
+}
+
+// CSS content：\1F600
+function toCssContent(ch) {
+  return getCodePoints(ch).map(cp => '\\' + cp.toString(16).toUpperCase()).join('');
+}
+
+// JS 转义：\u{1F600}
+function toJsEscape(ch) {
+  return getCodePoints(ch).map(cp => {
+    if (isBMP(cp)) return '\\u' + cp.toString(16).toUpperCase().padStart(4, '0');
+    return '\\u{' + cp.toString(16).toUpperCase() + '}';
+  }).join('');
+}
+
+// 复制到剪贴板
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch {}
+  document.body.removeChild(ta);
+  return ok;
+}
+
+async function copyAndToast(text, msg) {
+  if (await copyText(text)) showToast(msg);
+  else showToast('复制失败', false);
+}
+
+// Toast 提示
+let toastTimer;
+function showToast(msg, ok = true) {
+  const t = $('#toast');
+  t.textContent = msg; // 用 textContent 避免 XSS
+  t.className = ok ? '' : 'error';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+/* ---------- 主题切换 ---------- */
+const themeBtn = $('#themeBtn');
+const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
+function setTheme(dark) {
+  document.documentElement.classList.toggle('dark', dark);
+  themeBtn.innerHTML = dark ? SUN : MOON;
+  themeBtn.title = dark ? '切换到浅色' : '切换到深色';
+  try { localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light'); } catch {}
+}
+themeBtn.addEventListener('click', () => setTheme(!document.documentElement.classList.contains('dark')));
+try {
+  const saved = localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(saved ? saved === 'dark' : prefersDark);
+} catch { setTheme(false); }
+
+/* ---------- 最近使用 ---------- */
+function loadRecent() {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    state.recent = raw ? JSON.parse(raw) : [];
+  } catch { state.recent = []; }
+}
+function saveRecent() {
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(state.recent)); } catch {}
+}
+function addRecent(ch) {
+  state.recent = state.recent.filter(x => x !== ch);
+  state.recent.unshift(ch);
+  if (state.recent.length > 24) state.recent = state.recent.slice(0, 24);
+  saveRecent();
+}
+loadRecent();
+
+/* ---------- 搜索过滤 ---------- */
+const searchInput = $('#searchInput');
+const clearSearch = $('#clearSearch');
+
+function matches(item, q) {
+  q = q.trim().toLowerCase();
+  if (!q) return true;
+  if (item.cn.toLowerCase().includes(q)) return true;
+  if (item.name.toLowerCase().includes(q)) return true;
+  return item.kw.some(k => k.toLowerCase().includes(q));
+}
+
+function getFilteredItems() {
+  let items = EMOJI_DATA;
+  if (state.activeCat === '最近使用') {
+    // 按最近顺序，过滤掉已不在数据集中的
+    const map = new Map(EMOJI_DATA.map(e => [e.ch, e]));
+    items = state.recent.map(ch => map.get(ch)).filter(Boolean);
+  } else if (state.activeCat !== '全部') {
+    items = EMOJI_DATA.filter(e => e.cat === state.activeCat);
+  }
+  if (state.query.trim()) {
+    items = items.filter(e => matches(e, state.query));
+  }
+  return items;
+}
+
+/* 安全清空容器（避免使用 innerHTML 写入动态内容） */
+function clearElement(el) {
+  while (el.firstChild) el.removeChild(el.firstChild);
+}
+
+/* ---------- 渲染分类标签 ---------- */
+function renderTabs() {
+  const tabs = $('#tabs');
+  clearElement(tabs);
+  const labels = ['全部', '最近使用', ...CATEGORIES];
+  labels.forEach(label => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (state.activeCat === label ? ' active' : '');
+    btn.textContent = label;
+    btn.addEventListener('click', () => {
+      state.activeCat = label;
+      renderTabs();
+      renderMain();
+      // 移动端如果打开了详情面板，隐藏它
+      if (window.innerWidth <= 768) hideDetail();
+    });
+    tabs.appendChild(btn);
+  });
+}
+
+/* ---------- 渲染主内容 ---------- */
+function renderMain() {
+  const main = $('#main');
+  clearElement(main);
+  const items = getFilteredItems();
+  $('#matchStat').textContent = items.length;
+  $('#totalStat').textContent = EMOJI_DATA.length;
+
+  if (items.length === 0) {
+    main.appendChild(buildEmpty('未找到匹配的 Emoji', '换个关键词试试，比如“笑”“heart”“火”。'));
+    return;
+  }
+
+  if (state.activeCat === '最近使用' || state.query.trim()) {
+    // 搜索或最近使用：统一网格展示
+    const section = document.createElement('div');
+    section.className = 'cat-section';
+    const title = document.createElement('h2');
+    title.className = 'cat-title';
+    title.textContent = state.activeCat === '最近使用' ? '最近使用' : '搜索结果';
+    const count = document.createElement('span');
+    count.className = 'count'; count.textContent = items.length + ' 个';
+    title.appendChild(count);
+    section.appendChild(title);
+    section.appendChild(buildGrid(items));
+    main.appendChild(section);
+    return;
+  }
+
+  // 分类视图：每个分类一个 section
+  const cats = state.activeCat === '全部' ? CATEGORIES : [state.activeCat];
+  cats.forEach(cat => {
+    const catItems = items.filter(e => e.cat === cat);
+    if (catItems.length === 0) return;
+    const section = document.createElement('section');
+    section.className = 'cat-section';
+    section.id = 'cat-' + cat;
+    const title = document.createElement('h2');
+    title.className = 'cat-title';
+    title.textContent = cat;
+    const count = document.createElement('span');
+    count.className = 'count'; count.textContent = catItems.length + ' 个';
+    title.appendChild(count);
+    section.appendChild(title);
+    section.appendChild(buildGrid(catItems));
+    main.appendChild(section);
+  });
+}
+
+function buildGrid(items) {
+  const grid = document.createElement('div');
+  grid.className = 'emoji-grid';
+  items.forEach(item => {
+    const cell = document.createElement('div');
+    cell.className = 'emoji-cell';
+    cell.textContent = item.ch;  // 安全：用 textContent
+    cell.title = item.cn;
+    cell.addEventListener('click', () => selectEmoji(item));
+    // tooltip 事件
+    cell.addEventListener('mouseenter', (e) => showTooltip(e, item.cn));
+    cell.addEventListener('mousemove', (e) => moveTooltip(e));
+    cell.addEventListener('mouseleave', hideTooltip);
+    grid.appendChild(cell);
+  });
+  return grid;
+}
+
+function buildEmpty(titleText, desc) {
+  const box = document.createElement('div');
+  box.className = 'empty-state';
+  const big = document.createElement('div');
+  big.className = 'big'; big.textContent = '🔍';
+  box.appendChild(big);
+  const h = document.createElement('h3'); h.textContent = titleText;
+  box.appendChild(h);
+  const p = document.createElement('p'); p.textContent = desc;
+  box.appendChild(p);
+  return box;
+}
+
+/* ---------- Tooltip ---------- */
+const tooltip = $('#tooltip');
+function showTooltip(e, text) {
+  tooltip.textContent = text;
+  tooltip.classList.add('show');
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  tooltip.style.left = e.clientX + 'px';
+  tooltip.style.top = (e.clientY - 8) + 'px';
+}
+function hideTooltip() {
+  tooltip.classList.remove('show');
+}
+
+/* ---------- 选择 Emoji ---------- */
+function selectEmoji(item) {
+  state.selected = item;
+  addRecent(item.ch);
+  copyAndToast('已复制 ' + item.ch, '已复制 ' + item.ch);
+  renderDetail(item);
+  showDetail();
+}
+
+/* ---------- 详情面板 ---------- */
+const detail = $('#detail');
+function showDetail() {
+  detail.classList.remove('hidden');
+  if (window.innerWidth <= 768) detail.classList.add('visible');
+}
+function hideDetail() {
+  detail.classList.add('hidden');
+  detail.classList.remove('visible');
+}
+
+function renderDetail(item) {
+  $('#detailBig').textContent = item.ch;
+  $('#detailCn').textContent = item.cn;
+  $('#detailEn').textContent = item.name;
+  $('#detailCodepoint').textContent = toCodePointString(item.ch);
+  $('#detailUtf8').textContent = toUtf8Bytes(item.ch);
+  $('#detailHtml').textContent = toHtmlEntities(item.ch);
+  $('#detailCss').textContent = toCssContent(item.ch);
+  $('#detailJs').textContent = toJsEscape(item.ch);
+
+  // 肤色变体
+  const skinRow = $('#skinRow');
+  const skinTitle = $('#skinTitle');
+  clearElement(skinRow);
+  const hasSkin = SKIN_EMOJI.has(item.ch);
+  skinTitle.style.display = hasSkin ? 'block' : 'none';
+  if (hasSkin) {
+    SKIN_TONES.forEach(tone => {
+      const btn = document.createElement('button');
+      btn.className = 'skin-btn';
+      btn.textContent = item.ch + tone;
+      btn.title = tone ? '肤色 ' + tone : '默认';
+      btn.addEventListener('click', () => {
+        copyAndToast('已复制 ' + btn.textContent, '已复制 ' + btn.textContent);
+      });
+      skinRow.appendChild(btn);
+    });
+  }
+}
+
+// 详情面板内复制按钮
+detail.addEventListener('click', (e) => {
+  const btn = e.target.closest('.copy-mini');
+  if (!btn) return;
+  const targetId = btn.dataset.target;
+  const value = $('#' + targetId).textContent;
+  copyAndToast('已复制 ' + value, '已复制');
+});
+
+$('#detailClose').addEventListener('click', hideDetail);
+
+/* ---------- 事件绑定 ---------- */
+searchInput.addEventListener('input', () => {
+  state.query = searchInput.value;
+  clearSearch.classList.toggle('show', state.query.length > 0);
+  renderMain();
+});
+clearSearch.addEventListener('click', () => {
+  state.query = '';
+  searchInput.value = '';
+  clearSearch.classList.remove('show');
+  searchInput.focus();
+  renderMain();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (state.query) {
+      state.query = '';
+      searchInput.value = '';
+      clearSearch.classList.remove('show');
+      renderMain();
+    } else {
+      hideDetail();
+    }
+  }
+  // 默认聚焦搜索框：按 / 时
+  if (e.key === '/' && document.activeElement !== searchInput) {
+    e.preventDefault();
+    searchInput.focus();
+  }
+});
+
+/* ---------- 初始化 ---------- */
+renderTabs();
+renderMain();
+searchInput.focus();
+</script>
+</body>
+</html>
