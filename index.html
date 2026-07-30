@@ -20,6 +20,7 @@
     --danger: #dc2626;
     --danger-soft: #fef2f2;
     --success: #16a34a;
+    --star: #f59e0b;
     --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
     --radius: 10px;
   }
@@ -37,6 +38,7 @@
     --danger: #f87171;
     --danger-soft: #2a1a1c;
     --success: #3fb950;
+    --star: #fbbf24;
     --shadow: 0 1px 3px rgba(0,0,0,.4);
   }
 
@@ -109,6 +111,17 @@
   .search-wrap .clear-btn:hover { background: var(--border-strong); color: var(--text); }
   .search-wrap .clear-btn.show { display: flex; }
   .search-wrap .clear-btn svg { width: 12px; height: 12px; }
+  /* 「/ 聚焦搜索」快捷键提示徽标：聚焦或已有文字时隐藏 */
+  .search-wrap .search-hint {
+    position: absolute; right: 36px; top: 50%; transform: translateY(-50%);
+    font-size: 12px; line-height: 1.4; color: var(--text-faint);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 6px; background: var(--panel); pointer-events: none;
+  }
+  #searchInput:focus ~ .search-hint,
+  .search-wrap .clear-btn.show ~ .search-hint { display: none; }
+  /* 触屏无快捷键，不显示 */
+  @media (hover: none) { .search-wrap .search-hint { display: none; } }
 
   .stat { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
   .stat b { color: var(--text); font-weight: 600; }
@@ -135,22 +148,32 @@
     flex: 1; display: flex; overflow: hidden;
   }
   main {
-    flex: 1; overflow-y: auto; padding: 18px 20px 60px;
+    /* 顶部不留 padding：sticky 标题 pin 在 content-box 边缘，padding 透明带会让滚动内容穿透 */
+    flex: 1; overflow-y: auto; padding: 0 20px 60px;
   }
 
   /* ---------- Sections & grid ---------- */
   .cat-section { margin-bottom: 28px; }
+  /* 首屏顶部间距走 margin（随滚动滚走），不能放 main 的 padding */
+  .cat-section:first-child { margin-top: 18px; }
   .cat-title {
     display: flex; align-items: center; gap: 10px;
     font-size: 15px; font-weight: 600; color: var(--text);
-    margin: 0 0 12px; position: sticky; top: 0;
-    background: var(--bg); padding: 8px 0; z-index: 5;
+    /* 间距全走 padding（在背景内）：margin 透明带会让滚动内容穿透 pin 住的标题 */
+    margin: 0; position: sticky; top: 0;
+    background: var(--bg); padding: 8px 0 12px; z-index: 5;
   }
   .cat-title .count {
     font-size: 12px; color: var(--text-muted); font-weight: 400;
     background: var(--panel); border: 1px solid var(--border);
     padding: 2px 8px; border-radius: 10px;
   }
+  .cat-title .title-clear {
+    margin-left: auto; padding: 3px 10px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--panel);
+    color: var(--text-muted); font-size: 12px; cursor: pointer; transition: all .12s;
+  }
+  .cat-title .title-clear:hover { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
   .emoji-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
@@ -171,6 +194,20 @@
     border-color: var(--accent);
     box-shadow: 0 4px 12px rgba(37,99,235,.15);
   }
+  .fav-star {
+    position: absolute; top: 3px; right: 3px;
+    width: 20px; height: 20px; padding: 2px;
+    border: 0; background: transparent; cursor: pointer;
+    color: var(--text-faint); opacity: 0;
+    transition: opacity .12s, color .12s, transform .12s;
+  }
+  .fav-star svg { width: 100%; height: 100%; display: block; }
+  .emoji-cell:hover .fav-star, .fav-star.on { opacity: 1; }
+  .fav-star:hover { color: var(--star); transform: scale(1.15); }
+  .fav-star.on { color: var(--star); }
+  .fav-star.on svg { fill: currentColor; }
+  /* 触屏无 hover：星标常显半透明，已收藏保持实色 */
+  @media (hover: none) { .fav-star { opacity: .45; } .fav-star.on { opacity: 1; } }
   .emoji-cell.empty { display: none; }
 
   /* ---------- Empty state ---------- */
@@ -200,6 +237,7 @@
     display: grid; place-items: center;
     background: var(--bg); border-radius: var(--radius);
     border: 1px solid var(--border); flex-shrink: 0;
+    cursor: zoom-in;
   }
   .detail-names { min-width: 0; }
   .detail-names .cn { font-size: 16px; font-weight: 600; color: var(--text); margin: 0 0 4px; }
@@ -245,11 +283,48 @@
   .skin-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
 
   .detail-close {
-    display: none; margin-left: auto;
+    display: none; margin-left: 0;
     width: 28px; height: 28px; border-radius: 6px;
     border: 0; background: var(--bg); color: var(--text-muted); cursor: pointer;
   }
   .detail-close:hover { color: var(--text); }
+  .detail-fav {
+    margin-left: auto; flex-shrink: 0;
+    width: 28px; height: 28px; border-radius: 6px; padding: 4px;
+    border: 0; background: var(--bg); color: var(--text-muted); cursor: pointer;
+    display: grid; place-items: center; transition: color .12s;
+  }
+  .detail-fav svg { width: 100%; height: 100%; }
+  .detail-fav:hover { color: var(--star); }
+  .detail-fav.on { color: var(--star); }
+  .detail-fav.on svg { fill: currentColor; }
+
+  /* ---------- 放大查看浮层 ---------- */
+  #zoomOverlay {
+    position: fixed; inset: 0; z-index: 300;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    opacity: 0; pointer-events: none; transition: opacity .18s;
+  }
+  #zoomOverlay.show { opacity: 1; pointer-events: auto; }
+  .zoom-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 40px 48px 28px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    max-width: min(90vw, 480px);
+  }
+  .zoom-emoji { font-size: clamp(120px, 30vw, 200px); line-height: 1.15; user-select: none; }
+  .zoom-cn { font-size: 17px; font-weight: 600; color: var(--text); margin: 6px 0 0; }
+  .zoom-en { font-size: 13px; color: var(--text-muted); margin: 0; word-break: break-word; text-align: center; }
+  .zoom-copy {
+    margin-top: 14px; padding: 9px 22px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 14px; cursor: pointer; transition: all .12s;
+  }
+  .zoom-copy:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .zoom-hint { margin-top: 18px; font-size: 12px; color: var(--text-muted); }
 
   /* ---------- Toast ---------- */
   #toast {
@@ -281,7 +356,8 @@
     header { padding: 12px 14px; }
     .toolbar { padding: 8px 14px; }
     .tabs { padding: 8px 14px; }
-    main { padding: 12px 14px 50px; }
+    main { padding: 0 14px 50px; }
+    .cat-section:first-child { margin-top: 12px; }
     .logo .sub { display: none; }
     .emoji-grid { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
     .emoji-cell { font-size: 28px; }
@@ -319,6 +395,7 @@
     <button class="clear-btn" id="clearSearch" title="清空搜索">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
+    <kbd class="search-hint">/</kbd>
   </div>
   <div class="stat" id="statBar">共 <b id="totalStat">0</b> 个 · 匹配 <b id="matchStat">0</b> 个</div>
 </div>
@@ -334,6 +411,7 @@
         <p class="cn" id="detailCn">笑脸</p>
         <p class="en" id="detailEn">grinning face</p>
       </div>
+      <button class="detail-fav" id="detailFav" title="收藏" aria-label="收藏"></button>
       <button class="detail-close" id="detailClose" title="关闭详情">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -353,6 +431,16 @@
 
 <div id="toast"></div>
 <div id="tooltip"></div>
+
+<div id="zoomOverlay" role="dialog" aria-label="放大查看">
+  <div class="zoom-card">
+    <div class="zoom-emoji" id="zoomEmoji">😀</div>
+    <p class="zoom-cn" id="zoomCn"></p>
+    <p class="zoom-en" id="zoomEn"></p>
+    <button class="zoom-copy" id="zoomCopy">复制</button>
+  </div>
+  <div class="zoom-hint">点击空白处或按 Esc 关闭</div>
+</div>
 
 <script>
 /* =========================================================
@@ -1863,12 +1951,14 @@ const SKIN_EMOJI = new Set([
 const CATEGORIES = ['笑脸情感', '人物手势', '动物自然', '食物饮料', '活动运动', '旅行地点', '物品工具', '符号标志', '旗帜'];
 const THEME_KEY = 'emoji-theme';
 const RECENT_KEY = 'emoji-recent';
+const FAV_KEY = 'emoji-favorites';
 const SKIN_TONES = ['', '🏻', '🏼', '🏽', '🏾', '🏿'];
 
 const state = {
   query: '',
-  activeCat: '全部',   // '全部' 或 '最近使用' 或某个分类
+  activeCat: '全部',   // '全部' 或 '最近使用' 或 '收藏' 或某个分类
   recent: [],
+  favs: [],
   selected: null,
 };
 
@@ -1983,6 +2073,34 @@ function addRecent(ch) {
 }
 loadRecent();
 
+/* ---------- 收藏夹 ---------- */
+// 静态星形图标常量（非用户输入，可用 innerHTML）
+const STAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+
+function loadFavs() {
+  try {
+    const raw = localStorage.getItem(FAV_KEY);
+    state.favs = raw ? JSON.parse(raw) : [];
+  } catch { state.favs = []; }
+}
+function saveFavs() {
+  try { localStorage.setItem(FAV_KEY, JSON.stringify(state.favs)); } catch {}
+}
+function isFav(ch) { return state.favs.includes(ch); }
+function toggleFav(ch) {
+  const on = !isFav(ch);
+  state.favs = state.favs.filter(x => x !== ch);
+  if (on) state.favs.unshift(ch);
+  saveFavs();
+  // 同步所有格子上的星标与详情面板星标
+  $$('.fav-star').forEach(s => { if (s.dataset.ch === ch) s.classList.toggle('on', on); });
+  updateDetailFav();
+  showToast(on ? '已收藏 ' + ch : '已取消收藏 ' + ch);
+  // 收藏 tab 下取消收藏：移除该格
+  if (state.activeCat === '收藏') renderMain();
+}
+loadFavs();
+
 /* ---------- 搜索过滤 ---------- */
 const searchInput = $('#searchInput');
 const clearSearch = $('#clearSearch');
@@ -1997,10 +2115,11 @@ function matches(item, q) {
 
 function getFilteredItems() {
   let items = EMOJI_DATA;
-  if (state.activeCat === '最近使用') {
-    // 按最近顺序，过滤掉已不在数据集中的
+  if (state.activeCat === '最近使用' || state.activeCat === '收藏') {
+    // 按记录顺序，过滤掉已不在数据集中的
     const map = new Map(EMOJI_DATA.map(e => [e.ch, e]));
-    items = state.recent.map(ch => map.get(ch)).filter(Boolean);
+    const list = state.activeCat === '最近使用' ? state.recent : state.favs;
+    items = list.map(ch => map.get(ch)).filter(Boolean);
   } else if (state.activeCat !== '全部') {
     items = EMOJI_DATA.filter(e => e.cat === state.activeCat);
   }
@@ -2019,7 +2138,7 @@ function clearElement(el) {
 function renderTabs() {
   const tabs = $('#tabs');
   clearElement(tabs);
-  const labels = ['全部', '最近使用', ...CATEGORIES];
+  const labels = ['全部', '最近使用', '收藏', ...CATEGORIES];
   labels.forEach(label => {
     const btn = document.createElement('button');
     btn.className = 'tab-btn' + (state.activeCat === label ? ' active' : '');
@@ -2044,20 +2163,39 @@ function renderMain() {
   $('#totalStat').textContent = EMOJI_DATA.length;
 
   if (items.length === 0) {
-    main.appendChild(buildEmpty('未找到匹配的 Emoji', '换个关键词试试，比如“笑”“heart”“火”。'));
+    if (state.activeCat === '收藏' && !state.query.trim()) {
+      main.appendChild(buildEmpty('还没有收藏的 Emoji', '鼠标悬停 Emoji 格，点击右上角星标即可收藏。', '⭐'));
+    } else if (state.activeCat === '最近使用' && !state.query.trim()) {
+      main.appendChild(buildEmpty('暂无最近使用记录', '点击任意 Emoji 复制后，会出现在这里。', '🕘'));
+    } else {
+      main.appendChild(buildEmpty('未找到匹配的 Emoji', '换个关键词试试，比如“笑”“heart”“火”。'));
+    }
     return;
   }
 
-  if (state.activeCat === '最近使用' || state.query.trim()) {
-    // 搜索或最近使用：统一网格展示
+  if (state.activeCat === '最近使用' || state.activeCat === '收藏' || state.query.trim()) {
+    // 搜索 / 最近使用 / 收藏：统一网格展示
     const section = document.createElement('div');
     section.className = 'cat-section';
     const title = document.createElement('h2');
     title.className = 'cat-title';
-    title.textContent = state.activeCat === '最近使用' ? '最近使用' : '搜索结果';
+    title.textContent = state.query.trim() ? '搜索结果' : state.activeCat;
     const count = document.createElement('span');
     count.className = 'count'; count.textContent = items.length + ' 个';
     title.appendChild(count);
+    // 最近使用：一键清空
+    if (state.activeCat === '最近使用' && !state.query.trim()) {
+      const clear = document.createElement('button');
+      clear.className = 'title-clear';
+      clear.textContent = '清空';
+      clear.addEventListener('click', () => {
+        state.recent = [];
+        saveRecent();
+        renderMain();
+        showToast('已清空最近使用');
+      });
+      title.appendChild(clear);
+    }
     section.appendChild(title);
     section.appendChild(buildGrid(items));
     main.appendChild(section);
@@ -2093,6 +2231,18 @@ function buildGrid(items) {
     cell.textContent = item.ch;  // 安全：用 textContent
     cell.title = item.cn;
     cell.addEventListener('click', () => selectEmoji(item));
+    // 收藏星标（右上角，点击不触发选择）
+    const star = document.createElement('button');
+    star.className = 'fav-star' + (isFav(item.ch) ? ' on' : '');
+    star.dataset.ch = item.ch;
+    star.title = '收藏';
+    star.setAttribute('aria-label', '收藏 ' + item.cn);
+    star.innerHTML = STAR;  // 静态图标常量，非用户输入
+    star.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFav(item.ch);
+    });
+    cell.appendChild(star);
     // tooltip 事件
     cell.addEventListener('mouseenter', (e) => showTooltip(e, item.cn));
     cell.addEventListener('mousemove', (e) => moveTooltip(e));
@@ -2102,12 +2252,12 @@ function buildGrid(items) {
   return grid;
 }
 
-function buildEmpty(titleText, desc) {
+function buildEmpty(titleText, desc, big = '🔍') {
   const box = document.createElement('div');
   box.className = 'empty-state';
-  const big = document.createElement('div');
-  big.className = 'big'; big.textContent = '🔍';
-  box.appendChild(big);
+  const bigEl = document.createElement('div');
+  bigEl.className = 'big'; bigEl.textContent = big;
+  box.appendChild(bigEl);
   const h = document.createElement('h3'); h.textContent = titleText;
   box.appendChild(h);
   const p = document.createElement('p'); p.textContent = desc;
@@ -2150,10 +2300,18 @@ function hideDetail() {
   detail.classList.remove('visible');
 }
 
+function updateDetailFav() {
+  const btn = $('#detailFav');
+  const on = state.selected && isFav(state.selected.ch);
+  btn.classList.toggle('on', !!on);
+  btn.title = on ? '取消收藏' : '收藏';
+}
+
 function renderDetail(item) {
   $('#detailBig').textContent = item.ch;
   $('#detailCn').textContent = item.cn;
   $('#detailEn').textContent = item.name;
+  updateDetailFav();
   $('#detailCodepoint').textContent = toCodePointString(item.ch);
   $('#detailUtf8').textContent = toUtf8Bytes(item.ch);
   $('#detailHtml').textContent = toHtmlEntities(item.ch);
@@ -2189,7 +2347,33 @@ detail.addEventListener('click', (e) => {
   copyAndToast('已复制 ' + value, '已复制');
 });
 
+const detailFav = $('#detailFav');
+detailFav.innerHTML = STAR;  // 静态图标常量
+detailFav.addEventListener('click', () => {
+  if (state.selected) toggleFav(state.selected.ch);
+});
 $('#detailClose').addEventListener('click', hideDetail);
+
+/* ---------- 放大查看浮层 ---------- */
+const zoomOverlay = $('#zoomOverlay');
+function openZoom() {
+  const item = state.selected;
+  if (!item) return;
+  $('#zoomEmoji').textContent = item.ch;
+  $('#zoomCn').textContent = item.cn;
+  $('#zoomEn').textContent = item.name;
+  zoomOverlay.classList.add('show');
+}
+function closeZoom() {
+  zoomOverlay.classList.remove('show');
+}
+$('#detailBig').addEventListener('click', openZoom);
+zoomOverlay.addEventListener('click', (e) => {
+  if (!e.target.closest('.zoom-card')) closeZoom();
+});
+$('#zoomCopy').addEventListener('click', () => {
+  if (state.selected) copyAndToast('已复制 ' + state.selected.ch, '已复制 ' + state.selected.ch);
+});
 
 /* ---------- 事件绑定 ---------- */
 searchInput.addEventListener('input', () => {
@@ -2206,7 +2390,9 @@ clearSearch.addEventListener('click', () => {
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (state.query) {
+    if (zoomOverlay.classList.contains('show')) {
+      closeZoom();
+    } else if (state.query) {
       state.query = '';
       searchInput.value = '';
       clearSearch.classList.remove('show');
