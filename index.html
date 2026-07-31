@@ -2456,7 +2456,7 @@ function hideTooltip() {
 function selectEmoji(item) {
   state.selected = item;
   addRecent(item.ch);
-  copyAndToast(t('copied', { x: item.ch }), t('copied', { x: item.ch }));
+  copyAndToast(item.ch, t('copied', { x: item.ch }));
   renderDetail(item);
   showDetail();
 }
@@ -2503,7 +2503,7 @@ function renderDetail(item) {
       btn.textContent = item.ch + tone;
       btn.title = tone ? t('skinN', { x: tone }) : t('defaultTone');
       btn.addEventListener('click', () => {
-        copyAndToast(t('copied', { x: btn.textContent }), t('copied', { x: btn.textContent }));
+        copyAndToast(btn.textContent, t('copied', { x: btn.textContent }));
       });
       skinRow.appendChild(btn);
     });
@@ -2544,7 +2544,7 @@ zoomOverlay.addEventListener('click', (e) => {
   if (!e.target.closest('.zoom-card')) closeZoom();
 });
 $('#zoomCopy').addEventListener('click', () => {
-  if (state.selected) copyAndToast(t('copied', { x: state.selected.ch }), t('copied', { x: state.selected.ch }));
+  if (state.selected) copyAndToast(state.selected.ch, t('copied', { x: state.selected.ch }));
 });
 
 /* ---------- 事件绑定 ---------- */
