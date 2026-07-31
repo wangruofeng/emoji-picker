@@ -210,6 +210,13 @@
     transition: transform .12s, border-color .12s, box-shadow .12s;
     position: relative;
   }
+  .emoji-char { display: block; }
+  /* iOS 的 Apple Color Emoji 可见字形会略偏离行框中心，单独补偿字形而不影响卡片动画。 */
+  @supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+      .emoji-char { transform: translateY(18px); }
+    }
+  }
   .emoji-cell:hover {
     transform: translateY(-2px);
     border-color: var(--accent);
@@ -2390,7 +2397,10 @@ function buildGrid(items) {
   items.forEach(item => {
     const cell = document.createElement('div');
     cell.className = 'emoji-cell';
-    cell.textContent = item.ch;  // 安全：用 textContent
+    const emoji = document.createElement('span');
+    emoji.className = 'emoji-char';
+    emoji.textContent = item.ch;  // 安全：用 textContent
+    cell.appendChild(emoji);
     cell.title = localName(item);
     cell.addEventListener('click', () => selectEmoji(item));
     // 收藏星标（右上角，点击不触发选择）
