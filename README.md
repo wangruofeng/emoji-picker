@@ -10,6 +10,7 @@
 - 🔍 **多语言 / 关键词搜索**：输入“笑”“heart”“火”等即时过滤 800+ Emoji，搜索随当前语言适配。
 - 🗂️ **分类浏览**：笑脸情感、人物手势、动物自然、食物饮料、活动运动、旅行地点、物品工具、符号标志、旗帜九大分类，以及“最近使用”。
 - 📋 **一键复制**：点击 Emoji 格子即可复制字符，并自动记录到最近使用（`localStorage emoji-recent`，上限 24 个，去重前置）。
+- ⭐ **收藏夹**：鼠标悬停 Emoji 格，点击右上角星标即可收藏；收藏内容保存在 `localStorage emoji-favorites`，并提供独立的「收藏」分类查看。
 - 📊 **码点详情**：点击后在详情面板展示 Unicode 码点、UTF-8 字节、HTML 实体、CSS content、JS 转义，每项均可单独复制。
 - 🏻 **肤色变体**：对支持肤色的手势类 Emoji，详情面板提供 6 种肤色快速切换复制。
 - 🌓 **深浅色主题**：一键切换，偏好保存在 `localStorage emoji-theme`。
@@ -35,8 +36,8 @@ open index.html        # macOS
 
 ## 在线访问
 
-已通过 GitHub Pages 部署，可直接访问：
+已通过 Cloudflare Pages 部署，可直接访问：
 
-🔗 **https://blog.wangruofeng007.com/emoji-picker/**
+🔗 **https://emoji-picker.wangruofeng007.com/**
 
 源码仓库：https://github.com/wangruofeng/emoji-picker
