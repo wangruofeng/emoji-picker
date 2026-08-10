@@ -33,6 +33,7 @@ Type a name or keyword in the search box to quickly locate an emoji; click any e
 
 - A single HTML file built with native HTML / CSS / JavaScript — zero dependencies and zero build steps.
 - Emoji data is embedded as a JavaScript constant; all parsing and rendering happen locally in the browser. No data is ever uploaded.
+- The current Emoji data primarily comes from the [official Unicode Emoji 17.0 data directory](https://www.unicode.org/Public/17.0.0/emoji/).
 - Dynamic rendering always uses `createElement` / `textContent` to avoid XSS injection risks.
 
 ## Live Demo

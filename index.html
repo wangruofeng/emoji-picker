@@ -3,7 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Emoji 展示选择器</title>
+<title>Emoji 选择器：搜索、复制与 Unicode 码点查询</title>
+<meta name="description" content="免费 Emoji 选择器，支持中文与英文搜索、一键复制、肤色变体和 Unicode 码点、HTML 实体、CSS 与 JavaScript 转义查询。">
+<link rel="canonical" href="https://emoji-picker.wangruofeng007.com/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="Emoji 选择器：搜索、复制与 Unicode 码点查询">
+<meta property="og:description" content="搜索 Emoji、一键复制，并查看 Unicode 码点与开发者编码格式。">
+<meta property="og:url" content="https://emoji-picker.wangruofeng007.com/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Emoji 选择器：搜索、复制与 Unicode 码点查询">
+<meta name="twitter:description" content="搜索 Emoji、一键复制，并查看 Unicode 码点与开发者编码格式。">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Emoji 选择器",
+  "description": "支持搜索、复制和 Unicode 码点查询的免费 Emoji 工具。",
+  "url": "https://emoji-picker.wangruofeng007.com/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Web",
+  "inLanguage": "zh-CN",
+  "isAccessibleForFree": true
+}
+</script>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#2563eb">
@@ -177,6 +200,9 @@
 
   /* ---------- Sections & grid ---------- */
   .cat-section { margin-bottom: 28px; }
+  .seo-intro { margin: 18px 0 20px; max-width: 760px; }
+  .seo-intro h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.35; }
+  .seo-intro p { margin: 0; color: var(--text-muted); font-size: 14px; line-height: 1.7; }
   /* 首屏顶部间距走 margin（随滚动滚走），不能放 main 的 padding */
   .cat-section:first-child { margin-top: 18px; }
   .cat-title {
@@ -437,7 +463,13 @@
 <div class="tabs" id="tabs"></div>
 
 <div class="app-body">
-  <main id="main"></main>
+  <main id="main">
+    <section class="seo-intro" aria-labelledby="pageHeading">
+      <h1 id="pageHeading">Emoji 选择器：搜索、复制与 Unicode 码点查询</h1>
+      <p id="pageDescription">搜索 3,000+ Emoji，点击即可复制字符，并查看 Unicode 码点、HTML 实体、CSS content 和 JavaScript 转义。</p>
+    </section>
+    <div id="emojiContent"></div>
+  </main>
   <aside class="detail hidden" id="detail">
     <div class="detail-head">
       <div class="detail-big" id="detailBig">😀</div>
@@ -35026,8 +35058,10 @@ const LANG_KEY = 'emoji-lang';
 // UI 文案字典。含 {x} / {n} 占位符的，由 t() 替换。
 const I18N = {
   // 页头
-  title:        { 'zh-CN':'Emoji 展示选择器','zh-TW':'Emoji 展示選擇器','en':'Emoji Picker','ja':'Emoji ピッカー','ko':'Emoji 선택기','th':'ตัวเลือก Emoji','ms':'Pemilih Emoji' },
+  title:        { 'zh-CN':'Emoji 选择器：搜索、复制与 Unicode 码点查询','zh-TW':'Emoji 選擇器：搜尋、複製與 Unicode 碼點查詢','en':'Emoji Picker: Search, Copy & Unicode Codepoints','ja':'Emoji ピッカー：検索・コピー・Unicode コードポイント','ko':'Emoji 선택기: 검색, 복사 및 Unicode 코드 포인트','th':'ตัวเลือก Emoji: ค้นหา คัดลอก และโค้ดพอยต์ Unicode','ms':'Pemilih Emoji: Cari, Salin & Titik Kod Unicode' },
   subtitle:     { 'zh-CN':'中文搜索 / 一键复制 / 码点详情','zh-TW':'中文搜尋 / 一鍵複製 / 碼點詳情','en':'Search / Copy / Codepoints','ja':'検索 / コピー / コードポイント','ko':'검색 / 복사 / 코드포인트','th':'ค้นหา / คัดลอก / โค้ดพอยต์','ms':'Cari / Salin / Titik Kod' },
+  seoTitle:     { 'zh-CN':'Emoji 选择器：搜索、复制与 Unicode 码点查询','zh-TW':'Emoji 選擇器：搜尋、複製與 Unicode 碼點查詢','en':'Emoji Picker: Search, Copy & Unicode Codepoints','ja':'Emoji ピッカー：検索・コピー・Unicode コードポイント','ko':'Emoji 선택기: 검색, 복사 및 Unicode 코드 포인트','th':'ตัวเลือก Emoji: ค้นหา คัดลอก และโค้ดพอยต์ Unicode','ms':'Pemilih Emoji: Cari, Salin & Titik Kod Unicode' },
+  seoDescription: { 'zh-CN':'搜索 3,000+ Emoji，点击即可复制字符，并查看 Unicode 码点、HTML 实体、CSS content 和 JavaScript 转义。','zh-TW':'搜尋超過 3,000 個 Emoji，點擊即可複製字元，並查看 Unicode 碼點、HTML 實體、CSS content 與 JavaScript 跳脫。','en':'Search 3,000+ emoji, copy a character with one click, and view its Unicode codepoint, HTML entity, CSS content, and JavaScript escape.','ja':'3,000 種類以上の Emoji を検索し、ワンクリックでコピー。Unicode コードポイント、HTML エンティティ、CSS content、JavaScript エスケープも確認できます。','ko':'3,000개 이상의 Emoji를 검색하고 한 번에 복사하세요. Unicode 코드 포인트, HTML 엔티티, CSS content, JavaScript 이스케이프도 확인할 수 있습니다.','th':'ค้นหา Emoji กว่า 3,000 รายการ คัดลอกได้ในคลิกเดียว และดูโค้ดพอยต์ Unicode, HTML entity, CSS content และ JavaScript escape ได้','ms':'Cari lebih 3,000 Emoji, salin aksara dengan satu klik, dan lihat titik kod Unicode, entiti HTML, CSS content, serta JavaScript escape.' },
   githubTitle:  { 'zh-CN':'查看 GitHub 源码','zh-TW':'查看 GitHub 原始碼','en':'View source on GitHub','ja':'GitHub でソースを見る','ko':'GitHub 소스 보기','th':'ดูซอร์สบน GitHub','ms':'Lihat sumber di GitHub' },
   themeLight:   { 'zh-CN':'切换到浅色','zh-TW':'切換到淺色','en':'Switch to light','ja':'ライトに切り替え','ko':'라이트 모드로 전환','th':'สลับเป็นสว่าง','ms':'Tukar ke cerah' },
   themeDark:    { 'zh-CN':'切换到深色','zh-TW':'切換到深色','en':'Switch to dark','ja':'ダークに切り替え','ko':'다크 모드로 전환','th':'สลับเป็นมืด','ms':'Tukar ke gelap' },
@@ -35340,7 +35374,7 @@ function localTabLabel(key) {
 
 /* ---------- 渲染主内容 ---------- */
 function renderMain() {
-  const main = $('#main');
+  const main = $('#emojiContent');
   clearElement(main);
   const items = getFilteredItems();
   // 重建统计条（含本地化文案与粗体数字）
@@ -35596,6 +35630,10 @@ document.addEventListener('keydown', (e) => {
       searchInput.value = '';
       clearSearch.classList.remove('show');
       renderMain();
+    } else if (state.activeCat !== '全部') {
+      state.activeCat = '全部';
+      renderTabs();
+      renderMain();
     } else {
       hideDetail();
     }
@@ -35625,6 +35663,8 @@ function detectLang() {
 function applyStaticI18n() {
   document.title = t('title');
   document.documentElement.lang = state.lang;
+  $('#pageHeading').textContent = t('seoTitle');
+  $('#pageDescription').textContent = t('seoDescription');
   $('#appTitle').textContent = t('title');
   $('#appSub').textContent = t('subtitle');
   const gh = $('#githubLink');

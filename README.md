@@ -32,6 +32,7 @@ open index.html        # macOS
 
 - 单一 HTML 文件，原生 HTML / CSS / JavaScript，零依赖、零构建步骤。
 - Emoji 数据内嵌为 JS 常量，所有解析与渲染均在浏览器本地完成，不上传任何数据。
+- 当前 Emoji 数据主要来自 [Unicode Emoji 17.0 官方数据目录](https://www.unicode.org/Public/17.0.0/emoji/)。
 - 动态渲染一律使用 `createElement` / `textContent`，避免 XSS 注入风险。
 
 ## 在线访问
