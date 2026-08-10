@@ -1,0 +1,19 @@
+{
+  "name": "Emoji 展示选择器",
+  "short_name": "Emoji Picker",
+  "description": "本地 Emoji 搜索、复制与码点查看工具。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f9",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

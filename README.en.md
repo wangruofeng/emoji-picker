@@ -4,6 +4,8 @@ English | **[简体中文](./README.md)**
 
 A pure front-end, single-file Emoji search and copy tool. Just double-click `index.html` to use it — no installation, no back-end, and zero external dependencies.
 
+When served over HTTPS or localhost, it also supports installation as a PWA and caches its app shell for offline use.
+
 ## Features
 
 - 🌐 **Multi-language UI**: Switch among 7 languages — Simplified Chinese, Traditional Chinese, English, Japanese, Korean, Thai, and Malay. Your language choice is saved automatically. Emoji names come from the official Unicode CLDR localized annotations.
