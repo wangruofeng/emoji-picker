@@ -201,7 +201,8 @@
   /* ---------- Sections & grid ---------- */
   .cat-section { margin-bottom: 28px; }
   .seo-intro { margin: 18px 0 20px; max-width: 760px; }
-  .seo-intro h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.35; }
+  /* 主标题与导航栏重复，仅保留语义（SEO/无障碍），视觉上隐藏 */
+  .seo-intro h1 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   .seo-intro p { margin: 0; color: var(--text-muted); font-size: 14px; line-height: 1.7; }
   /* 首屏顶部间距走 margin（随滚动滚走），不能放 main 的 padding */
   .cat-section:first-child { margin-top: 18px; }
