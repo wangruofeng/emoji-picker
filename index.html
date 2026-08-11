@@ -35366,13 +35366,30 @@ function t(key, vars) {
   if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
   return s;
 }
+const ZH_CN_SUBDIVISION_FLAG_NAMES = {
+  gbeng: '旗: 英格兰',
+  gbsct: '旗: 苏格兰',
+  gbwls: '旗: 威尔士',
+};
+let zhCNRegionNames;
+try { zhCNRegionNames = new Intl.DisplayNames(['zh-CN'], { type: 'region' }); } catch {}
+
+function localZhCNFlagName(item) {
+  if (item.cat !== '旗帜' || !item.name.startsWith('flag:') || item.cn !== item.name) return item.cn;
+  const regionCode = getFlagRegionCode(item.ch);
+  if (ZH_CN_SUBDIVISION_FLAG_NAMES[regionCode]) return ZH_CN_SUBDIVISION_FLAG_NAMES[regionCode];
+  const regionName = regionCode.length === 2 && zhCNRegionNames?.of(regionCode);
+  return regionName && regionName !== regionCode ? `旗: ${regionName}` : item.cn;
+}
+
 // 取 emoji 的本地化显示名（回退：当前语言映射 -> zh-CN cn -> en name）
 function localName(item) {
   if (state.lang === 'en') return item.name || item.cn;
   const map = EMOJI_NAMES[state.lang];
   if (map && map[item.ch]) return map[item.ch];
   // zh-CN/zh-TW 用中文名；其余语言缺失时回退到英文名更友好
-  if (state.lang === 'zh-CN' || state.lang === 'zh-TW') return item.cn || item.name;
+  if (state.lang === 'zh-CN') return localZhCNFlagName(item) || item.name;
+  if (state.lang === 'zh-TW') return item.cn || item.name;
   return item.name || item.cn;
 }
 // 取分类的本地化显示名（key 为内部中文分类名）
@@ -35696,6 +35713,7 @@ function matches(item, q) {
   if (item.ch && item.ch.includes(q)) return true;
   // 中文名 / 繁体名 / 关键词（简繁中文搜索）
   if (item.cn && item.cn.toLowerCase().includes(q)) return true;
+  if (state.lang === 'zh-CN' && localZhCNFlagName(item).toLowerCase().includes(q)) return true;
   // 英文名（所有语言始终支持英文搜索）
   if (item.name && item.name.toLowerCase().includes(q)) return true;
   if (item.kw && item.kw.some(k => k.toLowerCase().includes(q))) return true;
