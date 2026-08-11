@@ -240,6 +240,10 @@
     position: relative;
   }
   .emoji-char { display: block; }
+  /* Unicode 17 的新组合在许多系统 Emoji 字体中尚无字形；用 Noto 图片兜底，
+     避免把每个未支持的码点渲染成缺字横条。 */
+  .emoji-image { width: 1em; height: 1em; object-fit: contain; }
+  .emoji-unsupported { color: var(--text-faint); font-size: .75em; }
   /* iOS 的 Apple Color Emoji 可见字形会略偏离行框中心，单独补偿字形而不影响卡片动画。 */
   @supports (-webkit-touch-callout: none) {
     @media (max-width: 768px) {
@@ -34540,6 +34544,15 @@ const UNICODE_EMOJI_17_ZWJ_ADDITIONS = [
 ];
 EMOJI_DATA.push(...UNICODE_EMOJI_17_ZWJ_ADDITIONS);
 
+// 当前系统字体缺失的是 Unicode 17 新增的 U+1FAEF（fight cloud）及其摔跤
+// ZWJ 组合。两个数据数组包含完整 Emoji 集合，因此必须按新码点精确筛选，
+// 不能把 👱‍♀️ 等原本可由系统字体显示的旧 Emoji 也切换成网络图片。
+const EMOJI_IMAGE_FALLBACK = new Set([
+  ...UNICODE_EMOJI_17_ADDITIONS,
+  ...UNICODE_EMOJI_17_ZWJ_ADDITIONS,
+].filter(item => item.ch.includes('\u{1FAEF}')).map(item => item.ch));
+const NOTO_EMOJI_CDN = 'https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@main/png/128/';
+
 // CLDR 没有为每一个双肤色 ZWJ 组合提供独立的简体中文名称；复用基础组合名称并补充肤色。
 const SKIN_TONE_ZH_NAMES = {
   '🏻': '较浅肤色',
@@ -35215,6 +35228,48 @@ function toJsEscape(ch) {
   }).join('');
 }
 
+// Google Noto Emoji 使用 `emoji_u<hex>_<hex>.png` 的完整码点序列命名。
+// 保留 ZWJ / 肤色修饰符，不能按可见字符拆分，否则会请求到错误资源。
+function emojiImageUrl(ch) {
+  return NOTO_EMOJI_CDN + 'emoji_u' + getCodePoints(ch)
+    .map(cp => cp.toString(16))
+    .join('_') + '.png';
+}
+
+function makeEmojiNode(ch, className = 'emoji-char') {
+  if (!EMOJI_IMAGE_FALLBACK.has(ch)) {
+    const text = document.createElement('span');
+    text.className = className;
+    text.textContent = ch;
+    return text;
+  }
+
+  const image = document.createElement('img');
+  image.className = className + ' emoji-image';
+  image.src = emojiImageUrl(ch);
+  image.alt = ch;
+  image.decoding = 'async';
+  image.addEventListener('error', () => {
+    // 网络或 CDN 不可用时宁可明确显示占位符，也不要回退为会产生横条的缺字文本。
+    const fallback = document.createElement('span');
+    fallback.className = className + ' emoji-unsupported';
+    fallback.textContent = '◌';
+    fallback.title = toCodePointString(ch);
+    image.replaceWith(fallback);
+  }, { once: true });
+  return image;
+}
+
+function setEmojiDisplay(container, ch) {
+  clearElement(container);
+  container.appendChild(makeEmojiNode(ch));
+}
+
+// Toast 不能嵌入尚未被系统字体支持的原始序列，否则会再次出现缺字横条。
+function emojiTextLabel(ch) {
+  return EMOJI_IMAGE_FALLBACK.has(ch) ? toCodePointString(ch) : ch;
+}
+
 // 复制到剪贴板
 async function copyText(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch {}
@@ -35301,7 +35356,7 @@ function toggleFav(ch) {
   // 同步所有格子上的星标与详情面板星标
   $$('.fav-star').forEach(s => { if (s.dataset.ch === ch) s.classList.toggle('on', on); });
   updateDetailFav();
-  showToast(on ? t('favOn', { x: ch }) : t('favOff', { x: ch }));
+  showToast(on ? t('favOn', { x: emojiTextLabel(ch) }) : t('favOff', { x: emojiTextLabel(ch) }));
   // 收藏 tab 下取消收藏：移除该格
   if (state.activeCat === '收藏') renderMain();
 }
@@ -35458,10 +35513,7 @@ function buildGrid(items) {
   items.forEach(item => {
     const cell = document.createElement('div');
     cell.className = 'emoji-cell';
-    const emoji = document.createElement('span');
-    emoji.className = 'emoji-char';
-    emoji.textContent = item.ch;  // 安全：用 textContent
-    cell.appendChild(emoji);
+    cell.appendChild(makeEmojiNode(item.ch));
     cell.title = localName(item);
     cell.addEventListener('click', () => selectEmoji(item));
     // 收藏星标（右上角，点击不触发选择）
@@ -35517,7 +35569,7 @@ function hideTooltip() {
 function selectEmoji(item) {
   state.selected = item;
   addRecent(item.ch);
-  copyAndToast(item.ch, t('copied', { x: item.ch }));
+  copyAndToast(item.ch, t('copied', { x: emojiTextLabel(item.ch) }));
   renderDetail(item);
   showDetail();
 }
@@ -35543,7 +35595,7 @@ function updateDetailFav() {
 function renderDetail(item) {
   const name = localName(item);
   const description = item.name;
-  $('#detailBig').textContent = item.ch;
+  setEmojiDisplay($('#detailBig'), item.ch);
   $('#detailCn').textContent = name;
   $('#detailEn').textContent = description;
   $('#detailEn').hidden = name === description;
@@ -35595,7 +35647,7 @@ const zoomOverlay = $('#zoomOverlay');
 function openZoom() {
   const item = state.selected;
   if (!item) return;
-  $('#zoomEmoji').textContent = item.ch;
+  setEmojiDisplay($('#zoomEmoji'), item.ch);
   $('#zoomCn').textContent = localName(item);
   $('#zoomEn').textContent = item.name;
   zoomOverlay.classList.add('show');
@@ -35608,7 +35660,7 @@ zoomOverlay.addEventListener('click', (e) => {
   if (!e.target.closest('.zoom-card')) closeZoom();
 });
 $('#zoomCopy').addEventListener('click', () => {
-  if (state.selected) copyAndToast(state.selected.ch, t('copied', { x: state.selected.ch }));
+  if (state.selected) copyAndToast(state.selected.ch, t('copied', { x: emojiTextLabel(state.selected.ch) }));
 });
 
 /* ---------- 事件绑定 ---------- */
