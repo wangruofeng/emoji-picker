@@ -66,7 +66,7 @@
 - **Emoji 本地化名** `EMOJI_NAMES`：{语言: {字符: 名称}}，覆盖 `zh-TW/ja/ko/th/ms`，取自 Unicode CLDR。`localName(item)` 回退顺序：当前语言映射 -> `cn`（zh-CN/zh-TW）-> `name`（en）。新增语言须建对应子字典。
 - 支持语言见 `LANGS`（`zh-CN/zh-TW/en/ja/ko/th/ms`），选择存 `localStorage`：
   - `emoji-theme` 主题、`emoji-lang` 语言、`emoji-recent` 最近使用（上限 24，去重前置）、`emoji-favorites` 收藏列表。
-- **收藏夹**：Emoji 格悬停显示星标，点击切换收藏；收藏独立于最近使用，在「收藏」tab 查看。`state.favs` 为字符数组，持久化到 `emoji-favorites`。
+- **收藏夹**：Emoji 格悬停显示星标，点击切换收藏；收藏独立于最近使用，在「收藏」tab 查看。`state.favs` 为字符数组，持久化到 `emoji-favorites`。星标点击带轻微弹 / 缩动效（`animateFavStar()`，约 180ms），系统开启「减少动态效果」时自动禁用。
 
 ## 在线地址
 

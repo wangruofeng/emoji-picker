@@ -267,8 +267,19 @@
   .fav-star:hover { color: var(--star); transform: scale(1.15); }
   .fav-star.on { color: var(--star); }
   .fav-star.on svg { fill: currentColor; }
+  .fav-star.fav-pop { animation: fav-pop .18s ease-out; }
+  .fav-star.fav-unpop { animation: fav-unpop .18s ease-out; }
+  @keyframes fav-pop {
+    50% { transform: scale(1.35); }
+  }
+  @keyframes fav-unpop {
+    50% { transform: scale(.72); }
+  }
   /* 触屏无 hover：星标常显半透明，已收藏保持实色 */
   @media (hover: none) { .fav-star { opacity: .45; } .fav-star.on { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .fav-star.fav-pop, .fav-star.fav-unpop { animation: none; }
+  }
   .emoji-cell.empty { display: none; }
 
   /* ---------- Empty state ---------- */
@@ -35687,13 +35698,27 @@ function saveFavs() {
   try { localStorage.setItem(FAV_KEY, JSON.stringify(state.favs)); } catch {}
 }
 function isFav(ch) { return state.favs.includes(ch); }
-function toggleFav(ch) {
+function animateFavStar(star, on) {
+  clearTimeout(star.favAnimationTimer);
+  star.classList.remove('fav-pop', 'fav-unpop');
+  void star.offsetWidth;
+  star.classList.add(on ? 'fav-pop' : 'fav-unpop');
+  const clear = () => star.classList.remove('fav-pop', 'fav-unpop');
+  star.addEventListener('animationend', clear, { once: true });
+  star.favAnimationTimer = setTimeout(clear, 220);
+}
+
+function toggleFav(ch, animateCards = false) {
   const on = !isFav(ch);
   state.favs = state.favs.filter(x => x !== ch);
   if (on) state.favs.unshift(ch);
   saveFavs();
   // 同步所有格子、详情面板与 Modal 星标
-  $$('.fav-star').forEach(s => { if (s.dataset.ch === ch) s.classList.toggle('on', on); });
+  $$('.fav-star').forEach(s => {
+    if (s.dataset.ch !== ch) return;
+    s.classList.toggle('on', on);
+    if (animateCards) animateFavStar(s, on);
+  });
   updateDetailFav();
   updateZoomFav();
   showToast(on ? t('favOn', { x: emojiTextLabel(ch) }) : t('favOff', { x: emojiTextLabel(ch) }));
@@ -35920,7 +35945,7 @@ function appendEmojiCells(grid, items) {
     star.innerHTML = STAR;  // 静态图标常量，非用户输入
     star.addEventListener('click', (e) => {
       e.stopPropagation();
-      toggleFav(item.ch);
+      toggleFav(item.ch, true);
     });
     cell.appendChild(star);
     // tooltip 事件

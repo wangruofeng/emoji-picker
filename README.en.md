@@ -9,11 +9,11 @@ When served over HTTPS or localhost, it also supports installation as a PWA and 
 ## Features
 
 - 🌐 **Multi-language UI**: Switch among 7 languages — Simplified Chinese, Traditional Chinese, English, Japanese, Korean, Thai, and Malay. Your language choice is saved automatically. Emoji names come from the official Unicode CLDR localized annotations.
-- 🔍 **Multi-language & keyword search**: Instantly filter 800+ emoji by typing terms such as “smile”, “heart”, or “fire”; search adapts to the active language.
+- 🔍 **Multi-language & keyword search**: Instantly filter 1000+ emoji by typing terms such as “smile”, “heart”, or “fire”; search adapts to the active language.
 - 🗂️ **Browse by category**: Nine categories — Smileys & Emotion, People & Body, Animals & Nature, Food & Drink, Activities, Travel & Places, Objects, Symbols, Flags — plus a “Recent” view.
 - 📋 **One-click copy**: Click any emoji cell to copy the character, which is also recorded to the recent list (`localStorage emoji-recent`, capped at 24, de-duplicated and moved to front).
 - ⭐ **Favorites**: Hover an emoji and click the star in the corner to favorite it; favorites are saved in `localStorage emoji-favorites` and shown in a dedicated “Favorites” view.
-- 📊 **Codepoint details**: After clicking, the detail panel shows the Unicode codepoint, UTF-8 bytes, HTML entity, CSS `content`, and JS escape — each individually copyable.
+- 📊 **Codepoint details**: Click any emoji to open the detail panel, and zoom into a full modal — showing Unicode (hex & decimal), UTF-8 bytes, HTML entities, CSS `content` and JS escapes, plus attributes like category, composition type and a codepoint breakdown. Every item is individually copyable, with copy-emoji and share-link actions.
 - 🏻 **Skin-tone variants**: For gesture emoji that support skin tones, the detail panel offers 6 tones for quick switching and copying.
 - 🌓 **Light / dark theme**: One-click toggle; the preference is saved in `localStorage emoji-theme`.
 - 📱 **Responsive layout**: The detail panel sits on the right on desktop and slides to the bottom on mobile.
