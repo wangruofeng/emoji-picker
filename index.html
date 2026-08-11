@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Emoji 选择器：搜索、复制与 Unicode 码点查询</title>
 <meta name="description" content="免费 Emoji 选择器，支持中文与英文搜索、一键复制、肤色变体和 Unicode 码点、HTML 实体、CSS 与 JavaScript 转义查询。">
 <link rel="canonical" href="https://emoji-picker.wangruofeng007.com/">
@@ -68,7 +68,8 @@
   }
 
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
+  html, body { width: 100%; max-width: 100%; height: 100%; margin: 0; overflow-x: hidden; overscroll-behavior-x: none; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
                  "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
@@ -87,13 +88,14 @@
   }
   .logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 650; }
   .logo .mark {
-    width: 30px; height: 30px; border-radius: 8px;
+    width: 30px; height: 30px; flex: 0 0 30px; border-radius: 8px;
     display: grid; place-items: center;
     background: linear-gradient(135deg, #2563eb, #7c3aed);
     color: #fff; font-size: 16px; font-weight: 700; line-height: 1;
   }
   .logo .sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
   .spacer { flex: 1; }
+  .header-actions { display: grid; grid-template-columns: repeat(3, 36px); align-items: center; gap: 12px; flex-shrink: 0; }
 
   .icon-btn {
     width: 36px; height: 36px; border-radius: 8px;
@@ -191,11 +193,11 @@
 
   /* ---------- App body ---------- */
   .app-body {
-    flex: 1; display: flex; overflow: hidden;
+    flex: 1; min-width: 0; min-height: 0; display: flex; overflow: hidden; overscroll-behavior-x: none;
   }
   main {
     /* 顶部不留 padding：sticky 标题 pin 在 content-box 边缘，padding 透明带会让滚动内容穿透 */
-    flex: 1; overflow-y: auto; padding: 0 20px 60px;
+    flex: 1; min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-x: none; padding: 0 20px 60px;
   }
 
   /* ---------- Sections & grid ---------- */
@@ -226,9 +228,11 @@
   .cat-title .title-clear:hover { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
   .emoji-grid {
     display: grid;
+    min-width: 0;
     grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
     gap: 8px;
   }
+  .emoji-load-sentinel { height: 1px; }
   .emoji-cell {
     aspect-ratio: 1;
     display: grid; place-items: center;
@@ -244,12 +248,6 @@
      避免把每个未支持的码点渲染成缺字横条。 */
   .emoji-image { width: 1em; height: 1em; object-fit: contain; }
   .emoji-unsupported { color: var(--text-faint); font-size: .75em; }
-  /* iOS 的 Apple Color Emoji 可见字形会略偏离行框中心，单独补偿字形而不影响卡片动画。 */
-  @supports (-webkit-touch-callout: none) {
-    @media (max-width: 768px) {
-      .emoji-char { transform: translateY(18px); }
-    }
-  }
   .emoji-cell:hover {
     transform: translateY(-2px);
     border-color: var(--accent);
@@ -324,10 +322,10 @@
     width: 28px; height: 28px; border-radius: 6px;
     border: 1px solid var(--border); background: var(--panel);
     color: var(--text-muted); cursor: pointer;
-    display: grid; place-items: center; flex-shrink: 0;
+    display: grid; place-items: center; flex-shrink: 0; padding: 0; line-height: 1;
   }
   .detail-row .copy-mini:hover { color: var(--accent); border-color: var(--accent); }
-  .detail-row .copy-mini svg { width: 13px; height: 13px; }
+  .detail-row .copy-mini svg { display: block; width: 13px; height: 13px; }
 
   .detail-section-title {
     font-size: 13px; font-weight: 600; color: var(--text-muted);
@@ -394,13 +392,13 @@
   }
   .zoom-scroll { max-height: inherit; overflow-y: auto; padding: 28px; }
   .zoom-close {
-    position: absolute; top: 14px; right: 14px; z-index: 2; width: 34px; height: 34px;
+    width: 34px; height: 34px; flex: 0 0 34px;
     display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px;
-    background: var(--panel); color: var(--text-muted); cursor: pointer;
+    padding: 0; background: var(--panel); color: var(--text-muted); cursor: pointer; line-height: 1;
   }
   .zoom-close:hover { color: var(--text); border-color: var(--border-strong); }
-  .zoom-close svg { width: 18px; height: 18px; }
-  .zoom-hero { display: flex; gap: 20px; align-items: center; padding-right: 42px; }
+  .zoom-close svg { display: block; width: 18px; height: 18px; }
+  .zoom-hero { display: flex; gap: 20px; align-items: center; }
   .zoom-emoji-wrap {
     width: 118px; height: 118px; flex: 0 0 118px; display: grid; place-items: center;
     border: 1px solid var(--border); border-radius: 18px; background: var(--bg);
@@ -409,9 +407,9 @@
   .zoom-emoji .emoji-image { width: 82px; height: 82px; }
   .zoom-heading { min-width: 0; flex: 1; }
   .zoom-title-row { display: flex; align-items: flex-start; gap: 10px; }
-  .zoom-cn { font-size: 23px; font-weight: 700; color: var(--text); margin: 0; line-height: 1.25; }
+  .zoom-cn { min-width: 0; flex: 1; font-size: 23px; font-weight: 700; color: var(--text); margin: 0; line-height: 1.25; }
   .zoom-en { font-size: 14px; color: var(--text-muted); margin: 6px 0 12px; word-break: break-word; }
-  .zoom-fav { width: 34px; height: 34px; padding: 6px; margin-left: auto; border: 0; border-radius: 8px; background: var(--bg); color: var(--text-muted); cursor: pointer; }
+  .zoom-fav { width: 34px; height: 34px; flex: 0 0 34px; padding: 6px; margin-left: auto; border: 0; border-radius: 8px; background: var(--bg); color: var(--text-muted); cursor: pointer; }
   .zoom-fav svg { width: 100%; height: 100%; }
   .zoom-fav.on { color: var(--star); }
   .zoom-fav.on svg { fill: currentColor; }
@@ -429,6 +427,7 @@
     border: 1px solid var(--border); border-radius: 8px; background: var(--panel);
   }
   .codepoint-glyph { font-size: 25px; text-align: center; }
+  .codepoint-glyph.zwj, .codepoint-glyph.vs16 { font: 12px/1.2 "SF Mono", Menlo, Consolas, monospace; }
   .codepoint-code { font: 12px/1.4 "SF Mono", Menlo, Consolas, monospace; color: var(--text); }
   .codepoint-role { color: var(--text-muted); font-size: 12px; text-align: right; }
   .zoom-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
@@ -469,13 +468,19 @@
 
   @media (max-width: 768px) {
     header { padding: 12px 14px; }
+    .logo { min-width: 0; flex: 1 1 auto; }
+    .logo > div:last-child { min-width: 0; }
+    #appTitle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .spacer { display: none; }
     .toolbar { padding: 8px 14px; }
+    .stat { display: none; }
     .tabs { padding: 8px 14px; }
     main { padding: 0 14px 50px; }
     .cat-section:first-child { margin-top: 12px; }
     .logo .sub { display: none; }
-    .emoji-grid { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
+    .emoji-grid { grid-template-columns: repeat(auto-fill, minmax(min(52px, 100%), 1fr)); gap: 6px; }
     .emoji-cell { font-size: 28px; }
+    .emoji-char { transform: translateY(12px); }
     .app-body { flex-direction: column; }
     .detail {
       width: auto; border-left: 0; border-top: 1px solid var(--border);
@@ -484,19 +489,21 @@
     .detail.visible { display: flex; }
     .detail-close { display: grid; }
     #zoomOverlay { padding: 0; align-items: stretch; }
-    .zoom-card { width: 100vw; height: 100dvh; max-height: none; border-radius: 0; border: 0; }
-    .zoom-scroll { height: 100%; max-height: none; padding: 20px 16px 28px; }
-    .zoom-hero { align-items: flex-start; gap: 14px; padding-right: 36px; }
+    .zoom-card { width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; border: 0; }
+    .zoom-scroll { height: 100%; max-height: none; padding: 20px 16px 0; }
+    .zoom-hero { align-items: flex-start; gap: 14px; }
     .zoom-emoji-wrap { width: 82px; height: 82px; flex-basis: 82px; border-radius: 14px; }
     .zoom-emoji { font-size: 54px; }
+    .zoom-emoji .emoji-char { transform: none; }
     .zoom-emoji .emoji-image { width: 58px; height: 58px; }
     .zoom-cn { font-size: 19px; }
     .zoom-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 18px; }
     .zoom-section.full { margin-top: 12px; }
     .zoom-section { padding: 14px; }
     .codepoint-part { grid-template-columns: 38px minmax(86px, .8fr) minmax(0, 1.2fr); gap: 8px; }
-    .zoom-actions { position: sticky; bottom: -28px; padding: 12px 0 0; background: var(--panel); }
+    .zoom-actions { position: sticky; bottom: 0; margin-top: 12px; padding: 12px 0; background: var(--panel); }
     .zoom-action { flex: 1; }
+    #zoomShare { color: var(--accent); border-color: var(--accent); }
   }
 </style>
 </head>
@@ -511,14 +518,16 @@
     </div>
   </div>
   <div class="spacer"></div>
-  <a class="icon-btn" id="githubLink" href="https://github.com/wangruofeng/emoji-picker" target="_blank" rel="noopener noreferrer" title="查看 GitHub 源码" aria-label="GitHub 源码仓库">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.37.5 0 5.78 0 12.292c0 5.211 3.438 9.63 8.205 11.188.6.111.82-.254.82-.567 0-.28-.01-1.022-.015-2.005-3.338.711-4.042-1.582-4.042-1.582-.546-1.361-1.335-1.725-1.335-1.725-1.087-.731.084-.716.084-.716 1.205.082 1.838 1.215 1.838 1.215 1.07 1.803 2.809 1.282 3.495.981.108-.763.417-1.282.76-1.577-2.665-.295-5.466-1.309-5.466-5.827 0-1.287.465-2.339 1.235-3.164-.135-.297-.54-1.498.105-3.121 0 0 1.005-.316 3.3 1.209.96-.262 1.98-.392 3-.397 1.02.005 2.04.135 3 .397 2.28-1.525 3.285-1.209 3.285-1.209.645 1.623.24 2.824.12 3.121.765.825 1.23 1.877 1.23 3.164 0 4.53-2.805 5.527-5.475 5.817.42.354.81 1.077.81 2.182 0 1.578-.015 2.846-.015 3.229 0 .309.21.678.825.562C20.565 21.917 24 17.495 24 12.292 24 5.78 18.627.5 12 .5z"/></svg>
-  </a>
-  <div class="lang-wrap">
-    <button class="lang-btn" id="langBtn" title="切换语言 / Language" aria-label="切换语言 / Language">🌐</button>
-    <div class="lang-menu" id="langMenu" role="menu"></div>
+  <div class="header-actions">
+    <a class="icon-btn" id="githubLink" href="https://github.com/wangruofeng/emoji-picker" target="_blank" rel="noopener noreferrer" title="查看 GitHub 源码" aria-label="GitHub 源码仓库">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.37.5 0 5.78 0 12.292c0 5.211 3.438 9.63 8.205 11.188.6.111.82-.254.82-.567 0-.28-.01-1.022-.015-2.005-3.338.711-4.042-1.582-4.042-1.582-.546-1.361-1.335-1.725-1.335-1.725-1.087-.731.084-.716.084-.716 1.205.082 1.838 1.215 1.838 1.215 1.07 1.803 2.809 1.282 3.495.981.108-.763.417-1.282.76-1.577-2.665-.295-5.466-1.309-5.466-5.827 0-1.287.465-2.339 1.235-3.164-.135-.297-.54-1.498.105-3.121 0 0 1.005-.316 3.3 1.209.96-.262 1.98-.392 3-.397 1.02.005 2.04.135 3 .397 2.28-1.525 3.285-1.209 3.285-1.209.645 1.623.24 2.824.12 3.121.765.825 1.23 1.877 1.23 3.164 0 4.53-2.805 5.527-5.475 5.817.42.354.81 1.077.81 2.182 0 1.578-.015 2.846-.015 3.229 0 .309.21.678.825.562C20.565 21.917 24 17.495 24 12.292 24 5.78 18.627.5 12 .5z"/></svg>
+    </a>
+    <div class="lang-wrap">
+      <button class="lang-btn" id="langBtn" title="切换语言 / Language" aria-label="切换语言 / Language">🌐</button>
+      <div class="lang-menu" id="langMenu" role="menu"></div>
+    </div>
+    <button class="icon-btn" id="themeBtn" title="切换深浅色"></button>
   </div>
-  <button class="icon-btn" id="themeBtn" title="切换深浅色"></button>
 </header>
 
 <div class="toolbar">
@@ -577,12 +586,11 @@
 
 <div id="zoomOverlay" role="dialog" aria-modal="true" aria-labelledby="zoomCn" aria-hidden="true">
   <div class="zoom-card">
-    <button class="zoom-close" id="zoomClose" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="zoom-scroll">
       <div class="zoom-hero">
         <div class="zoom-emoji-wrap"><div class="zoom-emoji" id="zoomEmoji">😀</div></div>
         <div class="zoom-heading">
-          <div class="zoom-title-row"><h2 class="zoom-cn" id="zoomCn"></h2><button class="zoom-fav" id="zoomFav" type="button"></button></div>
+          <div class="zoom-title-row"><h2 class="zoom-cn" id="zoomCn"></h2><button class="zoom-fav" id="zoomFav" type="button"></button><button class="zoom-close" id="zoomClose" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
           <p class="zoom-en" id="zoomEn"></p>
           <div class="zoom-tags" id="zoomTags"></div>
         </div>
@@ -35506,7 +35514,9 @@ function buildEmojiDetailModel(item) {
     properties,
     parts: buildCodePointParts(item.ch),
     tags: [localCat(item.cat), composition, ...(fallback ? ['Emoji 17.0'] : [])],
-    keywords: Array.from(new Set([...(item.kw || []), item.cn, item.name].filter(Boolean))).slice(0, 24),
+    keywords: Array.from(new Set(item.kw || []))
+      .filter(keyword => keyword !== item.cn && keyword !== item.name)
+      .slice(0, 24),
   };
 }
 
@@ -35740,7 +35750,31 @@ function localTabLabel(key) {
 }
 
 /* ---------- 渲染主内容 ---------- */
+const INITIAL_CATEGORY_BATCH = 36;
+const INITIAL_GRID_BATCH = 72;
+const GRID_BATCH_SIZE = 72;
+let gridLoadObserver;
+
+function resetLazyGrids() {
+  if (gridLoadObserver) {
+    gridLoadObserver.disconnect();
+    gridLoadObserver = null;
+  }
+}
+
+function getGridLoadObserver() {
+  if (!gridLoadObserver && 'IntersectionObserver' in window) {
+    gridLoadObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.loadNextBatch?.();
+      });
+    }, { root: $('#main'), rootMargin: '0px 0px 600px' });
+  }
+  return gridLoadObserver;
+}
+
 function renderMain() {
+  resetLazyGrids();
   const main = $('#emojiContent');
   clearElement(main);
   const items = getFilteredItems();
@@ -35791,7 +35825,7 @@ function renderMain() {
       title.appendChild(clear);
     }
     section.appendChild(title);
-    section.appendChild(buildGrid(items));
+    section.appendChild(buildGrid(items, INITIAL_GRID_BATCH));
     main.appendChild(section);
     return;
   }
@@ -35811,14 +35845,45 @@ function renderMain() {
     count.className = 'count'; count.textContent = t('countSuffix', { n: catItems.length });
     title.appendChild(count);
     section.appendChild(title);
-    section.appendChild(buildGrid(catItems));
+    section.appendChild(buildGrid(catItems, state.activeCat === '全部' ? INITIAL_CATEGORY_BATCH : INITIAL_GRID_BATCH));
     main.appendChild(section);
   });
 }
 
-function buildGrid(items) {
+function buildGrid(items, initialBatch) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'emoji-grid-wrap';
   const grid = document.createElement('div');
   grid.className = 'emoji-grid';
+  wrapper.appendChild(grid);
+  let nextIndex = 0;
+
+  const appendNextBatch = () => {
+    const batch = items.slice(nextIndex, nextIndex + GRID_BATCH_SIZE);
+    nextIndex += batch.length;
+    appendEmojiCells(grid, batch);
+    if (nextIndex >= items.length) {
+      gridLoadObserver?.unobserve(sentinel);
+      sentinel.remove();
+    }
+  };
+
+  const sentinel = document.createElement('div');
+  sentinel.className = 'emoji-load-sentinel';
+  sentinel.loadNextBatch = appendNextBatch;
+  wrapper.appendChild(sentinel);
+
+  appendEmojiCells(grid, items.slice(0, initialBatch));
+  nextIndex = Math.min(initialBatch, items.length);
+  if (nextIndex >= items.length) {
+    sentinel.remove();
+  } else {
+    getGridLoadObserver()?.observe(sentinel);
+  }
+  return wrapper;
+}
+
+function appendEmojiCells(grid, items) {
   items.forEach(item => {
     const cell = document.createElement('div');
     cell.className = 'emoji-cell';
@@ -35841,7 +35906,6 @@ function buildGrid(items) {
     cell.addEventListener('mouseleave', hideTooltip);
     grid.appendChild(cell);
   });
-  return grid;
 }
 
 function buildEmpty(titleText, desc, big = '🔍') {
@@ -35876,6 +35940,11 @@ function selectEmoji(item) {
   state.selected = item;
   addRecent(item.ch);
   copyAndToast(item.ch, t('copied', { x: emojiTextLabel(item.ch) }));
+  if (window.innerWidth <= 768) {
+    hideDetail();
+    openZoom();
+    return;
+  }
   renderDetail(item);
   showDetail();
 }
@@ -36002,7 +36071,7 @@ function renderZoom(item) {
     const row = document.createElement('div');
     row.className = 'codepoint-part';
     const glyph = document.createElement('div');
-    glyph.className = 'codepoint-glyph';
+    glyph.className = 'codepoint-glyph' + (part.cp === 0x200D ? ' zwj' : part.cp === 0xFE0F ? ' vs16' : '');
     glyph.textContent = part.glyph;
     const code = document.createElement('div');
     code.className = 'codepoint-code';
