@@ -35179,6 +35179,22 @@ const RECENT_KEY = 'emoji-recent';
 const FAV_KEY = 'emoji-favorites';
 const SKIN_TONES = ['', '🏻', '🏼', '🏽', '🏾', '🏿'];
 
+// 按联合国 M49 统计区域口径归类国家和地区旗帜。
+// Unicode 旗帜代表的是 region，因此这里也覆盖属地、欧盟/联合国与英国分区旗。
+const CONTINENT_REGION_CODES = {
+  africa: 'AC AO BF BI BJ BW CD CF CG CI CM CV DG DJ DZ EA EG EH ER ET GA GH GM GN GQ GW IC IO KE KM LR LS LY MA MG ML MR MU MW MZ NA NE NG RE RW SC SD SH SL SN SO SS ST SZ TA TD TF TG TN TZ UG YT ZA ZM ZW'.split(' '),
+  americas: 'AG AI AR AS AW BB BL BM BO BQ BR BS BV BZ CA CL CO CP CR CU CW DM DO EC FK GD GF GL GP GS GT GY HN HT JM KN KY LC MF MQ MS MX NI PA PE PM PR PY SR SV SX TC TT US UY VC VE VG VI'.split(' '),
+  asia: 'AE AF AM AZ BD BH BN BT CN CY GE HK ID IL IN IQ IR JO JP KG KH KP KR KW KZ LA LB LK MM MN MO MV MY NP OM PH PK PS QA SA SG SY TH TJ TL TM TR TW UZ VN YE'.split(' '),
+  europe: 'AD AL AT AX BA BE BG BY CH CQ CZ DE DK EE ES EU FI FO FR GB GG GI GR HR HU IE IM IS IT JE LI LT LU LV MC MD ME MK MT NL NO PL PT RO RS RU SE SI SJ SK SM UA VA XK'.split(' '),
+  oceania: 'AU CC CK CX FJ FM GU HM KI MH MP NC NF NR NU NZ PF PG PN PW SB TK TO TV UM VU WF WS'.split(' '),
+  antarctica: ['AQ'],
+  global: ['UN'],
+};
+const CONTINENT_BY_REGION = new Map(
+  Object.entries(CONTINENT_REGION_CODES).flatMap(([continent, codes]) => codes.map(code => [code, continent]))
+);
+const SUBDIVISION_CONTINENTS = { gbeng: 'europe', gbsct: 'europe', gbwls: 'europe' };
+
 /* ---------- 多语言（i18n） ---------- */
 // 支持的语言：代码 => 菜单显示名
 const LANGS = {
@@ -35252,6 +35268,14 @@ const I18N = {
   codepointParts:{ 'zh-CN':'码点组成','zh-TW':'碼點組成','en':'Code point breakdown' },
   keywords:     { 'zh-CN':'关键词','zh-TW':'關鍵詞','en':'Keywords' },
   category:     { 'zh-CN':'分类','zh-TW':'分類','en':'Category' },
+  continent:    { 'zh-CN':'所在洲','zh-TW':'所在洲','en':'Continent','ja':'大陸','ko':'대륙','th':'ทวีป','ms':'Benua' },
+  africa:       { 'zh-CN':'非洲','zh-TW':'非洲','en':'Africa','ja':'アフリカ','ko':'아프리카','th':'แอฟริกา','ms':'Afrika' },
+  americas:     { 'zh-CN':'美洲','zh-TW':'美洲','en':'Americas','ja':'アメリカ','ko':'아메리카','th':'อเมริกา','ms':'Benua Amerika' },
+  asia:         { 'zh-CN':'亚洲','zh-TW':'亞洲','en':'Asia','ja':'アジア','ko':'아시아','th':'เอเชีย','ms':'Asia' },
+  europe:       { 'zh-CN':'欧洲','zh-TW':'歐洲','en':'Europe','ja':'ヨーロッパ','ko':'유럽','th':'ยุโรป','ms':'Eropah' },
+  oceania:      { 'zh-CN':'大洋洲','zh-TW':'大洋洲','en':'Oceania','ja':'オセアニア','ko':'오세아니아','th':'โอเชียเนีย','ms':'Oceania' },
+  antarctica:   { 'zh-CN':'南极洲','zh-TW':'南極洲','en':'Antarctica','ja':'南極大陸','ko':'남극 대륙','th':'แอนตาร์กติกา','ms':'Antartika' },
+  global:       { 'zh-CN':'全球','zh-TW':'全球','en':'Global','ja':'世界','ko':'전 세계','th':'ทั่วโลก','ms':'Global' },
   codepointCount:{ 'zh-CN':'码点数量','zh-TW':'碼點數量','en':'Code points' },
   composition:  { 'zh-CN':'序列类型','zh-TW':'序列類型','en':'Sequence type' },
   gender:       { 'zh-CN':'性别','zh-TW':'性別','en':'Gender' },
@@ -35398,6 +35422,23 @@ function toJsEscape(ch) {
   }).join('');
 }
 
+function getFlagRegionCode(ch) {
+  const cps = getCodePoints(ch);
+  if (cps.length === 2 && cps.every(cp => cp >= 0x1F1E6 && cp <= 0x1F1FF)) {
+    return String.fromCharCode(...cps.map(cp => cp - 0x1F1E6 + 65));
+  }
+  if (cps[0] === 0x1F3F4 && cps[cps.length - 1] === 0xE007F) {
+    return cps.slice(1, -1).map(cp => String.fromCharCode(cp - 0xE0000)).join('');
+  }
+  return '';
+}
+
+function getFlagContinent(item) {
+  if (item.cat !== '旗帜') return '';
+  const regionCode = getFlagRegionCode(item.ch);
+  return CONTINENT_BY_REGION.get(regionCode) || SUBDIVISION_CONTINENTS[regionCode] || '';
+}
+
 const SKIN_TONE_KEYS = {
   0x1F3FB: 'lightTone',
   0x1F3FC: 'mediumLightTone',
@@ -35434,8 +35475,12 @@ function buildEmojiDetailModel(item) {
     : cps.length === 1 ? t('singleCodepoint') : t('multiCodepoint');
   const gender = hasFemale ? t('female') : hasMale ? t('male') : t('neutral');
   const fallback = EMOJI_IMAGE_FALLBACK.has(item.ch);
+  const continent = getFlagContinent(item);
   const properties = [
     [t('category'), localCat(item.cat)],
+  ];
+  if (continent) properties.push([t('continent'), t(continent)]);
+  properties.push(
     [t('codepointCount'), String(cps.length)],
     [t('composition'), composition],
     [t('skinTone'), toneKeys.length ? toneKeys.map(key => t(key)).join(' + ') : t('noSkinTone')],
@@ -35443,7 +35488,7 @@ function buildEmojiDetailModel(item) {
     [t('presentation'), cps.includes(0xFE0F) ? t('emojiStyle') : t('defaultStyle')],
     [t('renderSource'), fallback ? t('notoRender') : t('nativeRender')],
     [t('dataStandard'), 'Unicode Emoji 17.0'],
-  ];
+  );
   if (fallback) properties.push([t('introduced'), 'Emoji 17.0']);
   return {
     item,
