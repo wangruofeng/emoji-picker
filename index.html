@@ -254,6 +254,8 @@
     transform: translateY(-2px);
     border-color: var(--accent);
     box-shadow: 0 4px 12px rgba(37,99,235,.15);
+    /* 提示浮层意外相交时，也不能遮住 hover 边框。 */
+    z-index: 151;
   }
   .fav-star {
     position: absolute; top: 3px; right: 3px;
@@ -332,6 +334,20 @@
     margin: 18px 0 10px; text-transform: uppercase; letter-spacing: .03em;
   }
 
+  .property-list { display: grid; gap: 8px; margin: 0; }
+  .property-item {
+    display: grid; grid-template-columns: minmax(92px, .8fr) minmax(0, 1.2fr);
+    gap: 12px; align-items: start; font-size: 12px;
+  }
+  .property-item dt { color: var(--text-muted); }
+  .property-item dd { margin: 0; color: var(--text); text-align: right; word-break: break-word; }
+  .detail-tags, .zoom-tags, .zoom-keywords { display: flex; flex-wrap: wrap; gap: 6px; }
+  .info-tag {
+    display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--bg);
+    color: var(--text-muted); font-size: 11px; line-height: 1.25;
+  }
+
   .skin-row {
     display: flex; gap: 8px; flex-wrap: wrap;
   }
@@ -360,32 +376,70 @@
   .detail-fav.on { color: var(--star); }
   .detail-fav.on svg { fill: currentColor; }
 
-  /* ---------- 放大查看浮层 ---------- */
+  /* ---------- Emoji 详情 Modal ---------- */
+  body.modal-open { overflow: hidden; }
   #zoomOverlay {
     position: fixed; inset: 0; z-index: 300;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
     background: color-mix(in srgb, var(--bg) 72%, transparent);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    opacity: 0; pointer-events: none; transition: opacity .18s;
+    opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .18s, visibility 0s linear .18s;
   }
-  #zoomOverlay.show { opacity: 1; pointer-events: auto; }
+  #zoomOverlay.show { opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }
   .zoom-card {
     background: var(--panel); border: 1px solid var(--border);
     border-radius: var(--radius); box-shadow: var(--shadow);
-    padding: 40px 48px 28px;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-    max-width: min(90vw, 480px);
+    width: min(820px, calc(100vw - 48px)); max-height: min(88vh, 860px);
+    position: relative; overflow: hidden;
   }
-  .zoom-emoji { font-size: clamp(120px, 30vw, 200px); line-height: 1.15; user-select: none; }
-  .zoom-cn { font-size: 17px; font-weight: 600; color: var(--text); margin: 6px 0 0; }
-  .zoom-en { font-size: 13px; color: var(--text-muted); margin: 0; word-break: break-word; text-align: center; }
-  .zoom-copy {
-    margin-top: 14px; padding: 9px 22px; border-radius: 8px;
+  .zoom-scroll { max-height: inherit; overflow-y: auto; padding: 28px; }
+  .zoom-close {
+    position: absolute; top: 14px; right: 14px; z-index: 2; width: 34px; height: 34px;
+    display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--panel); color: var(--text-muted); cursor: pointer;
+  }
+  .zoom-close:hover { color: var(--text); border-color: var(--border-strong); }
+  .zoom-close svg { width: 18px; height: 18px; }
+  .zoom-hero { display: flex; gap: 20px; align-items: center; padding-right: 42px; }
+  .zoom-emoji-wrap {
+    width: 118px; height: 118px; flex: 0 0 118px; display: grid; place-items: center;
+    border: 1px solid var(--border); border-radius: 18px; background: var(--bg);
+  }
+  .zoom-emoji { font-size: 78px; line-height: 1; user-select: none; }
+  .zoom-emoji .emoji-image { width: 82px; height: 82px; }
+  .zoom-heading { min-width: 0; flex: 1; }
+  .zoom-title-row { display: flex; align-items: flex-start; gap: 10px; }
+  .zoom-cn { font-size: 23px; font-weight: 700; color: var(--text); margin: 0; line-height: 1.25; }
+  .zoom-en { font-size: 14px; color: var(--text-muted); margin: 6px 0 12px; word-break: break-word; }
+  .zoom-fav { width: 34px; height: 34px; padding: 6px; margin-left: auto; border: 0; border-radius: 8px; background: var(--bg); color: var(--text-muted); cursor: pointer; }
+  .zoom-fav svg { width: 100%; height: 100%; }
+  .zoom-fav.on { color: var(--star); }
+  .zoom-fav.on svg { fill: currentColor; }
+  .zoom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 24px; }
+  .zoom-section { min-width: 0; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+  .zoom-section.full { margin-top: 18px; }
+  .zoom-section h3 { margin: 0 0 14px; color: var(--text); font-size: 14px; }
+  .zoom-section .detail-row:last-child { margin-bottom: 0; }
+  .zoom-section .detail-row label { width: 86px; }
+  .zoom-section .detail-row .value { background: var(--panel); }
+  .codepoint-parts { display: grid; gap: 8px; }
+  .codepoint-part {
+    display: grid; grid-template-columns: 48px minmax(92px, .8fr) minmax(0, 1.2fr);
+    align-items: center; gap: 10px; min-height: 46px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--panel);
+  }
+  .codepoint-glyph { font-size: 25px; text-align: center; }
+  .codepoint-code { font: 12px/1.4 "SF Mono", Menlo, Consolas, monospace; color: var(--text); }
+  .codepoint-role { color: var(--text-muted); font-size: 12px; text-align: right; }
+  .zoom-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  .zoom-action {
+    padding: 9px 16px; border-radius: 8px;
     border: 1px solid var(--border); background: var(--bg);
     color: var(--text); font-size: 14px; cursor: pointer; transition: all .12s;
   }
-  .zoom-copy:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
-  .zoom-hint { margin-top: 18px; font-size: 12px; color: var(--text-muted); }
+  .zoom-action.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .zoom-action:hover { border-color: var(--accent); }
+  .zoom-hint { margin: 12px 0 0; text-align: center; font-size: 11px; color: var(--text-muted); }
 
   /* ---------- Toast ---------- */
   #toast {
@@ -394,7 +448,7 @@
     padding: 9px 16px; border-radius: 8px; font-size: 13px;
     box-shadow: 0 8px 24px rgba(0,0,0,.2);
     opacity: 0; pointer-events: none; transition: all .22s;
-    z-index: 200; display: flex; align-items: center; gap: 7px;
+    z-index: 400; display: flex; align-items: center; gap: 7px;
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   #toast svg { width: 15px; height: 15px; }
@@ -429,6 +483,20 @@
     }
     .detail.visible { display: flex; }
     .detail-close { display: grid; }
+    #zoomOverlay { padding: 0; align-items: stretch; }
+    .zoom-card { width: 100vw; height: 100dvh; max-height: none; border-radius: 0; border: 0; }
+    .zoom-scroll { height: 100%; max-height: none; padding: 20px 16px 28px; }
+    .zoom-hero { align-items: flex-start; gap: 14px; padding-right: 36px; }
+    .zoom-emoji-wrap { width: 82px; height: 82px; flex-basis: 82px; border-radius: 14px; }
+    .zoom-emoji { font-size: 54px; }
+    .zoom-emoji .emoji-image { width: 58px; height: 58px; }
+    .zoom-cn { font-size: 19px; }
+    .zoom-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 18px; }
+    .zoom-section.full { margin-top: 12px; }
+    .zoom-section { padding: 14px; }
+    .codepoint-part { grid-template-columns: 38px minmax(86px, .8fr) minmax(0, 1.2fr); gap: 8px; }
+    .zoom-actions { position: sticky; bottom: -28px; padding: 12px 0 0; background: var(--panel); }
+    .zoom-action { flex: 1; }
   }
 </style>
 </head>
@@ -439,7 +507,7 @@
     <div class="mark">😀</div>
     <div>
       <span id="appTitle">Emoji 展示选择器</span>
-      <div class="sub" id="appSub">中文搜索 / 一键复制 / 码点详情</div>
+      <div class="sub" id="appSub">中文搜索 / 一键复制 / 码点详情 · Unicode Emoji 17.0</div>
     </div>
   </div>
   <div class="spacer"></div>
@@ -477,7 +545,7 @@
   </main>
   <aside class="detail hidden" id="detail">
     <div class="detail-head">
-      <div class="detail-big" id="detailBig">😀</div>
+      <div class="detail-big" id="detailBig" role="button" tabindex="0" aria-haspopup="dialog">😀</div>
       <div class="detail-names">
         <p class="cn" id="detailCn">笑脸</p>
         <p class="en" id="detailEn">grinning face</p>
@@ -494,6 +562,10 @@
       <div class="detail-row"><label>HTML</label><div class="value" id="detailHtml"></div><button class="copy-mini" data-target="detailHtml" data-i18n-title="copyHtml"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
       <div class="detail-row"><label>CSS</label><div class="value" id="detailCss"></div><button class="copy-mini" data-target="detailCss" data-i18n-title="copyCss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
       <div class="detail-row"><label id="jsLabel">JS 转义</label><div class="value" id="detailJs"></div><button class="copy-mini" data-target="detailJs" data-i18n-title="copyJs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+      <div class="detail-section-title" id="propertiesTitle">Emoji 属性</div>
+      <dl class="property-list" id="detailProperties"></dl>
+      <div class="detail-section-title" id="tagsTitle">标签</div>
+      <div class="detail-tags" id="detailTags"></div>
       <div class="detail-section-title" id="skinTitle" style="display:none">肤色变体</div>
       <div class="skin-row" id="skinRow"></div>
     </div>
@@ -503,14 +575,43 @@
 <div id="toast"></div>
 <div id="tooltip"></div>
 
-<div id="zoomOverlay" role="dialog" aria-label="放大查看">
+<div id="zoomOverlay" role="dialog" aria-modal="true" aria-labelledby="zoomCn" aria-hidden="true">
   <div class="zoom-card">
-    <div class="zoom-emoji" id="zoomEmoji">😀</div>
-    <p class="zoom-cn" id="zoomCn"></p>
-    <p class="zoom-en" id="zoomEn"></p>
-    <button class="zoom-copy" id="zoomCopy">复制</button>
+    <button class="zoom-close" id="zoomClose" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div class="zoom-scroll">
+      <div class="zoom-hero">
+        <div class="zoom-emoji-wrap"><div class="zoom-emoji" id="zoomEmoji">😀</div></div>
+        <div class="zoom-heading">
+          <div class="zoom-title-row"><h2 class="zoom-cn" id="zoomCn"></h2><button class="zoom-fav" id="zoomFav" type="button"></button></div>
+          <p class="zoom-en" id="zoomEn"></p>
+          <div class="zoom-tags" id="zoomTags"></div>
+        </div>
+      </div>
+      <div class="zoom-grid">
+        <section class="zoom-section">
+          <h3 id="zoomEncodingTitle">编码信息</h3>
+          <div id="zoomEncodings"></div>
+        </section>
+        <section class="zoom-section">
+          <h3 id="zoomPropertiesTitle">Emoji 属性</h3>
+          <dl class="property-list" id="zoomProperties"></dl>
+        </section>
+      </div>
+      <section class="zoom-section full">
+        <h3 id="codepointPartsTitle">码点组成</h3>
+        <div class="codepoint-parts" id="codepointParts"></div>
+      </section>
+      <section class="zoom-section full">
+        <h3 id="keywordsTitle">关键词</h3>
+        <div class="zoom-keywords" id="zoomKeywords"></div>
+      </section>
+      <div class="zoom-actions">
+        <button class="zoom-action" id="zoomShare" type="button">复制分享链接</button>
+        <button class="zoom-action primary" id="zoomCopy" type="button">复制 Emoji</button>
+      </div>
+      <p class="zoom-hint" id="zoomHint">点击空白处或按 Esc 关闭</p>
+    </div>
   </div>
-  <div class="zoom-hint" id="zoomHint">点击空白处或按 Esc 关闭</div>
 </div>
 
 <script>
@@ -34544,13 +34645,35 @@ const UNICODE_EMOJI_17_ZWJ_ADDITIONS = [
 ];
 EMOJI_DATA.push(...UNICODE_EMOJI_17_ZWJ_ADDITIONS);
 
-// 当前系统字体缺失的是 Unicode 17 新增的 U+1FAEF（fight cloud）及其摔跤
-// ZWJ 组合。两个数据数组包含完整 Emoji 集合，因此必须按新码点精确筛选，
-// 不能把 👱‍♀️ 等原本可由系统字体显示的旧 Emoji 也切换成网络图片。
+// Unicode 17.0 官方新增项。数据数组包含完整 Emoji 集合，不能直接整组切换
+// 成网络图片；这里按官方 E17.0 的码点家族精确筛选，避免误伤 👱‍♀️ 等旧 Emoji。
+const EMOJI_17_SINGLE_CODEPOINTS = new Set([
+  0x1FAEA, // distorted face
+  0x1FAEF, // fight cloud
+  0x1FAC8, // hairy creature
+  0x1FACD, // orca
+  0x1F6D8, // landslide
+  0x1FA8A, // trombone
+  0x1FA8E, // treasure chest
+]);
+const EMOJI_SKIN_TONE_CODEPOINTS = new Set([0x1F3FB, 0x1F3FC, 0x1F3FD, 0x1F3FE, 0x1F3FF]);
+
+function needsEmoji17ImageFallback(item) {
+  const codepoints = Array.from(item.ch, char => char.codePointAt(0));
+  const set = new Set(codepoints);
+
+  if (codepoints.length === 1 && EMOJI_17_SINGLE_CODEPOINTS.has(codepoints[0])) return true;
+  // ballet dancer：person + ZWJ + ballet shoes（含肤色变体）
+  if (set.has(0x200D) && set.has(0x1FA70)) return true;
+  if (!codepoints.some(cp => EMOJI_SKIN_TONE_CODEPOINTS.has(cp))) return false;
+  // Emoji 17 新增的带肤色兔耳舞者与摔跤系列，包括双人物独立肤色组合。
+  return set.has(0x1F46F) || set.has(0x1F430) || set.has(0x1F93C) || set.has(0x1FAEF);
+}
+
 const EMOJI_IMAGE_FALLBACK = new Set([
   ...UNICODE_EMOJI_17_ADDITIONS,
   ...UNICODE_EMOJI_17_ZWJ_ADDITIONS,
-].filter(item => item.ch.includes('\u{1FAEF}')).map(item => item.ch));
+].filter(needsEmoji17ImageFallback).map(item => item.ch));
 const NOTO_EMOJI_CDN = 'https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@main/png/128/';
 
 // CLDR 没有为每一个双肤色 ZWJ 组合提供独立的简体中文名称；复用基础组合名称并补充肤色。
@@ -35073,7 +35196,7 @@ const LANG_KEY = 'emoji-lang';
 const I18N = {
   // 页头
   title:        { 'zh-CN':'Emoji 选择器：搜索、复制与 Unicode 码点查询','zh-TW':'Emoji 選擇器：搜尋、複製與 Unicode 碼點查詢','en':'Emoji Picker: Search, Copy & Unicode Codepoints','ja':'Emoji ピッカー：検索・コピー・Unicode コードポイント','ko':'Emoji 선택기: 검색, 복사 및 Unicode 코드 포인트','th':'ตัวเลือก Emoji: ค้นหา คัดลอก และโค้ดพอยต์ Unicode','ms':'Pemilih Emoji: Cari, Salin & Titik Kod Unicode' },
-  subtitle:     { 'zh-CN':'中文搜索 / 一键复制 / 码点详情','zh-TW':'中文搜尋 / 一鍵複製 / 碼點詳情','en':'Search / Copy / Codepoints','ja':'検索 / コピー / コードポイント','ko':'검색 / 복사 / 코드포인트','th':'ค้นหา / คัดลอก / โค้ดพอยต์','ms':'Cari / Salin / Titik Kod' },
+  subtitle:     { 'zh-CN':'中文搜索 / 一键复制 / 码点详情 · Unicode Emoji 17.0','zh-TW':'中文搜尋 / 一鍵複製 / 碼點詳情 · Unicode Emoji 17.0','en':'Search / Copy / Codepoints · Unicode Emoji 17.0','ja':'検索 / コピー / コードポイント · Unicode Emoji 17.0','ko':'검색 / 복사 / 코드포인트 · Unicode Emoji 17.0','th':'ค้นหา / คัดลอก / โค้ดพอยต์ · Unicode Emoji 17.0','ms':'Cari / Salin / Titik Kod · Unicode Emoji 17.0' },
   seoTitle:     { 'zh-CN':'Emoji 选择器：搜索、复制与 Unicode 码点查询','zh-TW':'Emoji 選擇器：搜尋、複製與 Unicode 碼點查詢','en':'Emoji Picker: Search, Copy & Unicode Codepoints','ja':'Emoji ピッカー：検索・コピー・Unicode コードポイント','ko':'Emoji 선택기: 검색, 복사 및 Unicode 코드 포인트','th':'ตัวเลือก Emoji: ค้นหา คัดลอก และโค้ดพอยต์ Unicode','ms':'Pemilih Emoji: Cari, Salin & Titik Kod Unicode' },
   seoDescription: { 'zh-CN':'搜索 3,000+ Emoji，点击即可复制字符，并查看 Unicode 码点、HTML 实体、CSS content 和 JavaScript 转义。','zh-TW':'搜尋超過 3,000 個 Emoji，點擊即可複製字元，並查看 Unicode 碼點、HTML 實體、CSS content 與 JavaScript 跳脫。','en':'Search 3,000+ emoji, copy a character with one click, and view its Unicode codepoint, HTML entity, CSS content, and JavaScript escape.','ja':'3,000 種類以上の Emoji を検索し、ワンクリックでコピー。Unicode コードポイント、HTML エンティティ、CSS content、JavaScript エスケープも確認できます。','ko':'3,000개 이상의 Emoji를 검색하고 한 번에 복사하세요. Unicode 코드 포인트, HTML 엔티티, CSS content, JavaScript 이스케이프도 확인할 수 있습니다.','th':'ค้นหา Emoji กว่า 3,000 รายการ คัดลอกได้ในคลิกเดียว และดูโค้ดพอยต์ Unicode, HTML entity, CSS content และ JavaScript escape ได้','ms':'Cari lebih 3,000 Emoji, salin aksara dengan satu klik, dan lihat titik kod Unicode, entiti HTML, CSS content, serta JavaScript escape.' },
   githubTitle:  { 'zh-CN':'查看 GitHub 源码','zh-TW':'查看 GitHub 原始碼','en':'View source on GitHub','ja':'GitHub でソースを見る','ko':'GitHub 소스 보기','th':'ดูซอร์สบน GitHub','ms':'Lihat sumber di GitHub' },
@@ -35124,6 +35247,45 @@ const I18N = {
   zoomCopy:     { 'zh-CN':'复制','zh-TW':'複製','en':'Copy','ja':'コピー','ko':'복사','th':'คัดลอก','ms':'Salin' },
   zoomHint:     { 'zh-CN':'点击空白处或按 Esc 关闭','zh-TW':'點擊空白處或按 Esc 關閉','en':'Click outside or press Esc to close','ja':'外側をクリックまたは Esc で閉じる','ko':'바깥 클릭 또는 Esc 누르기','th':'คลิกด้านนอกหรือกด Esc เพื่อปิด','ms':'Klik luar atau tekan Esc untuk tutup' },
   zoomAria:     { 'zh-CN':'放大查看','zh-TW':'放大查看','en':'Zoom view','ja':'拡大表示','ko':'확대 보기','th':'มุมมองขยาย','ms':'Paparan zum' },
+  emojiProperties:{ 'zh-CN':'Emoji 属性','zh-TW':'Emoji 屬性','en':'Emoji properties' },
+  tags:         { 'zh-CN':'标签','zh-TW':'標籤','en':'Tags' },
+  codepointParts:{ 'zh-CN':'码点组成','zh-TW':'碼點組成','en':'Code point breakdown' },
+  keywords:     { 'zh-CN':'关键词','zh-TW':'關鍵詞','en':'Keywords' },
+  category:     { 'zh-CN':'分类','zh-TW':'分類','en':'Category' },
+  codepointCount:{ 'zh-CN':'码点数量','zh-TW':'碼點數量','en':'Code points' },
+  composition:  { 'zh-CN':'序列类型','zh-TW':'序列類型','en':'Sequence type' },
+  gender:       { 'zh-CN':'性别','zh-TW':'性別','en':'Gender' },
+  presentation: { 'zh-CN':'呈现方式','zh-TW':'呈現方式','en':'Presentation' },
+  renderSource: { 'zh-CN':'渲染来源','zh-TW':'渲染來源','en':'Render source' },
+  dataStandard: { 'zh-CN':'数据标准','zh-TW':'資料標準','en':'Data standard' },
+  introduced:   { 'zh-CN':'收录版本','zh-TW':'收錄版本','en':'Introduced in' },
+  singleCodepoint:{ 'zh-CN':'单一码点','zh-TW':'單一碼點','en':'Single code point' },
+  modifierSequence:{ 'zh-CN':'修饰符序列','zh-TW':'修飾符序列','en':'Modifier sequence' },
+  zwjSequence:  { 'zh-CN':'ZWJ 连接序列','zh-TW':'ZWJ 連接序列','en':'ZWJ sequence' },
+  multiCodepoint:{ 'zh-CN':'多码点序列','zh-TW':'多碼點序列','en':'Multi-code-point sequence' },
+  female:       { 'zh-CN':'女性','zh-TW':'女性','en':'Female' },
+  male:         { 'zh-CN':'男性','zh-TW':'男性','en':'Male' },
+  neutral:      { 'zh-CN':'中性 / 未指定','zh-TW':'中性 / 未指定','en':'Neutral / unspecified' },
+  emojiStyle:   { 'zh-CN':'Emoji 彩色样式','zh-TW':'Emoji 彩色樣式','en':'Emoji presentation' },
+  defaultStyle: { 'zh-CN':'默认 Unicode 呈现','zh-TW':'預設 Unicode 呈現','en':'Default Unicode presentation' },
+  nativeRender: { 'zh-CN':'系统原生字体','zh-TW':'系統原生字型','en':'System emoji font' },
+  notoRender:   { 'zh-CN':'Noto Emoji 图片兜底','zh-TW':'Noto Emoji 圖片備援','en':'Noto Emoji image fallback' },
+  noSkinTone:   { 'zh-CN':'无','zh-TW':'無','en':'None' },
+  lightTone:    { 'zh-CN':'较浅肤色','zh-TW':'較淺膚色','en':'Light skin tone' },
+  mediumLightTone:{ 'zh-CN':'中等-浅肤色','zh-TW':'中等-淺膚色','en':'Medium-light skin tone' },
+  mediumTone:   { 'zh-CN':'中等肤色','zh-TW':'中等膚色','en':'Medium skin tone' },
+  mediumDarkTone:{ 'zh-CN':'中等-深肤色','zh-TW':'中等-深膚色','en':'Medium-dark skin tone' },
+  darkTone:     { 'zh-CN':'较深肤色','zh-TW':'較深膚色','en':'Dark skin tone' },
+  baseCharacter:{ 'zh-CN':'基础字符 / Emoji 组件','zh-TW':'基礎字元 / Emoji 元件','en':'Base character / emoji component' },
+  zwjRole:      { 'zh-CN':'零宽连接符（连接前后组件）','zh-TW':'零寬連接符（連接前後元件）','en':'Zero width joiner' },
+  variationRole:{ 'zh-CN':'变体选择符（强制 Emoji 样式）','zh-TW':'變體選擇符（強制 Emoji 樣式）','en':'Variation selector for emoji style' },
+  skinRole:     { 'zh-CN':'肤色修饰符','zh-TW':'膚色修飾符','en':'Skin tone modifier' },
+  genderRole:   { 'zh-CN':'性别符号','zh-TW':'性別符號','en':'Gender sign' },
+  decimalCodepoints:{ 'zh-CN':'十进制码点','zh-TW':'十進位碼點','en':'Decimal' },
+  htmlDecimal:  { 'zh-CN':'HTML 十进制','zh-TW':'HTML 十進位','en':'HTML decimal' },
+  shareLink:    { 'zh-CN':'复制分享链接','zh-TW':'複製分享連結','en':'Copy share link' },
+  linkCopied:   { 'zh-CN':'分享链接已复制','zh-TW':'分享連結已複製','en':'Share link copied' },
+  closeModal:   { 'zh-CN':'关闭 Emoji 详情','zh-TW':'關閉 Emoji 詳情','en':'Close emoji details' },
 };
 
 // 分类名多语言：内部仍用中文 key（item.cat），仅显示层翻译
@@ -35215,6 +35377,14 @@ function toHtmlEntities(ch) {
   return getCodePoints(ch).map(cp => `&#x${cp.toString(16).toUpperCase()};`).join('');
 }
 
+function toDecimalCodePoints(ch) {
+  return getCodePoints(ch).join(' ');
+}
+
+function toHtmlDecimalEntities(ch) {
+  return getCodePoints(ch).map(cp => `&#${cp};`).join('');
+}
+
 // CSS content：\1F600
 function toCssContent(ch) {
   return getCodePoints(ch).map(cp => '\\' + cp.toString(16).toUpperCase()).join('');
@@ -35228,10 +35398,102 @@ function toJsEscape(ch) {
   }).join('');
 }
 
-// Google Noto Emoji 使用 `emoji_u<hex>_<hex>.png` 的完整码点序列命名。
-// 保留 ZWJ / 肤色修饰符，不能按可见字符拆分，否则会请求到错误资源。
+const SKIN_TONE_KEYS = {
+  0x1F3FB: 'lightTone',
+  0x1F3FC: 'mediumLightTone',
+  0x1F3FD: 'mediumTone',
+  0x1F3FE: 'mediumDarkTone',
+  0x1F3FF: 'darkTone',
+};
+
+function buildCodePointParts(ch) {
+  return getCodePoints(ch).map(cp => {
+    let roleKey = 'baseCharacter';
+    if (cp === 0x200D) roleKey = 'zwjRole';
+    else if (cp === 0xFE0F) roleKey = 'variationRole';
+    else if (SKIN_TONE_KEYS[cp]) roleKey = 'skinRole';
+    else if (cp === 0x2640 || cp === 0x2642) roleKey = 'genderRole';
+    return {
+      cp,
+      glyph: cp === 0x200D ? 'ZWJ' : cp === 0xFE0F ? 'VS16' : String.fromCodePoint(cp),
+      codepoint: 'U+' + cp.toString(16).toUpperCase().padStart(4, '0'),
+      decimal: String(cp),
+      role: t(roleKey),
+    };
+  });
+}
+
+function buildEmojiDetailModel(item) {
+  const cps = getCodePoints(item.ch);
+  const toneKeys = cps.filter(cp => SKIN_TONE_KEYS[cp]).map(cp => SKIN_TONE_KEYS[cp]);
+  const hasZWJ = cps.includes(0x200D);
+  const hasFemale = cps.includes(0x2640);
+  const hasMale = cps.includes(0x2642);
+  const composition = hasZWJ ? t('zwjSequence')
+    : toneKeys.length ? t('modifierSequence')
+    : cps.length === 1 ? t('singleCodepoint') : t('multiCodepoint');
+  const gender = hasFemale ? t('female') : hasMale ? t('male') : t('neutral');
+  const fallback = EMOJI_IMAGE_FALLBACK.has(item.ch);
+  const properties = [
+    [t('category'), localCat(item.cat)],
+    [t('codepointCount'), String(cps.length)],
+    [t('composition'), composition],
+    [t('skinTone'), toneKeys.length ? toneKeys.map(key => t(key)).join(' + ') : t('noSkinTone')],
+    [t('gender'), gender],
+    [t('presentation'), cps.includes(0xFE0F) ? t('emojiStyle') : t('defaultStyle')],
+    [t('renderSource'), fallback ? t('notoRender') : t('nativeRender')],
+    [t('dataStandard'), 'Unicode Emoji 17.0'],
+  ];
+  if (fallback) properties.push([t('introduced'), 'Emoji 17.0']);
+  return {
+    item,
+    name: localName(item),
+    englishName: item.name,
+    encodings: [
+      ['Unicode', toCodePointString(item.ch)],
+      [t('decimalCodepoints'), toDecimalCodePoints(item.ch)],
+      ['UTF-8', toUtf8Bytes(item.ch)],
+      ['HTML', toHtmlEntities(item.ch)],
+      [t('htmlDecimal'), toHtmlDecimalEntities(item.ch)],
+      ['CSS', toCssContent(item.ch)],
+      [t('jsEscape'), toJsEscape(item.ch)],
+    ],
+    properties,
+    parts: buildCodePointParts(item.ch),
+    tags: [localCat(item.cat), composition, ...(fallback ? ['Emoji 17.0'] : [])],
+    keywords: Array.from(new Set([...(item.kw || []), item.cn, item.name].filter(Boolean))).slice(0, 24),
+  };
+}
+
+function renderPropertyList(container, entries) {
+  clearElement(container);
+  entries.forEach(([label, value]) => {
+    const row = document.createElement('div');
+    row.className = 'property-item';
+    const dt = document.createElement('dt');
+    dt.textContent = label;
+    const dd = document.createElement('dd');
+    dd.textContent = value;
+    row.append(dt, dd);
+    container.appendChild(row);
+  });
+}
+
+function renderTags(container, tags) {
+  clearElement(container);
+  tags.forEach(text => {
+    const tag = document.createElement('span');
+    tag.className = 'info-tag';
+    tag.textContent = text;
+    container.appendChild(tag);
+  });
+}
+
+// Google Noto Emoji 使用 `emoji_u<hex>_<hex>.png` 的码点序列命名，但文件名
+// 不包含 Emoji 表现选择符 U+FE0F。ZWJ、肤色修饰符等其余码点必须完整保留。
 function emojiImageUrl(ch) {
   return NOTO_EMOJI_CDN + 'emoji_u' + getCodePoints(ch)
+    .filter(cp => cp !== 0xFE0F)
     .map(cp => cp.toString(16))
     .join('_') + '.png';
 }
@@ -35249,6 +35511,7 @@ function makeEmojiNode(ch, className = 'emoji-char') {
   image.src = emojiImageUrl(ch);
   image.alt = ch;
   image.decoding = 'async';
+  image.loading = 'lazy';
   image.addEventListener('error', () => {
     // 网络或 CDN 不可用时宁可明确显示占位符，也不要回退为会产生横条的缺字文本。
     const fallback = document.createElement('span');
@@ -35353,9 +35616,10 @@ function toggleFav(ch) {
   state.favs = state.favs.filter(x => x !== ch);
   if (on) state.favs.unshift(ch);
   saveFavs();
-  // 同步所有格子上的星标与详情面板星标
+  // 同步所有格子、详情面板与 Modal 星标
   $$('.fav-star').forEach(s => { if (s.dataset.ch === ch) s.classList.toggle('on', on); });
   updateDetailFav();
+  updateZoomFav();
   showToast(on ? t('favOn', { x: emojiTextLabel(ch) }) : t('favOff', { x: emojiTextLabel(ch) }));
   // 收藏 tab 下取消收藏：移除该格
   if (state.activeCat === '收藏') renderMain();
@@ -35514,7 +35778,6 @@ function buildGrid(items) {
     const cell = document.createElement('div');
     cell.className = 'emoji-cell';
     cell.appendChild(makeEmojiNode(item.ch));
-    cell.title = localName(item);
     cell.addEventListener('click', () => selectEmoji(item));
     // 收藏星标（右上角，点击不触发选择）
     const star = document.createElement('button');
@@ -35530,7 +35793,6 @@ function buildGrid(items) {
     cell.appendChild(star);
     // tooltip 事件
     cell.addEventListener('mouseenter', (e) => showTooltip(e, localName(item)));
-    cell.addEventListener('mousemove', (e) => moveTooltip(e));
     cell.addEventListener('mouseleave', hideTooltip);
     grid.appendChild(cell);
   });
@@ -35555,11 +35817,10 @@ const tooltip = $('#tooltip');
 function showTooltip(e, text) {
   tooltip.textContent = text;
   tooltip.classList.add('show');
-  moveTooltip(e);
-}
-function moveTooltip(e) {
-  tooltip.style.left = e.clientX + 'px';
-  tooltip.style.top = (e.clientY - 8) + 'px';
+  const rect = e.currentTarget.getBoundingClientRect();
+  tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+  // 固定在卡片正上方，避免鼠标位于卡片中下部时提示浮层遮挡首行的 hover 边框。
+  tooltip.style.top = (rect.top - 4) + 'px';
 }
 function hideTooltip() {
   tooltip.classList.remove('show');
@@ -35590,12 +35851,15 @@ function updateDetailFav() {
   const on = state.selected && isFav(state.selected.ch);
   btn.classList.toggle('on', !!on);
   btn.title = on ? t('unfav') : t('fav');
+  btn.setAttribute('aria-label', btn.title);
 }
 
 function renderDetail(item) {
-  const name = localName(item);
-  const description = item.name;
+  const model = buildEmojiDetailModel(item);
+  const name = model.name;
+  const description = model.englishName;
   setEmojiDisplay($('#detailBig'), item.ch);
+  $('#detailBig').setAttribute('aria-label', t('zoomAria') + ': ' + name);
   $('#detailCn').textContent = name;
   $('#detailEn').textContent = description;
   $('#detailEn').hidden = name === description;
@@ -35605,6 +35869,8 @@ function renderDetail(item) {
   $('#detailHtml').textContent = toHtmlEntities(item.ch);
   $('#detailCss').textContent = toCssContent(item.ch);
   $('#detailJs').textContent = toJsEscape(item.ch);
+  renderPropertyList($('#detailProperties'), model.properties);
+  renderTags($('#detailTags'), model.tags);
 
   // 肤色变体
   const skinRow = $('#skinRow');
@@ -35632,7 +35898,7 @@ detail.addEventListener('click', (e) => {
   if (!btn) return;
   const targetId = btn.dataset.target;
   const value = $('#' + targetId).textContent;
-  copyAndToast(t('copied', { x: value }), t('copiedShort'));
+  copyAndToast(value, t('copiedShort'));
 });
 
 const detailFav = $('#detailFav');
@@ -35644,23 +35910,106 @@ $('#detailClose').addEventListener('click', hideDetail);
 
 /* ---------- 放大查看浮层 ---------- */
 const zoomOverlay = $('#zoomOverlay');
+let lastFocusedBeforeZoom = null;
+
+function updateZoomFav() {
+  const btn = $('#zoomFav');
+  if (!btn) return;
+  const on = state.selected && isFav(state.selected.ch);
+  btn.classList.toggle('on', !!on);
+  btn.title = on ? t('unfav') : t('fav');
+  btn.setAttribute('aria-label', btn.title);
+}
+
+function createEncodingRow(label, value, index) {
+  const row = document.createElement('div');
+  row.className = 'detail-row';
+  const labelEl = document.createElement('label');
+  labelEl.textContent = label;
+  const valueEl = document.createElement('div');
+  valueEl.className = 'value';
+  valueEl.id = 'zoomEncoding' + index;
+  valueEl.textContent = value;
+  const button = document.createElement('button');
+  button.className = 'copy-mini';
+  button.type = 'button';
+  button.dataset.copyValue = value;
+  button.title = t('zoomCopy') + ' ' + label;
+  button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  row.append(labelEl, valueEl, button);
+  return row;
+}
+
+function renderZoom(item) {
+  const model = buildEmojiDetailModel(item);
+  setEmojiDisplay($('#zoomEmoji'), item.ch);
+  $('#zoomCn').textContent = model.name;
+  $('#zoomEn').textContent = model.englishName;
+  $('#zoomEn').hidden = model.name === model.englishName;
+  renderTags($('#zoomTags'), model.tags);
+  renderPropertyList($('#zoomProperties'), model.properties);
+  const encodingBox = $('#zoomEncodings');
+  clearElement(encodingBox);
+  model.encodings.forEach(([label, value], index) => encodingBox.appendChild(createEncodingRow(label, value, index)));
+  const partsBox = $('#codepointParts');
+  clearElement(partsBox);
+  model.parts.forEach(part => {
+    const row = document.createElement('div');
+    row.className = 'codepoint-part';
+    const glyph = document.createElement('div');
+    glyph.className = 'codepoint-glyph';
+    glyph.textContent = part.glyph;
+    const code = document.createElement('div');
+    code.className = 'codepoint-code';
+    code.textContent = part.codepoint + ' · ' + part.decimal;
+    const role = document.createElement('div');
+    role.className = 'codepoint-role';
+    role.textContent = part.role;
+    row.append(glyph, code, role);
+    partsBox.appendChild(row);
+  });
+  renderTags($('#zoomKeywords'), model.keywords);
+  updateZoomFav();
+}
+
 function openZoom() {
   const item = state.selected;
   if (!item) return;
-  setEmojiDisplay($('#zoomEmoji'), item.ch);
-  $('#zoomCn').textContent = localName(item);
-  $('#zoomEn').textContent = item.name;
+  lastFocusedBeforeZoom = document.activeElement;
+  renderZoom(item);
   zoomOverlay.classList.add('show');
+  zoomOverlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  requestAnimationFrame(() => $('#zoomClose').focus());
 }
 function closeZoom() {
   zoomOverlay.classList.remove('show');
+  zoomOverlay.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  if (lastFocusedBeforeZoom && document.contains(lastFocusedBeforeZoom)) lastFocusedBeforeZoom.focus();
 }
 $('#detailBig').addEventListener('click', openZoom);
+$('#detailBig').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openZoom(); }
+});
 zoomOverlay.addEventListener('click', (e) => {
   if (!e.target.closest('.zoom-card')) closeZoom();
+  const copyButton = e.target.closest('[data-copy-value]');
+  if (copyButton) copyAndToast(copyButton.dataset.copyValue, t('copiedShort'));
+});
+$('#zoomClose').addEventListener('click', closeZoom);
+$('#zoomFav').innerHTML = STAR;
+$('#zoomFav').addEventListener('click', () => {
+  if (state.selected) toggleFav(state.selected.ch);
 });
 $('#zoomCopy').addEventListener('click', () => {
   if (state.selected) copyAndToast(state.selected.ch, t('copied', { x: emojiTextLabel(state.selected.ch) }));
+});
+$('#zoomShare').addEventListener('click', () => {
+  if (!state.selected) return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('q', state.selected.ch);
+  copyAndToast(url.toString(), t('linkCopied'));
 });
 
 /* ---------- 事件绑定 ---------- */
@@ -35677,6 +36026,16 @@ clearSearch.addEventListener('click', () => {
   renderMain();
 });
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab' && zoomOverlay.classList.contains('show')) {
+    const focusable = Array.from(zoomOverlay.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'))
+      .filter(el => !el.hidden && el.offsetParent !== null);
+    if (focusable.length) {
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
   if (e.key === 'Escape') {
     if (zoomOverlay.classList.contains('show')) {
       closeZoom();
@@ -35733,9 +36092,18 @@ function applyStaticI18n() {
   $('#detailFav').setAttribute('aria-label', t('fav'));
   $('#detailClose').title = t('closeDetail');
   $('#codeInfoTitle').textContent = t('codeInfo');
+  $('#propertiesTitle').textContent = t('emojiProperties');
+  $('#tagsTitle').textContent = t('tags');
   $('#jsLabel').textContent = t('jsEscape');
   $('#skinTitle').textContent = t('skinTone');
-  $('#zoomCopy').textContent = t('zoomCopy');
+  $('#zoomEncodingTitle').textContent = t('codeInfo');
+  $('#zoomPropertiesTitle').textContent = t('emojiProperties');
+  $('#codepointPartsTitle').textContent = t('codepointParts');
+  $('#keywordsTitle').textContent = t('keywords');
+  $('#zoomCopy').textContent = t('zoomCopy') + ' Emoji';
+  $('#zoomShare').textContent = t('shareLink');
+  $('#zoomClose').title = t('closeModal');
+  $('#zoomClose').setAttribute('aria-label', t('closeModal'));
   $('#zoomHint').textContent = t('zoomHint');
   $('#zoomOverlay').setAttribute('aria-label', t('zoomAria'));
   // 复制按钮 title（带 data-i18n-title 标记）
@@ -35752,7 +36120,10 @@ function setLang(code) {
   applyStaticI18n();
   renderTabs();
   renderMain();
-  if (state.selected) renderDetail(state.selected);
+  if (state.selected) {
+    renderDetail(state.selected);
+    if (zoomOverlay.classList.contains('show')) renderZoom(state.selected);
+  }
 }
 
 // 构建语言下拉菜单

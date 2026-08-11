@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emoji-picker-v2';
+const CACHE_NAME = 'emoji-picker-v3';
 const APP_SHELL = [
   './',
   './index.html',
