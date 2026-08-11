@@ -35314,6 +35314,8 @@ const clearSearch = $('#clearSearch');
 function matches(item, q) {
   q = q.trim().toLowerCase();
   if (!q) return true;
+  // 支持直接粘贴 Emoji 字符搜索。
+  if (item.ch && item.ch.includes(q)) return true;
   // 中文名 / 繁体名 / 关键词（简繁中文搜索）
   if (item.cn && item.cn.toLowerCase().includes(q)) return true;
   // 英文名（所有语言始终支持英文搜索）
@@ -35736,6 +35738,12 @@ try {
   const savedLang = localStorage.getItem(LANG_KEY);
   state.lang = (savedLang && LANGS[savedLang]) ? savedLang : detectLang();
 } catch { state.lang = detectLang(); }
+const initialQuery = new URLSearchParams(window.location.search).get('q');
+if (initialQuery !== null) {
+  state.query = initialQuery;
+  searchInput.value = initialQuery;
+  clearSearch.classList.toggle('show', initialQuery.length > 0);
+}
 renderLangMenu();
 applyStaticI18n();
 renderTabs();
