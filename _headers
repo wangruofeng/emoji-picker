@@ -1,0 +1,14 @@
+# Cloudflare Pages headers
+# 参考：https://developers.cloudflare.com/pages/configuration/headers/
+
+/*
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  # HTML：浏览器短缓存 + 边缘长缓存（Pages 部署时会自动失效）
+  Cache-Control: public, max-age=300, s-maxage=31536000, stale-while-revalidate=86400
+
+# Service Worker 必须始终回源获取最新版本，否则更新无法生效
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate, no-cache
+  Service-Worker-Allowed: /

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>og.png 源文件 — 用 headless Chrome 截图为 1200×630</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #7c3aed 100%);
+    color: #ffffff;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .glow1 { position: absolute; width: 560px; height: 560px; right: -120px; top: -160px;
+    background: radial-gradient(circle, rgba(255,255,255,.16), rgba(255,255,255,0) 60%); }
+  .glow2 { position: absolute; width: 480px; height: 480px; left: -160px; bottom: -180px;
+    background: radial-gradient(circle, rgba(255,255,255,.14), rgba(255,255,255,0) 60%); }
+  .mark {
+    width: 176px; height: 176px; border-radius: 40px; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.20), rgba(255,255,255,.06));
+    border: 2px solid rgba(255,255,255,.55);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 112px; line-height: 1; margin-right: 32px;
+  }
+  .copy { flex: 1; min-width: 0; }
+  h1 { font-size: 74px; font-weight: 700; letter-spacing: 1px; line-height: 1.1; }
+  .sub { font-size: 30px; font-weight: 400; color: #dbeafe; margin-top: 8px; }
+  .feat { font-size: 22px; color: #bfdbfe; margin-top: 16px; opacity: .95; }
+  .emojis { font-size: 56px; margin-top: 26px; letter-spacing: 6px; }
+  .url { position: absolute; left: 96px; bottom: 56px; font-size: 24px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #e0e7ff; }
+</style>
+</head>
+<body>
+  <div class="glow1"></div>
+  <div class="glow2"></div>
+  <div class="mark">😀</div>
+  <div class="copy">
+    <h1>Emoji 选择器</h1>
+    <div class="sub">搜索 · 复制 · Unicode 码点查询</div>
+    <div class="feat">3000+ Emoji · 中英文搜索 · HTML / CSS / JS 转义 · 离线可用</div>
+    <div class="emojis">😀 😍 🔥 👍 🎉 🚀</div>
+  </div>
+  <div class="url">emoji-picker.wangruofeng007.com</div>
+</body>
+</html>

@@ -4,16 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Emoji 选择器：搜索、复制与 Unicode 码点查询</title>
-<meta name="description" content="免费 Emoji 选择器，支持中文与英文搜索、一键复制、肤色变体和 Unicode 码点、HTML 实体、CSS 与 JavaScript 转义查询。">
+<meta name="description" content="免费 Emoji 选择器：中英文搜索 3000+ 表情，一键复制字符，查看 Unicode 码点、HTML 实体、CSS 与 JavaScript 转义。">
 <link rel="canonical" href="https://emoji-picker.wangruofeng007.com/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="Emoji 选择器">
 <meta property="og:title" content="Emoji 选择器：搜索、复制与 Unicode 码点查询">
-<meta property="og:description" content="搜索 Emoji、一键复制，并查看 Unicode 码点与开发者编码格式。">
+<meta property="og:description" content="中英文搜索 3000+ Emoji，一键复制，并查看 Unicode 码点与 HTML/CSS/JavaScript 编码格式。">
 <meta property="og:url" content="https://emoji-picker.wangruofeng007.com/">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://emoji-picker.wangruofeng007.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Emoji 选择器 —— 搜索、复制与 Unicode 码点查询工具">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Emoji 选择器：搜索、复制与 Unicode 码点查询">
-<meta name="twitter:description" content="搜索 Emoji、一键复制，并查看 Unicode 码点与开发者编码格式。">
+<meta name="twitter:description" content="中英文搜索 3000+ Emoji，一键复制，并查看 Unicode 码点与 HTML/CSS/JavaScript 编码格式。">
+<meta name="twitter:image" content="https://emoji-picker.wangruofeng007.com/og.png">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -25,6 +31,54 @@
   "operatingSystem": "Web",
   "inLanguage": "zh-CN",
   "isAccessibleForFree": true
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "怎么在 HTML 里插入 Emoji？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "最简单的方式是直接把 Emoji 字符粘贴进 HTML 文档；也可以使用 HTML 实体。例如笑脸 😀 的码点是 U+1F600，十进制实体写作 &#128512;、十六进制实体写作 &#x1F600;，浏览器都会将其渲染为 😀。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "CSS content 属性里怎么写 Emoji？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "在 ::before 或 ::after 伪元素的 content 中，用反斜杠加十六进制码点转义，例如 content: \"\\1F600\"; 会显示为 😀。注意码点最多 6 位十六进制，且不要带 U+ 前缀。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "JavaScript 字符串怎么转义 Emoji？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "ES6 起可用大括号码点转义：\"\\u{1F600}\" 得到 😀。在更早环境或处理超出基本多文种平面（BMP）的字符时，需用代理对，例如 😀 等价于 \"\\uD83D\\uDE00\"。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Emoji 的 Unicode 码点怎么查？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "在本工具中点击任意 Emoji，详情面板会列出它的 Unicode 码点（十六进制 U+1F600 与十进制 128512）、UTF-8 字节序列，以及 HTML、CSS、JavaScript 各自的转义写法，每一项都能一键复制。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "为什么有些 Emoji 由多个码点组成？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "许多 Emoji 是由多个码点组合而成的序列。常见方式包括：零宽连字（ZWJ，U+200D）把多个图形拼成一个，例如家庭和技术人员；肤色修饰符（如 U+1F3FD）附加到手势或人物上；变体选择符（U+FE0F）提示以彩色 Emoji 风格显示。这类序列在 UTF-8 中占多个字节，但视觉上只显示为一个 Emoji。"
+      }
+    }
+  ]
 }
 </script>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -520,6 +574,46 @@
   @media (max-width: 480px) {
     .emoji-char { transform: translateY(12px); }
   }
+
+  /* ---------- SEO 文档区（可抓取文本内容） ---------- */
+  .ns-banner {
+    margin: 14px 0 0; max-width: 760px; padding: 10px 14px;
+    background: var(--accent-soft); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text-muted); font-size: 13px; line-height: 1.6;
+  }
+  .ns-banner a { color: var(--accent); }
+
+  .seo-doc {
+    max-width: 780px; margin: 48px 0 24px; padding-top: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--text); font-size: 15px; line-height: 1.75;
+  }
+  .seo-doc h2 {
+    font-size: 20px; font-weight: 650; margin: 36px 0 12px;
+    color: var(--text); letter-spacing: -.01em;
+  }
+  .seo-doc h2:first-child { margin-top: 0; }
+  .seo-doc h3 { font-size: 15.5px; font-weight: 600; margin: 22px 0 6px; color: var(--text); }
+  .seo-doc p { margin: 0 0 12px; color: var(--text-muted); }
+  .seo-doc ul, .seo-doc ol { margin: 0 0 14px; padding-left: 20px; color: var(--text-muted); }
+  .seo-doc li { margin: 4px 0; }
+  .seo-doc a { color: var(--accent); text-decoration: none; }
+  .seo-doc a:hover { text-decoration: underline; }
+  .seo-doc strong { color: var(--text); font-weight: 600; }
+  .seo-doc code, .seo-doc pre {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  }
+  .seo-doc code { padding: 1px 6px; font-size: 13px; color: var(--text); }
+  .seo-doc pre {
+    margin: 0 0 14px; padding: 12px 14px; overflow-x: auto;
+    font-size: 13px; line-height: 1.6; color: var(--text);
+  }
+  .seo-doc pre code { padding: 0; border: 0; background: transparent; font-size: inherit; }
+  @media (max-width: 480px) {
+    .seo-doc { margin: 36px 0 16px; font-size: 14.5px; }
+    .seo-doc h2 { font-size: 18px; }
+  }
 </style>
 </head>
 <body>
@@ -565,7 +659,63 @@
       <h1 id="pageHeading">Emoji 选择器：搜索、复制与 Unicode 码点查询</h1>
       <p id="pageDescription">搜索 3,000+ Emoji，点击即可复制字符，并查看 Unicode 码点、HTML 实体、CSS content 和 JavaScript 转义。</p>
     </section>
+    <noscript>
+      <p class="ns-banner">本工具需要启用 JavaScript 才能搜索和浏览 Emoji。你仍可 <a href="https://github.com/wangruofeng/emoji-picker">查看源码</a>，或下载 index.html 在本地用浏览器打开使用。</p>
+    </noscript>
     <div id="emojiContent"></div>
+    <section class="seo-doc" aria-label="使用说明与常见问题">
+      <h2>使用说明</h2>
+      <p>这是一个纯前端、免安装的 <strong>Emoji 搜索与复制工具</strong>，全部数据在浏览器本地处理，不上传任何信息。常用操作：</p>
+      <ul>
+        <li><strong>搜索</strong>：在顶部搜索框输入中文关键词（如「笑」「心」「火」）或英文名（如 <code>heart</code>、<code>fire</code>）即时过滤；按 <code>/</code> 键可快速聚焦搜索框。</li>
+        <li><strong>复制</strong>：点击任意 Emoji 格子即可把字符复制到剪贴板，并自动记入「最近使用」（最多 24 个，去重前置）。</li>
+        <li><strong>查看编码</strong>：点击 Emoji 打开详情面板，展示 Unicode 码点、UTF-8 字节、HTML 实体、CSS <code>content</code> 与 JavaScript 转义，每项均可单独复制。</li>
+        <li><strong>肤色变体</strong>：对手势类 Emoji，详情面板提供 6 种肤色快速切换复制。</li>
+        <li><strong>收藏</strong>：鼠标悬停 Emoji 格，点击右上角星标即可收藏；在「收藏」分类集中查看，收藏独立于最近使用。</li>
+      </ul>
+
+      <h2>常见问题</h2>
+
+      <h3>怎么在 HTML 里插入 Emoji？</h3>
+      <p>最简单的方式是直接把 Emoji 字符粘贴进 HTML 文档；也可以使用 HTML 实体，浏览器会自动渲染。例如笑脸 😀 的码点是 <code>U+1F600</code>：</p>
+      <pre><code>&lt;p&gt;&amp;#128512; 你好&lt;/p&gt;   &lt;!-- 十进制实体 --&gt;
+&lt;p&gt;&amp;#x1F600; 你好&lt;/p&gt;   &lt;!-- 十六进制实体 --&gt;</code></pre>
+      <p>两种写法在浏览器中都显示为：😀 你好。</p>
+
+      <h3>CSS content 属性里怎么写 Emoji？</h3>
+      <p>在 <code>::before</code> / <code>::after</code> 伪元素的 <code>content</code> 中，用反斜杠加十六进制码点转义。例如：</p>
+      <pre><code>.icon::before {
+  content: "\1F600";   /* 显示为 😀 */
+}</code></pre>
+      <p>注意：码点最多 6 位十六进制，<strong>不要</strong>带 <code>U+</code> 前缀。</p>
+
+      <h3>JavaScript 字符串怎么转义 Emoji？</h3>
+      <p>ES6 起可用大括号码点转义，最为直观：</p>
+      <pre><code>const s = "\u{1F600}";   // "😀"</code></pre>
+      <p>在更早的环境或需要处理代理对时，😀 等价于代理对写法：</p>
+      <pre><code>const s = "\uD83D\uDE00";   // "😀"</code></pre>
+
+      <h3>Emoji 的 Unicode 码点怎么查？</h3>
+      <p>在本工具中点击任意 Emoji，详情面板会列出它的 <strong>Unicode 码点</strong>（十六进制 <code>U+1F600</code> 与十进制 <code>128512</code>）、<strong>UTF-8 字节序列</strong>（如 <code>F0 9F 98 80</code>），以及 HTML / CSS / JavaScript 各自的转义写法，每一项都能一键复制。</p>
+
+      <h3>为什么有些 Emoji 由多个码点组成？</h3>
+      <p>许多 Emoji 是由多个码点组合而成的「序列」。常见的组合方式：</p>
+      <ul>
+        <li><strong>零宽连字（ZWJ）</strong>：<code>U+200D</code> 把多个图形拼成一个，例如 👨‍👩‍👧 家庭、🧑‍💻 技术人员。</li>
+        <li><strong>肤色修饰符</strong>：在手势或人物后附加肤色码点（如 <code>U+1F3FD</code> 表示中等肤色），例如 👍🏽。</li>
+        <li><strong>变体选择符</strong>：<code>U+FE0F</code> 提示以 Emoji（彩色）风格而非文本风格显示。</li>
+      </ul>
+      <p>这类序列在 UTF-8 中会占用多个字节，但在屏幕上只呈现为一个 Emoji。本工具的详情面板会完整拆解每一个码点。</p>
+
+      <h2>关于 Unicode 与 Emoji 编码</h2>
+      <p>每个 Emoji 在 Unicode 标准中都有一个或多个<strong>码点</strong>（Code Point），写作 <code>U+</code> 加十六进制数。例如 😀 是 <code>U+1F600</code>，位于补充平面（码点大于 <code>U+FFFF</code>）。</p>
+      <p>计算机存储时，码点会被编码为字节序列，最常见的是 <strong>UTF-8</strong>：</p>
+      <ul>
+        <li><code>U+1F600</code> → UTF-8 四字节：<code>F0 9F 98 80</code>。</li>
+        <li>UTF-16 则用一对「代理项」（surrogate pair）表示：<code>D83D DE00</code>，这正是 JavaScript 旧式转义 <code>\uD83D\uDE00</code> 的来源。</li>
+      </ul>
+      <p>理解码点、UTF-8 字节与各种语言的转义写法之间的对应关系，对前端开发、数据存储和跨平台显示一致性都很关键——这也是本工具把这几类编码一并展示的原因。本站数据基于 <a href="https://www.unicode.org/Public/17.0.0/emoji/" target="_blank" rel="noopener">Unicode Emoji 17.0</a>，名称取自 Unicode CLDR 官方本地化标注。</p>
+    </section>
   </main>
   <aside class="detail hidden" id="detail">
     <div class="detail-head">

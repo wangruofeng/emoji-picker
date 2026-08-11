@@ -11,9 +11,12 @@
 
 ## 文件结构
 
-- `index.html` — 全部代码（结构 + 样式 + 脚本），内置 `EMOJI_DATA` / `EMOJI_NAMES` / `I18N` 数据。
+- `index.html` — 全部代码（结构 + 样式 + 脚本），内置 `EMOJI_DATA` / `EMOJI_NAMES` / `I18N` 数据。`<main>` 末尾的 `.seo-doc` 区为可抓取的静态 SEO 文本（使用说明 / FAQ / 编码科普），`<head>` 内含 `WebApplication` 与 `FAQPage` 两段 JSON-LD。
 - `favicon.svg` — 蓝紫渐变圆角方块 + 白色 `😀`。
+- `og.png` + `og.html` — 社交分享预览图（1200×630）及其 HTML 源；`og.html` 经 headless Chrome 截图生成 `og.png`，复用 favicon 的蓝紫渐变品牌风格。
 - `manifest.webmanifest` + `sw.js` — PWA 清单与 Service Worker（离线缓存应用壳）。
+- `robots.txt` + `sitemap.xml` — 抓取许可与单页 sitemap（含 `<lastmod>`）。
+- `_headers` — Cloudflare Pages 自定义响应头：HSTS、HTML 边缘/浏览器缓存策略；`sw.js` 单独 `no-cache` 以保证更新生效。
 - `README.md` / `README.en.md` — 面向用户的功能说明与在线访问地址（中 / 英）。
 - `CLAUDE.md` — 本文件，记录红线、约定与数据结构。
 

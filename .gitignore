@@ -14,6 +14,8 @@ node_modules/
 
 # 截图（如不想纳入版本）
 /*.png
+# OG 社交预览图需随站点部署，保留版本
+!/og.png
 
 # ai
 .superpowers/
