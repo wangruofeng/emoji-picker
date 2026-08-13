@@ -298,8 +298,8 @@
     position: relative;
   }
   .emoji-char { display: block; }
-  /* Unicode 17 的新组合在许多系统 Emoji 字体中尚无字形；用 Noto 图片兜底，
-     避免把每个未支持的码点渲染成缺字横条。 */
+  /* 新版本 Unicode（15.1/16.0/17.0）新增的 Emoji 在许多系统 Emoji 字体中尚无字形；
+     用 Noto 图片兜底，避免把每个未支持的码点渲染成缺字横条/乱码。 */
   .emoji-image { width: 1em; height: 1em; object-fit: contain; }
   .emoji-unsupported { color: var(--text-faint); font-size: .75em; }
   .emoji-cell:hover {
@@ -567,6 +567,7 @@
     .codepoint-part { grid-template-columns: 38px minmax(86px, .8fr) minmax(0, 1.2fr); gap: 8px; }
     .zoom-actions { position: sticky; bottom: 0; margin-top: 12px; padding: 12px 0; background: var(--panel); }
     .zoom-action { flex: 1; }
+    .zoom-hint { display: none; }
     #zoomShare { color: var(--accent); border-color: var(--accent); }
   }
 
@@ -614,6 +615,48 @@
     .seo-doc { margin: 36px 0 16px; font-size: 14.5px; }
     .seo-doc h2 { font-size: 18px; }
   }
+
+  /* ---------- 帮助页入口 & 帮助视图 ---------- */
+  .help-entry {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: fit-content; max-width: none; margin: 30px auto 0; padding: 7px 10px;
+    background: var(--accent-soft); border: 0; border-radius: 8px; box-shadow: none;
+    color: var(--text); text-decoration: none; cursor: pointer;
+    transition: background .12s, color .12s;
+  }
+  .help-entry:hover {
+    background: color-mix(in srgb, var(--accent) 14%, var(--panel));
+  }
+  .help-entry .help-entry-icon { flex: none; width: 17px; height: 17px; color: var(--text-muted); }
+  .help-entry .help-entry-body { flex: none; min-width: 0; display: block; }
+  .help-entry .help-entry-title { color: var(--text-muted); font-size: 13px; font-weight: 500; }
+  .help-entry .help-entry-desc { display: none; }
+  .help-entry .help-entry-arrow { flex: none; width: 14px; height: 14px; color: var(--text-faint); }
+  .help-entry:hover .help-entry-title,
+  .help-entry:hover .help-entry-icon,
+  .help-entry:hover .help-entry-arrow { color: var(--accent); }
+  @media (min-width: 769px) {
+    .help-entry { margin-top: 36px; }
+  }
+  .help-back { display: none; max-width: 780px; margin: 18px 0 2px; }
+  .help-back a {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-left: -10px; padding: 6px 10px; border-radius: 8px;
+    color: var(--accent); text-decoration: none; font-size: 14px;
+  }
+  .help-back a::before { content: "←"; }
+  .help-back a:hover { background: var(--accent-soft); text-decoration: none; }
+  /* 帮助文档默认不铺在首页列表底部，仅帮助视图显示 */
+  .seo-doc { display: none; }
+  body.help-view .toolbar,
+  body.help-view .tabs,
+  body.help-view .seo-intro,
+  body.help-view #emojiContent,
+  body.help-view .help-entry { display: none; }
+  body.help-view .seo-doc {
+    display: block; margin: 10px 0 40px; padding-top: 0; border-top: 0;
+  }
+  body.help-view .help-back { display: block; }
 </style>
 </head>
 <body>
@@ -663,59 +706,18 @@
       <p class="ns-banner">本工具需要启用 JavaScript 才能搜索和浏览 Emoji。你仍可 <a href="https://github.com/wangruofeng/emoji-picker">查看源码</a>，或下载 index.html 在本地用浏览器打开使用。</p>
     </noscript>
     <div id="emojiContent"></div>
-    <section class="seo-doc" aria-label="使用说明与常见问题">
-      <h2>使用说明</h2>
-      <p>这是一个纯前端、免安装的 <strong>Emoji 搜索与复制工具</strong>，全部数据在浏览器本地处理，不上传任何信息。常用操作：</p>
-      <ul>
-        <li><strong>搜索</strong>：在顶部搜索框输入中文关键词（如「笑」「心」「火」）或英文名（如 <code>heart</code>、<code>fire</code>）即时过滤；按 <code>/</code> 键可快速聚焦搜索框。</li>
-        <li><strong>复制</strong>：点击任意 Emoji 格子即可把字符复制到剪贴板，并自动记入「最近使用」（最多 24 个，去重前置）。</li>
-        <li><strong>查看编码</strong>：点击 Emoji 打开详情面板，展示 Unicode 码点、UTF-8 字节、HTML 实体、CSS <code>content</code> 与 JavaScript 转义，每项均可单独复制。</li>
-        <li><strong>肤色变体</strong>：对手势类 Emoji，详情面板提供 6 种肤色快速切换复制。</li>
-        <li><strong>收藏</strong>：鼠标悬停 Emoji 格，点击右上角星标即可收藏；在「收藏」分类集中查看，收藏独立于最近使用。</li>
-      </ul>
-
-      <h2>常见问题</h2>
-
-      <h3>怎么在 HTML 里插入 Emoji？</h3>
-      <p>最简单的方式是直接把 Emoji 字符粘贴进 HTML 文档；也可以使用 HTML 实体，浏览器会自动渲染。例如笑脸 😀 的码点是 <code>U+1F600</code>：</p>
-      <pre><code>&lt;p&gt;&amp;#128512; 你好&lt;/p&gt;   &lt;!-- 十进制实体 --&gt;
-&lt;p&gt;&amp;#x1F600; 你好&lt;/p&gt;   &lt;!-- 十六进制实体 --&gt;</code></pre>
-      <p>两种写法在浏览器中都显示为：😀 你好。</p>
-
-      <h3>CSS content 属性里怎么写 Emoji？</h3>
-      <p>在 <code>::before</code> / <code>::after</code> 伪元素的 <code>content</code> 中，用反斜杠加十六进制码点转义。例如：</p>
-      <pre><code>.icon::before {
-  content: "\1F600";   /* 显示为 😀 */
-}</code></pre>
-      <p>注意：码点最多 6 位十六进制，<strong>不要</strong>带 <code>U+</code> 前缀。</p>
-
-      <h3>JavaScript 字符串怎么转义 Emoji？</h3>
-      <p>ES6 起可用大括号码点转义，最为直观：</p>
-      <pre><code>const s = "\u{1F600}";   // "😀"</code></pre>
-      <p>在更早的环境或需要处理代理对时，😀 等价于代理对写法：</p>
-      <pre><code>const s = "\uD83D\uDE00";   // "😀"</code></pre>
-
-      <h3>Emoji 的 Unicode 码点怎么查？</h3>
-      <p>在本工具中点击任意 Emoji，详情面板会列出它的 <strong>Unicode 码点</strong>（十六进制 <code>U+1F600</code> 与十进制 <code>128512</code>）、<strong>UTF-8 字节序列</strong>（如 <code>F0 9F 98 80</code>），以及 HTML / CSS / JavaScript 各自的转义写法，每一项都能一键复制。</p>
-
-      <h3>为什么有些 Emoji 由多个码点组成？</h3>
-      <p>许多 Emoji 是由多个码点组合而成的「序列」。常见的组合方式：</p>
-      <ul>
-        <li><strong>零宽连字（ZWJ）</strong>：<code>U+200D</code> 把多个图形拼成一个，例如 👨‍👩‍👧 家庭、🧑‍💻 技术人员。</li>
-        <li><strong>肤色修饰符</strong>：在手势或人物后附加肤色码点（如 <code>U+1F3FD</code> 表示中等肤色），例如 👍🏽。</li>
-        <li><strong>变体选择符</strong>：<code>U+FE0F</code> 提示以 Emoji（彩色）风格而非文本风格显示。</li>
-      </ul>
-      <p>这类序列在 UTF-8 中会占用多个字节，但在屏幕上只呈现为一个 Emoji。本工具的详情面板会完整拆解每一个码点。</p>
-
-      <h2>关于 Unicode 与 Emoji 编码</h2>
-      <p>每个 Emoji 在 Unicode 标准中都有一个或多个<strong>码点</strong>（Code Point），写作 <code>U+</code> 加十六进制数。例如 😀 是 <code>U+1F600</code>，位于补充平面（码点大于 <code>U+FFFF</code>）。</p>
-      <p>计算机存储时，码点会被编码为字节序列，最常见的是 <strong>UTF-8</strong>：</p>
-      <ul>
-        <li><code>U+1F600</code> → UTF-8 四字节：<code>F0 9F 98 80</code>。</li>
-        <li>UTF-16 则用一对「代理项」（surrogate pair）表示：<code>D83D DE00</code>，这正是 JavaScript 旧式转义 <code>\uD83D\uDE00</code> 的来源。</li>
-      </ul>
-      <p>理解码点、UTF-8 字节与各种语言的转义写法之间的对应关系，对前端开发、数据存储和跨平台显示一致性都很关键——这也是本工具把这几类编码一并展示的原因。本站数据基于 <a href="https://www.unicode.org/Public/17.0.0/emoji/" target="_blank" rel="noopener">Unicode Emoji 17.0</a>，名称取自 Unicode CLDR 官方本地化标注。</p>
-    </section>
+    <a class="help-entry" href="#/help" aria-label="Help & FAQ">
+      <svg class="help-entry-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span class="help-entry-body">
+        <span class="help-entry-title" id="helpEntryTitle">使用说明与常见问题</span>
+        <span class="help-entry-desc" id="helpEntryDesc">关于 Unicode 与 Emoji 编码</span>
+      </span>
+      <svg class="help-entry-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </a>
+    <nav class="help-back" aria-label="Help">
+      <a href="#/" id="helpBack">返回 Emoji 列表</a>
+    </nav>
+    <section class="seo-doc" id="helpDoc" aria-label="使用说明与常见问题"></section>
   </main>
   <aside class="detail hidden" id="detail">
     <div class="detail-head">
@@ -34818,24 +34820,36 @@ const UNICODE_EMOJI_17_ZWJ_ADDITIONS = [
 ];
 EMOJI_DATA.push(...UNICODE_EMOJI_17_ZWJ_ADDITIONS);
 
-// Unicode 17.0 官方新增项。数据数组包含完整 Emoji 集合，不能直接整组切换
-// 成网络图片；这里按官方 E17.0 的码点家族精确筛选，避免误伤 👱‍♀️ 等旧 Emoji。
-const EMOJI_17_SINGLE_CODEPOINTS = new Set([
-  0x1FAEA, // distorted face
-  0x1FAEF, // fight cloud
-  0x1FAC8, // hairy creature
-  0x1FACD, // orca
+// 新版本 Unicode（15.1 / 16.0 / 17.0）官方新增项。数据数组包含完整 Emoji 集合，
+// 不能直接整组切换成网络图片；这里按码点家族精确筛选，避免误伤 👱‍♀️ 等旧 Emoji。
+// 这些较新的码点在许多手机系统 Emoji 字体中仍无字形（显示为缺字/乱码），统一走 Noto 图片兜底。
+const EMOJI_NEW_SINGLE_CODEPOINTS = new Set([
+  // Unicode 15.1（2023-09）
+  0x1F6DC, // wireless
+  0x1FAE9, // face with bags under eyes
+  // Unicode 16.0（2024-09）
   0x1F6D8, // landslide
   0x1FA8A, // trombone
   0x1FA8E, // treasure chest
+  0x1FABE, // leafless tree
+  0x1FADC, // root vegetable
+  0x1FA89, // harp
+  0x1FA8F, // shovel
+  0x1FADF, // splatter
+  // Unicode 17.0（2025-09）
+  0x1FAC6, // face with fingerprint
+  0x1FAC8, // hairy creature
+  0x1FACD, // orca
+  0x1FAEA, // distorted face
+  0x1FAEF, // fight cloud
 ]);
 const EMOJI_SKIN_TONE_CODEPOINTS = new Set([0x1F3FB, 0x1F3FC, 0x1F3FD, 0x1F3FE, 0x1F3FF]);
 
-function needsEmoji17ImageFallback(item) {
+function needsEmojiImageFallback(item) {
   const codepoints = Array.from(item.ch, char => char.codePointAt(0));
   const set = new Set(codepoints);
 
-  if (codepoints.length === 1 && EMOJI_17_SINGLE_CODEPOINTS.has(codepoints[0])) return true;
+  if (codepoints.length === 1 && EMOJI_NEW_SINGLE_CODEPOINTS.has(codepoints[0])) return true;
   // ballet dancer：person + ZWJ + ballet shoes（含肤色变体）
   if (set.has(0x200D) && set.has(0x1FA70)) return true;
   if (!codepoints.some(cp => EMOJI_SKIN_TONE_CODEPOINTS.has(cp))) return false;
@@ -34846,7 +34860,7 @@ function needsEmoji17ImageFallback(item) {
 const EMOJI_IMAGE_FALLBACK = new Set([
   ...UNICODE_EMOJI_17_ADDITIONS,
   ...UNICODE_EMOJI_17_ZWJ_ADDITIONS,
-].filter(needsEmoji17ImageFallback).map(item => item.ch));
+].filter(needsEmojiImageFallback).map(item => item.ch));
 const NOTO_EMOJI_CDN = 'https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@main/png/128/';
 
 // CLDR 没有为每一个双肤色 ZWJ 组合提供独立的简体中文名称；复用基础组合名称并补充肤色。
@@ -35425,6 +35439,10 @@ const I18N = {
   emptyRecentD: { 'zh-CN':'点击任意 Emoji 复制后，会出现在这里。','zh-TW':'點擊任意 Emoji 複製後，會出現在這裡。','en':'Copy any emoji and it will show up here.','ja':'Emoji をコピーするとここに表示されます。','ko':'이모지를 복사하면 여기에 표시됩니다.','th':'คัดลอก Emoji ใดก็ตามแล้วจะปรากฏที่นี่','ms':'Salin mana-mana Emoji dan ia akan muncul di sini.' },
   emptySearchT: { 'zh-CN':'未找到匹配的 Emoji','zh-TW':'未找到符合的 Emoji','en':'No emoji found','ja':'一致する Emoji が見つかりません','ko':'일치하는 이모지가 없습니다','th':'ไม่พบ Emoji ที่ตรง','ms':'Tiada Emoji yang sepadan' },
   emptySearchD: { 'zh-CN':'换个关键词试试，比如“笑”“heart”“火”。','zh-TW':'換個關鍵詞試試，比如「笑」「heart」「火」。','en':'Try another keyword, e.g. “smile”, “heart”, “fire”.','ja':'別のキーワードを試してください（例：「笑い」「heart」「火」）。','ko':'다른 키워드를 시도해 보세요 (예: “웃음”, “heart”, “불”).','th':'ลองคำค้นอื่น เช่น “ยิ้ม”, “heart”, “ไฟ”','ms':'Cuba kata kunci lain, cth. “senyum”, “heart”, “api”.' },
+  // 帮助页
+  helpEntryTitle:{ 'zh-CN':'使用说明与常见问题','zh-TW':'使用說明與常見問題','en':'Help & FAQ','ja':'使い方とよくある質問','ko':'사용 방법과 자주 묻는 질문','th':'วิธีใช้และคำถามที่พบบ่อย','ms':'Panduan & Soalan Lazim' },
+  helpEntryDesc: { 'zh-CN':'关于 Unicode 与 Emoji 编码','zh-TW':'關於 Unicode 與 Emoji 編碼','en':'About Unicode & emoji encoding','ja':'Unicode と Emoji のエンコーディングについて','ko':'Unicode와 Emoji 인코딩 정보','th':'เกี่ยวกับการเข้ารหัส Unicode และ Emoji','ms':'Tentang pengekodan Unicode & Emoji' },
+  helpBack:      { 'zh-CN':'返回 Emoji 列表','zh-TW':'返回 Emoji 列表','en':'Back to emoji list','ja':'Emoji リストに戻る','ko':'Emoji 목록으로 돌아가기','th':'กลับไปรายการ Emoji','ms':'Kembali ke senarai Emoji' },
   // Toast
   copied:       { 'zh-CN':'已复制 {x}','zh-TW':'已複製 {x}','en':'Copied {x}','ja':'{x} をコピーしました','ko':'{x} 복사됨','th':'คัดลอก {x} แล้ว','ms':'{x} disalin' },
   copiedShort:  { 'zh-CN':'已复制','zh-TW':'已複製','en':'Copied','ja':'コピーしました','ko':'복사됨','th':'คัดลอกแล้ว','ms':'Disalin' },
@@ -35526,6 +35544,211 @@ function t(key, vars) {
   let s = (dict && dict[state.lang]) || (dict && dict['en']) || (dict && dict['zh-CN']) || key;
   if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
   return s;
+}
+
+const HELP_DOCS = {
+  'zh-CN': `
+    <h2>使用说明</h2>
+    <p>这是一个纯前端、免安装的 <strong>Emoji 搜索与复制工具</strong>。数据仅在浏览器本地处理，不会上传。</p>
+    <ul>
+      <li><strong>搜索</strong>：输入中文关键词或英文名即可即时过滤结果。</li>
+      <li><strong>复制</strong>：点击任意 Emoji 即可复制，并自动记入「最近使用」。</li>
+      <li><strong>查看编码</strong>：点击 Emoji 可查看 Unicode 码点、UTF-8、HTML、CSS 和 JavaScript 写法，并单独复制。</li>
+      <li><strong>收藏</strong>：点击 Emoji 格右上角的星标，将其加入「收藏」。</li>
+    </ul>
+    <h2>快捷键</h2>
+    <ul>
+      <li><code>/</code>：聚焦搜索框。</li>
+      <li><code>Esc</code>：按当前状态逐级关闭帮助页或 Emoji 详情、清空搜索、返回「全部」，最后关闭详情面板。</li>
+    </ul>
+    <h2>常见问题</h2>
+    <h3>怎么在 HTML 里插入 Emoji？</h3>
+    <p>直接粘贴 Emoji 最简单；也可使用实体。例如 😀 可写为 <code>&amp;#128512;</code> 或 <code>&amp;#x1F600;</code>。</p>
+    <h3>CSS content 属性里怎么写 Emoji？</h3>
+    <pre><code>.icon::before { content: "\\1F600"; }</code></pre>
+    <p>使用反斜杠加十六进制码点，不要带 <code>U+</code> 前缀。</p>
+    <h3>JavaScript 字符串怎么转义 Emoji？</h3>
+    <pre><code>const emoji = "\\u{1F600}";</code></pre>
+    <p>旧式环境也可使用代理对：<code>"\\uD83D\\uDE00"</code>。</p>
+    <h3>为什么有些 Emoji 有多个码点？</h3>
+    <p>Emoji 可由零宽连接符（ZWJ）、肤色修饰符或变体选择符组成。它们屏幕上显示为一个图形，但编码会包含多个码点和字节。</p>
+    <h2>关于 Unicode 与 Emoji 编码</h2>
+    <p>每个 Emoji 都有一个或多个 Unicode 码点，例如 😀 是 <code>U+1F600</code>。UTF-8 会把码点编码为字节；本工具同时显示 Unicode、UTF-8 及各种转义格式，方便跨语言使用。</p>
+    <p>数据基于 <a href="https://www.unicode.org/Public/17.0.0/emoji/" target="_blank" rel="noopener">Unicode Emoji 17.0</a> 与 Unicode CLDR 本地化标注。</p>`,
+  'zh-TW': `
+    <h2>使用說明</h2>
+    <p>這是一個純前端、免安裝的 <strong>Emoji 搜尋與複製工具</strong>。資料只會在瀏覽器本機處理，不會上傳。</p>
+    <ul>
+      <li><strong>搜尋</strong>：輸入中文關鍵字或英文名稱即可即時篩選結果。</li>
+      <li><strong>複製</strong>：點擊任一 Emoji 即可複製，並自動記入「最近使用」。</li>
+      <li><strong>查看編碼</strong>：點擊 Emoji 可查看 Unicode 碼點、UTF-8、HTML、CSS 與 JavaScript 寫法，並個別複製。</li>
+      <li><strong>收藏</strong>：點擊 Emoji 格右上角星號，將它加入「收藏」。</li>
+    </ul>
+    <h2>快速鍵</h2>
+    <ul>
+      <li><code>/</code>：聚焦搜尋框。</li>
+      <li><code>Esc</code>：依目前狀態逐步關閉說明頁或 Emoji 詳情、清除搜尋、回到「全部」，最後關閉詳情面板。</li>
+    </ul>
+    <h2>常見問題</h2>
+    <h3>如何在 HTML 插入 Emoji？</h3>
+    <p>直接貼上 Emoji 最簡單；也可使用實體。例如 😀 可寫成 <code>&amp;#128512;</code> 或 <code>&amp;#x1F600;</code>。</p>
+    <h3>如何在 CSS content 使用 Emoji？</h3>
+    <pre><code>.icon::before { content: "\\1F600"; }</code></pre>
+    <p>使用反斜線加十六進位碼點，不要加上 <code>U+</code> 前綴。</p>
+    <h3>如何在 JavaScript 字串轉義 Emoji？</h3>
+    <pre><code>const emoji = "\\u{1F600}";</code></pre>
+    <p>舊版環境亦可使用代理對：<code>"\\uD83D\\uDE00"</code>。</p>
+    <h3>為什麼有些 Emoji 有多個碼點？</h3>
+    <p>Emoji 可由零寬連接符（ZWJ）、膚色修飾符或變體選擇符組成。畫面上顯示一個圖形，但編碼會包含多個碼點與位元組。</p>
+    <h2>關於 Unicode 與 Emoji 編碼</h2>
+    <p>每個 Emoji 都有一個或多個 Unicode 碼點，例如 😀 是 <code>U+1F600</code>。UTF-8 會把碼點編碼為位元組；本工具同時顯示 Unicode、UTF-8 與各種跳脫格式，方便跨語言使用。</p>
+    <p>資料基於 <a href="https://www.unicode.org/Public/17.0.0/emoji/" target="_blank" rel="noopener">Unicode Emoji 17.0</a> 與 Unicode CLDR 在地化標注。</p>`,
+  en: `
+    <h2>How to use</h2>
+    <p>This is a no-install <strong>emoji search and copy tool</strong> that runs entirely in your browser. Your data stays on your device.</p>
+    <ul>
+      <li><strong>Search</strong>: Type a Chinese keyword or English name to filter instantly.</li>
+      <li><strong>Copy</strong>: Click any emoji to copy it and add it to Recent automatically.</li>
+      <li><strong>Inspect encodings</strong>: Select an emoji to view and copy its Unicode code points, UTF-8 bytes, HTML, CSS, and JavaScript forms.</li>
+      <li><strong>Favorite</strong>: Use the star in an emoji cell’s upper-right corner to add it to Favorites.</li>
+    </ul>
+    <h2>Keyboard shortcuts</h2>
+    <ul>
+      <li><code>/</code>: Focus the search field.</li>
+      <li><code>Esc</code>: Progressively close Help or emoji details, clear search, return to All, then close the detail panel.</li>
+    </ul>
+    <h2>FAQ</h2>
+    <h3>How do I insert an emoji in HTML?</h3>
+    <p>Pasting the character is simplest. You can also use an entity: 😀 is <code>&amp;#128512;</code> or <code>&amp;#x1F600;</code>.</p>
+    <h3>How do I use an emoji in CSS content?</h3>
+    <pre><code>.icon::before { content: "\\1F600"; }</code></pre>
+    <p>Use a backslash plus the hexadecimal code point, without the <code>U+</code> prefix.</p>
+    <h3>How do I escape an emoji in JavaScript?</h3>
+    <pre><code>const emoji = "\\u{1F600}";</code></pre>
+    <p>For older environments, use the surrogate pair: <code>"\\uD83D\\uDE00"</code>.</p>
+    <h3>Why do some emoji have multiple code points?</h3>
+    <p>An emoji may combine a zero-width joiner (ZWJ), skin-tone modifier, or variation selector. It renders as one glyph but has multiple code points and bytes.</p>
+    <h2>Unicode and emoji encodings</h2>
+    <p>Every emoji has one or more Unicode code points; 😀 is <code>U+1F600</code>. UTF-8 encodes code points as bytes. This tool shows Unicode, UTF-8, and common escape formats for cross-language use.</p>
+    <p>Data is based on <a href="https://www.unicode.org/Public/17.0.0/emoji/" target="_blank" rel="noopener">Unicode Emoji 17.0</a> and Unicode CLDR annotations.</p>`,
+  ja: `
+    <h2>使い方</h2>
+    <p>これはインストール不要の <strong>Emoji 検索・コピー ツール</strong>です。すべてのデータはブラウザー内で処理され、アップロードされません。</p>
+    <ul>
+      <li><strong>検索</strong>：中国語のキーワードまたは英語名を入力すると、すぐに絞り込めます。</li>
+      <li><strong>コピー</strong>：任意の Emoji をクリックするとコピーされ、「最近使用」に追加されます。</li>
+      <li><strong>エンコードを確認</strong>：Emoji を選択すると、Unicode コードポイント、UTF-8、HTML、CSS、JavaScript 表記を確認・コピーできます。</li>
+      <li><strong>お気に入り</strong>：Emoji セル右上の星でお気に入りに追加できます。</li>
+    </ul>
+    <h2>キーボードショートカット</h2>
+    <ul>
+      <li><code>/</code>：検索欄にフォーカスします。</li>
+      <li><code>Esc</code>：ヘルプまたは詳細を閉じ、検索をクリアし、「すべて」に戻り、最後に詳細パネルを閉じます。</li>
+    </ul>
+    <h2>よくある質問</h2>
+    <h3>HTML に Emoji を入れるには？</h3>
+    <p>文字を直接貼り付けるのが最も簡単です。😀 は <code>&amp;#128512;</code> または <code>&amp;#x1F600;</code> とも書けます。</p>
+    <h3>CSS content で Emoji を使うには？</h3>
+    <pre><code>.icon::before { content: "\\1F600"; }</code></pre>
+    <p>バックスラッシュの後に 16 進数コードポイントを書き、<code>U+</code> は付けません。</p>
+    <h3>JavaScript で Emoji をエスケープするには？</h3>
+    <pre><code>const emoji = "\\u{1F600}";</code></pre>
+    <p>古い環境ではサロゲートペア <code>"\\uD83D\\uDE00"</code> も使えます。</p>
+    <h3>複数のコードポイントを持つ Emoji があるのはなぜ？</h3>
+    <p>ZWJ、肌の色修飾子、異体字セレクターを組み合わせることがあります。1 つの絵文字として表示されても、複数のコードポイントとバイトを持ちます。</p>
+    <h2>Unicode と Emoji のエンコード</h2>
+    <p>各 Emoji には 1 つ以上の Unicode コードポイントがあり、😀 は <code>U+1F600</code> です。UTF-8 はコードポイントをバイトに変換します。このツールは Unicode、UTF-8、主要なエスケープ形式を表示します。</p>
+    <p>データは <a href="https://www.unicode.org/Public/17.0.0/emoji/" target="_blank" rel="noopener">Unicode Emoji 17.0</a> と Unicode CLDR 注釈に基づいています。</p>`,
+  ko: `
+    <h2>사용 방법</h2>
+    <p>설치가 필요 없는 <strong>Emoji 검색 및 복사 도구</strong>입니다. 모든 데이터는 브라우저에서만 처리되며 업로드되지 않습니다.</p>
+    <ul>
+      <li><strong>검색</strong>: 중국어 키워드 또는 영어 이름을 입력하면 즉시 필터링됩니다.</li>
+      <li><strong>복사</strong>: Emoji를 클릭하면 복사되고 최근 사용 항목에 자동으로 추가됩니다.</li>
+      <li><strong>인코딩 보기</strong>: Emoji를 선택하면 Unicode 코드 포인트, UTF-8, HTML, CSS, JavaScript 표기를 확인하고 복사할 수 있습니다.</li>
+      <li><strong>즐겨찾기</strong>: Emoji 셀 오른쪽 위의 별을 눌러 즐겨찾기에 추가합니다.</li>
+    </ul>
+    <h2>키보드 단축키</h2>
+    <ul>
+      <li><code>/</code>: 검색 입력창에 포커스합니다.</li>
+      <li><code>Esc</code>: 도움말 또는 Emoji 상세를 닫고, 검색을 지우고, 전체로 돌아간 뒤 마지막으로 상세 패널을 닫습니다.</li>
+    </ul>
+    <h2>자주 묻는 질문</h2>
+    <h3>HTML에 Emoji를 넣으려면?</h3>
+    <p>문자를 직접 붙여 넣는 것이 가장 쉽습니다. 😀는 <code>&amp;#128512;</code> 또는 <code>&amp;#x1F600;</code>으로도 쓸 수 있습니다.</p>
+    <h3>CSS content에 Emoji를 쓰려면?</h3>
+    <pre><code>.icon::before { content: "\\1F600"; }</code></pre>
+    <p>역슬래시 뒤에 16진수 코드 포인트를 쓰고 <code>U+</code> 접두사는 붙이지 마세요.</p>
+    <h3>JavaScript에서 Emoji를 이스케이프하려면?</h3>
+    <pre><code>const emoji = "\\u{1F600}";</code></pre>
+    <p>이전 환경에서는 서로게이트 쌍 <code>"\\uD83D\\uDE00"</code>도 사용할 수 있습니다.</p>
+    <h3>여러 코드 포인트로 이루어진 Emoji가 있는 이유는?</h3>
+    <p>ZWJ, 피부색 수정자 또는 이모지 변형 선택자가 결합될 수 있습니다. 하나의 그림으로 보이지만 여러 코드 포인트와 바이트를 가집니다.</p>
+    <h2>Unicode와 Emoji 인코딩</h2>
+    <p>각 Emoji에는 하나 이상의 Unicode 코드 포인트가 있으며 😀는 <code>U+1F600</code>입니다. UTF-8은 코드 포인트를 바이트로 인코딩합니다. 이 도구는 Unicode, UTF-8 및 주요 이스케이프 형식을 보여 줍니다.</p>
+    <p>데이터는 <a href="https://www.unicode.org/Public/17.0.0/emoji/" target="_blank" rel="noopener">Unicode Emoji 17.0</a> 및 Unicode CLDR 주석을 기반으로 합니다.</p>`,
+  th: `
+    <h2>วิธีใช้งาน</h2>
+    <p>นี่คือ <strong>เครื่องมือค้นหาและคัดลอก Emoji</strong> ที่ไม่ต้องติดตั้ง ข้อมูลทั้งหมดประมวลผลในเบราว์เซอร์และจะไม่ถูกอัปโหลด</p>
+    <ul>
+      <li><strong>ค้นหา</strong>: พิมพ์คำค้นภาษาจีนหรือชื่อภาษาอังกฤษเพื่อกรองผลลัพธ์ทันที</li>
+      <li><strong>คัดลอก</strong>: คลิก Emoji ใดก็ได้เพื่อคัดลอกและเพิ่มในรายการล่าสุดโดยอัตโนมัติ</li>
+      <li><strong>ดูการเข้ารหัส</strong>: เลือก Emoji เพื่อดูและคัดลอก Unicode, UTF-8, HTML, CSS และ JavaScript</li>
+      <li><strong>รายการโปรด</strong>: กดดาวที่มุมขวาบนของช่อง Emoji เพื่อเพิ่มในรายการโปรด</li>
+    </ul>
+    <h2>แป้นพิมพ์ลัด</h2>
+    <ul>
+      <li><code>/</code>: โฟกัสช่องค้นหา</li>
+      <li><code>Esc</code>: ปิดหน้าช่วยเหลือหรือรายละเอียด Emoji ตามลำดับ ล้างการค้นหา กลับไปที่ทั้งหมด และปิดแผงรายละเอียดในท้ายที่สุด</li>
+    </ul>
+    <h2>คำถามที่พบบ่อย</h2>
+    <h3>ใส่ Emoji ใน HTML อย่างไร?</h3>
+    <p>วางตัวอักษรโดยตรงง่ายที่สุด หรือใช้ entity ได้: 😀 คือ <code>&amp;#128512;</code> หรือ <code>&amp;#x1F600;</code></p>
+    <h3>ใช้ Emoji ใน CSS content อย่างไร?</h3>
+    <pre><code>.icon::before { content: "\\1F600"; }</code></pre>
+    <p>ใช้แบ็กสแลชตามด้วยโค้ดพอยต์เลขฐานสิบหก โดยไม่ต้องมีคำนำหน้า <code>U+</code></p>
+    <h3>Escape Emoji ใน JavaScript อย่างไร?</h3>
+    <pre><code>const emoji = "\\u{1F600}";</code></pre>
+    <p>สภาพแวดล้อมเก่ายังใช้ surrogate pair ได้: <code>"\\uD83D\\uDE00"</code></p>
+    <h3>เหตุใด Emoji บางตัวมีหลายโค้ดพอยต์?</h3>
+    <p>Emoji อาจประกอบด้วยตัวเชื่อมความกว้างศูนย์ (ZWJ) ตัวปรับโทนผิว หรือเครื่องหมายเลือกรูปแบบ จึงแสดงเป็นรูปเดียวแต่มีหลายโค้ดพอยต์และหลายไบต์</p>
+    <h2>Unicode และการเข้ารหัส Emoji</h2>
+    <p>Emoji ทุกตัวมี Unicode code point อย่างน้อยหนึ่งค่า โดย 😀 คือ <code>U+1F600</code> UTF-8 เข้ารหัส code point เป็นไบต์ เครื่องมือนี้แสดง Unicode, UTF-8 และรูปแบบ escape ที่ใช้บ่อย</p>
+    <p>ข้อมูลอ้างอิงจาก <a href="https://www.unicode.org/Public/17.0.0/emoji/" target="_blank" rel="noopener">Unicode Emoji 17.0</a> และคำอธิบาย Unicode CLDR</p>`,
+  ms: `
+    <h2>Cara menggunakan</h2>
+    <p>Ini ialah <strong>alat carian dan salinan Emoji</strong> tanpa pemasangan. Semua data diproses dalam pelayar anda dan tidak dimuat naik.</p>
+    <ul>
+      <li><strong>Cari</strong>: Masukkan kata kunci Cina atau nama Inggeris untuk menapis hasil dengan segera.</li>
+      <li><strong>Salin</strong>: Klik mana-mana Emoji untuk menyalinnya dan menambahkannya ke Terbaru secara automatik.</li>
+      <li><strong>Lihat pengekodan</strong>: Pilih Emoji untuk melihat dan menyalin titik kod Unicode, UTF-8, HTML, CSS dan JavaScript.</li>
+      <li><strong>Kegemaran</strong>: Gunakan bintang di penjuru kanan atas sel Emoji untuk menambahkannya ke Kegemaran.</li>
+    </ul>
+    <h2>Pintasan papan kekunci</h2>
+    <ul>
+      <li><code>/</code>: Fokus pada medan carian.</li>
+      <li><code>Esc</code>: Menutup Bantuan atau butiran Emoji secara berperingkat, mengosongkan carian, kembali ke Semua, kemudian menutup panel butiran.</li>
+    </ul>
+    <h2>Soalan lazim</h2>
+    <h3>Bagaimana memasukkan Emoji dalam HTML?</h3>
+    <p>Menampal aksara secara terus adalah paling mudah. Anda juga boleh menggunakan entity: 😀 ialah <code>&amp;#128512;</code> atau <code>&amp;#x1F600;</code>.</p>
+    <h3>Bagaimana menggunakan Emoji dalam CSS content?</h3>
+    <pre><code>.icon::before { content: "\\1F600"; }</code></pre>
+    <p>Gunakan garis condong ke belakang diikuti titik kod perenambelasan, tanpa awalan <code>U+</code>.</p>
+    <h3>Bagaimana melepaskan Emoji dalam JavaScript?</h3>
+    <pre><code>const emoji = "\\u{1F600}";</code></pre>
+    <p>Untuk persekitaran lama, gunakan pasangan surrogate: <code>"\\uD83D\\uDE00"</code>.</p>
+    <h3>Mengapa sesetengah Emoji mempunyai beberapa titik kod?</h3>
+    <p>Emoji boleh menggabungkan zero-width joiner (ZWJ), pengubah tona kulit atau pemilih variasi. Ia kelihatan sebagai satu ikon tetapi mempunyai beberapa titik kod dan bait.</p>
+    <h2>Unicode dan pengekodan Emoji</h2>
+    <p>Setiap Emoji mempunyai satu atau lebih titik kod Unicode; 😀 ialah <code>U+1F600</code>. UTF-8 mengekodkan titik kod sebagai bait. Alat ini memaparkan Unicode, UTF-8 dan format escape yang biasa digunakan.</p>
+    <p>Data berdasarkan <a href="https://www.unicode.org/Public/17.0.0/emoji/" target="_blank" rel="noopener">Unicode Emoji 17.0</a> dan anotasi Unicode CLDR.</p>`,
+};
+
+function renderHelpDoc() {
+  const doc = $('#helpDoc');
+  doc.innerHTML = HELP_DOCS[state.lang] || HELP_DOCS.en;
+  doc.setAttribute('aria-label', t('helpEntryTitle'));
 }
 const ZH_CN_SUBDIVISION_FLAG_NAMES = {
   gbeng: '旗: 英格兰',
@@ -35932,6 +36155,8 @@ function renderTabs() {
       state.activeCat = key;
       renderTabs();
       renderMain();
+      // 切换分类后回到列表顶部，避免停留在上一个分类的滚动位置
+      $('#main').scrollTop = 0;
       // 移动端如果打开了详情面板，隐藏它
       if (window.innerWidth <= 768) hideDetail();
     });
@@ -36348,7 +36573,9 @@ document.addEventListener('keydown', (e) => {
     }
   }
   if (e.key === 'Escape') {
-    if (zoomOverlay.classList.contains('show')) {
+    if (document.body.classList.contains('help-view')) {
+      location.hash = '#/';
+    } else if (zoomOverlay.classList.contains('show')) {
       closeZoom();
     } else if (state.query) {
       state.query = '';
@@ -36363,8 +36590,8 @@ document.addEventListener('keydown', (e) => {
       hideDetail();
     }
   }
-  // 默认聚焦搜索框：按 / 时
-  if (e.key === '/' && document.activeElement !== searchInput) {
+  // 默认聚焦搜索框：按 / 时（帮助页无搜索框，忽略）
+  if (e.key === '/' && document.activeElement !== searchInput && !document.body.classList.contains('help-view')) {
     e.preventDefault();
     searchInput.focus();
   }
@@ -36419,6 +36646,11 @@ function applyStaticI18n() {
   $('#zoomOverlay').setAttribute('aria-label', t('zoomAria'));
   // 复制按钮 title（带 data-i18n-title 标记）
   $$('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+  // 帮助页入口与返回
+  $('#helpEntryTitle').textContent = t('helpEntryTitle');
+  $('#helpEntryDesc').textContent = t('helpEntryDesc');
+  $('#helpBack').textContent = t('helpBack');
+  renderHelpDoc();
 }
 
 // 切换语言：保存、刷新界面与全量重渲染
@@ -36466,6 +36698,22 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.lang-wrap')) langMenu.classList.remove('show');
 });
 
+/* ---------- 帮助页路由（hash 切换，保持单文件） ---------- */
+function isHelpRoute() {
+  const h = location.hash;
+  return h === '#/help' || h === '#help';
+}
+function applyRoute() {
+  const help = isHelpRoute();
+  document.body.classList.toggle('help-view', help);
+  $('#main').scrollTop = 0;
+  if (help) {
+    hideDetail();
+    if (zoomOverlay.classList.contains('show')) closeZoom();
+  }
+}
+window.addEventListener('hashchange', applyRoute);
+
 /* ---------- 初始化 ---------- */
 // 先确定语言（本地保存 -> 浏览器语言 -> 默认 zh-CN），再渲染
 try {
@@ -36480,9 +36728,10 @@ if (initialQuery !== null) {
 }
 renderLangMenu();
 applyStaticI18n();
+applyRoute();
 renderTabs();
 renderMain();
-searchInput.focus();
+if (!isHelpRoute()) searchInput.focus();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {

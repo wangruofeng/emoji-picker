@@ -11,7 +11,8 @@
 
 ## 文件结构
 
-- `index.html` — 全部代码（结构 + 样式 + 脚本），内置 `EMOJI_DATA` / `EMOJI_NAMES` / `I18N` 数据。`<main>` 末尾的 `.seo-doc` 区为可抓取的静态 SEO 文本（使用说明 / FAQ / 编码科普），`<head>` 内含 `WebApplication` 与 `FAQPage` 两段 JSON-LD。
+- `index.html` — 全部代码（结构 + 样式 + 脚本），内置 `EMOJI_DATA` / `EMOJI_NAMES` / `I18N` 数据。`<head>` 内含 `WebApplication` 与 `FAQPage` 两段 JSON-LD。
+- **帮助页（hash 路由 `#/help`）**：使用说明 / FAQ / 快捷键 / 编码科普由 `HELP_DOCS` 和 `renderHelpDoc()` 按当前语言渲染到 `.seo-doc`；默认 `display:none` 不铺在首页列表底部。首页底部只放一个 `.help-entry` 入口，点击进入 `#/help`。路由由 `isHelpRoute()` / `applyRoute()` 处理，通过 `body.help-view` 类切换视图（帮助视图隐藏 toolbar / tabs / `#emojiContent`，显示 `.seo-doc` 与 `.help-back` 返回栏）。
 - `favicon.svg` — 蓝紫渐变圆角方块 + 白色 `😀`。
 - `og.png` + `og.html` — 社交分享预览图（1200×630）及其 HTML 源；`og.html` 经 headless Chrome 截图生成 `og.png`，复用 favicon 的蓝紫渐变品牌风格。
 - `manifest.webmanifest` + `sw.js` — PWA 清单与 Service Worker（离线缓存应用壳）。
