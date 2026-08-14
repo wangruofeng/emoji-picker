@@ -19,6 +19,7 @@
 - `robots.txt` + `sitemap.xml` — 抓取许可与单页 sitemap（含 `<lastmod>`）。
 - `_headers` — Cloudflare Pages 自定义响应头：HSTS、HTML 边缘/浏览器缓存策略；`sw.js` 单独 `no-cache` 以保证更新生效。
 - `README.md` / `README.en.md` — 面向用户的功能说明与在线访问地址（中 / 英）。
+- `DESIGN.md` — 设计规范（[DESIGN.md 格式](https://github.com/google-labs-code/design.md)）：frontmatter 为设计 token，正文为视觉 rationale；CSS 变量是其实现。
 - `CLAUDE.md` — 本文件，记录红线、约定与数据结构。
 
 ## UI 约定

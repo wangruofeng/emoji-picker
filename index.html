@@ -93,14 +93,19 @@
     --text: #1f2328;
     --text-muted: #6b7280;
     --text-faint: #9ca3af;
-    --accent: #2563eb;
-    --accent-hover: #1d4ed8;
-    --accent-soft: #eff6ff;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: #eef2ff;
     --danger: #dc2626;
     --danger-soft: #fef2f2;
     --success: #16a34a;
     --star: #f59e0b;
+    --brand-from: #2563eb;
+    --brand-to: #7c3aed;
+    --on-accent: #ffffff;
     --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-hover: 0 4px 12px rgba(79,70,229,.15);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,.2);
     --radius: 10px;
   }
   html.dark {
@@ -111,13 +116,15 @@
     --text: #e6edf3;
     --text-muted: #9198a1;
     --text-faint: #6e7681;
-    --accent: #58a6ff;
-    --accent-hover: #79b8ff;
-    --accent-soft: #1a2332;
+    --accent: #818cf8;
+    --accent-hover: #a5b4fc;
+    --accent-soft: #1e1b4b;
     --danger: #f87171;
     --danger-soft: #2a1a1c;
     --success: #3fb950;
     --star: #fbbf24;
+    --shadow-hover: 0 4px 12px rgba(129,140,248,.15);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,.2);
     --shadow: 0 1px 3px rgba(0,0,0,.4);
   }
 
@@ -144,8 +151,8 @@
   .logo .mark {
     width: 30px; height: 30px; flex: 0 0 30px; border-radius: 8px;
     display: grid; place-items: center;
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
-    color: #fff; font-size: 16px; font-weight: 700; line-height: 1;
+    background: linear-gradient(135deg, var(--brand-from), var(--brand-to));
+    color: var(--on-accent); font-size: 16px; font-weight: 700; line-height: 1;
   }
   .logo .sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
   .spacer { flex: 1; }
@@ -305,9 +312,9 @@
   .emoji-cell:hover {
     transform: translateY(-2px);
     border-color: var(--accent);
-    box-shadow: 0 4px 12px rgba(37,99,235,.15);
+    box-shadow: var(--shadow-hover);
     /* 提示浮层意外相交时，也不能遮住 hover 边框。 */
-    z-index: 151;
+    z-index: 150;
   }
   .fav-star {
     position: absolute; top: 3px; right: 3px;
@@ -501,7 +508,7 @@
     border: 1px solid var(--border); background: var(--bg);
     color: var(--text); font-size: 14px; cursor: pointer; transition: all .12s;
   }
-  .zoom-action.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .zoom-action.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .zoom-action:hover { border-color: var(--accent); }
   .zoom-hint { margin: 12px 0 0; text-align: center; font-size: 11px; color: var(--text-muted); }
 
@@ -510,7 +517,7 @@
     position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: var(--text); color: var(--panel);
     padding: 9px 16px; border-radius: 8px; font-size: 13px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    box-shadow: var(--shadow-lg);
     opacity: 0; pointer-events: none; transition: all .22s;
     z-index: 400; display: flex; align-items: center; gap: 7px;
   }
@@ -519,7 +526,7 @@
 
   /* ---------- Tooltip ---------- */
   #tooltip {
-    position: fixed; z-index: 150; pointer-events: none;
+    position: fixed; z-index: 151; pointer-events: none;
     background: var(--text); color: var(--panel);
     padding: 5px 10px; border-radius: 6px; font-size: 12px;
     opacity: 0; transform: translate(-50%, -100%); margin-top: -8px;
@@ -36356,6 +36363,8 @@ function showTooltip(e, text) {
 function hideTooltip() {
   tooltip.classList.remove('show');
 }
+// tooltip 是 fixed 定位，滚动时停留在视口原位，会与随内容滚动的 hover 放大卡片错位相交；滚动即隐藏。
+$('#main').addEventListener('scroll', hideTooltip);
 
 /* ---------- 选择 Emoji ---------- */
 function selectEmoji(item) {
