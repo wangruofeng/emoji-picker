@@ -274,7 +274,8 @@
     font-size: 15px; font-weight: 600; color: var(--text);
     /* 间距全走 padding（在背景内）：margin 透明带会让滚动内容穿透 pin 住的标题 */
     margin: 0; position: sticky; top: 0;
-    background: var(--bg); padding: 8px 0 12px; z-index: 5;
+    /* hover 卡片会提升到 150，吸顶标题必须始终覆盖滚动内容。 */
+    background: var(--bg); padding: 8px 0 12px; z-index: 200;
   }
   .cat-title .count {
     font-size: 12px; color: var(--text-muted); font-weight: 400;
