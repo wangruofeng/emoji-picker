@@ -8,8 +8,8 @@
   html, body { width: 1200px; height: 630px; overflow: hidden; }
   body {
     font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #7c3aed 100%);
-    color: #ffffff;
+    background: #FFF6EA;
+    color: #743947;
     position: relative;
     display: flex;
     align-items: center;
@@ -17,29 +17,37 @@
     -webkit-font-smoothing: antialiased;
   }
   .glow1 { position: absolute; width: 560px; height: 560px; right: -120px; top: -160px;
-    background: radial-gradient(circle, rgba(255,255,255,.16), rgba(255,255,255,0) 60%); }
+    background: radial-gradient(circle, rgba(255,177,78,.22), rgba(255,177,78,0) 60%); }
   .glow2 { position: absolute; width: 480px; height: 480px; left: -160px; bottom: -180px;
-    background: radial-gradient(circle, rgba(255,255,255,.14), rgba(255,255,255,0) 60%); }
-  .mark {
-    width: 176px; height: 176px; border-radius: 40px; flex-shrink: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,.20), rgba(255,255,255,.06));
-    border: 2px solid rgba(255,255,255,.55);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 112px; line-height: 1; margin-right: 32px;
-  }
+    background: radial-gradient(circle, rgba(255,102,128,.14), rgba(255,102,128,0) 60%); }
+  .deco { position: absolute; }
+  .deco-a { width: 84px; height: 84px; right: 120px; top: 88px; transform: rotate(-14deg); opacity: .85; }
+  .deco-b { width: 52px; height: 52px; right: 250px; top: 210px; transform: rotate(10deg); opacity: .6; }
+  .logo { width: 200px; height: 200px; flex-shrink: 0; margin-right: 44px;
+    filter: drop-shadow(0 6px 18px rgba(116,57,71,.14)); }
   .copy { flex: 1; min-width: 0; }
-  h1 { font-size: 74px; font-weight: 700; letter-spacing: 1px; line-height: 1.1; }
-  .sub { font-size: 30px; font-weight: 400; color: #dbeafe; margin-top: 8px; }
-  .feat { font-size: 22px; color: #bfdbfe; margin-top: 16px; opacity: .95; }
-  .emojis { font-size: 56px; margin-top: 26px; letter-spacing: 6px; }
+  h1 { font-size: 74px; font-weight: 700; letter-spacing: 1px; line-height: 1.1; color: #743947; }
+  .sub { font-size: 30px; font-weight: 400; color: #9C5B68; margin-top: 8px; }
+  .feat { font-size: 22px; color: #8C6E75; margin-top: 16px; opacity: .95; }
+  .emojis { font-size: 56px; margin-top: 34px; letter-spacing: 6px; margin-right: -6px; }
   .url { position: absolute; left: 96px; bottom: 56px; font-size: 24px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #e0e7ff; }
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #C0703C; }
 </style>
 </head>
 <body>
   <div class="glow1"></div>
   <div class="glow2"></div>
-  <div class="mark">😀</div>
+  <svg class="deco deco-a" viewBox="0 0 72 72" aria-hidden="true"><path d="M54 10c-2.7-3.2-8.2-1.1-7.4 3.4.6 3.2 5.4 6 7.3 7.8 1.9-1.8 6.7-4.6 7.4-7.8.8-4.5-4.7-6.6-7.3-3.4Z" fill="#F04E72"/></svg>
+  <svg class="deco deco-b" viewBox="0 0 72 72" aria-hidden="true"><path d="M54 10c-2.7-3.2-8.2-1.1-7.4 3.4.6 3.2 5.4 6 7.3 7.8 1.9-1.8 6.7-4.6 7.4-7.8.8-4.5-4.7-6.6-7.3-3.4Z" fill="#FF6680"/></svg>
+  <svg class="logo" viewBox="0 0 72 72" role="img" aria-label="Emoji 选择器 Logo">
+    <circle cx="35" cy="38" r="27" fill="#FFB14E"/>
+    <path d="M54 10c-2.7-3.2-8.2-1.1-7.4 3.4.6 3.2 5.4 6 7.3 7.8 1.9-1.8 6.7-4.6 7.4-7.8.8-4.5-4.7-6.6-7.3-3.4Z" fill="#F04E72"/>
+    <path d="M12 18c-2-2.4-6.3-.8-5.6 2.6.5 2.4 4.1 4.6 5.6 5.9 1.5-1.3 5.1-3.5 5.6-5.9.7-3.4-3.6-5-5.6-2.6Z" fill="#FF6680"/>
+    <g fill="none" stroke="#743947" stroke-linecap="round">
+      <path d="M20 34q4-4 8 0M40 34q4-4 8 0" stroke-width="4"/>
+      <path d="M23 44q11 8 21 0" stroke-width="4.2"/>
+    </g>
+  </svg>
   <div class="copy">
     <h1>Emoji 选择器</h1>
     <div class="sub">搜索 · 复制 · Unicode 码点查询</div>

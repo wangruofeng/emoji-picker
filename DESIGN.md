@@ -18,9 +18,11 @@ colors:
   danger-soft: "#fef2f2"
   success: "#16a34a"
   star: "#f59e0b"
-  # 品牌渐变（logo / favicon / og 图）
-  brand-from: "#2563eb"
-  brand-to: "#7c3aed"
+  # 品牌标识色（logo / favicon / og 图的手绘爱心笑脸，纯色非渐变）
+  logo-face: "#FFB14E"
+  logo-heart-right: "#F04E72"
+  logo-heart-left: "#FF6680"
+  logo-ink: "#743947"
   # 强调色之上的文字
   on-primary: "#ffffff"
   # 深色主题对应值
@@ -145,7 +147,7 @@ components:
 - **danger (#dc2626) / danger-soft (#fef2f2)**：删除类操作及其悬停底色。
 - **success (#16a34a)**：复制成功等正向反馈。
 - **star (#f59e0b)**：收藏星标专属琥珀色，不作他用。
-- **brand-from (#2563eb) → brand-to (#7c3aed)**：蓝紫品牌渐变，仅用于 logo 标记、favicon、og 图，与交互色分离。
+- **logo-face (#FFB14E) / logo-heart (#F04E72、#FF6680) / logo-ink (#743947)**：手绘爱心笑脸的品牌标识色，仅用于页头 logo、favicon、og 图（直接写在 SVG 内），与交互色分离。
 - **on-primary (#ffffff)**：强调色按钮上的文字。
 
 ### 深色主题（`html.dark`）
@@ -202,7 +204,7 @@ components:
 
 - Do 全站只用一个强调色；新增交互态复用 `--accent` 系列变量
 - Do 新增颜色先找 `:root` / `html.dark` 是否已有可复用变量，两套主题同时补
-- Don't 在样式区硬编码十六进制色值（品牌渐变变量 `--brand-from/to` 除外，且仅用于品牌标识）
-- Don't 让强调色与品牌渐变混用——渐变只属于 logo/favicon/og，交互永远用纯色 accent
+- Don't 在样式区硬编码十六进制色值（品牌标识 SVG 内的 logo 色除外，样式区不引用品牌色）
+- Don't 让强调色与品牌标识色混用——logo 色只属于 logo/favicon/og，交互永远用纯色 accent
 - Don't 对用户可控内容使用 innerHTML 拼接（XSS 红线，见 CLAUDE.md）
 - Don't 引入第二套阴影写法；用 `--shadow` / `--shadow-hover` / `--shadow-lg` 三档
