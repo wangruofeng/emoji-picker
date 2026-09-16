@@ -10,7 +10,7 @@
   "theme_color": "#FFB14E",
   "icons": [
     {
-      "src": "favicon.svg",
+      "src": "favicon.svg?v=heart",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

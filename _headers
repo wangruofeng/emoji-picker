@@ -5,8 +5,9 @@
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  # HTML：浏览器短缓存 + 边缘长缓存（Pages 部署时会自动失效）
-  Cache-Control: public, max-age=300, s-maxage=31536000, stale-while-revalidate=86400
+  # 不设长 s-maxage：边缘缓存经实测未随部署可靠失效（favicon 曾滞留 8 天旧版），
+  # 资源更新一律靠 URL 版本号（如 favicon.svg?v=heart）
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
 
 # Service Worker 必须始终回源获取最新版本，否则更新无法生效
 /sw.js

@@ -1,9 +1,9 @@
-const CACHE_NAME = 'emoji-picker-v4';
+const CACHE_NAME = 'emoji-picker-v5';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './favicon.svg',
+  './favicon.svg?v=heart',
   './robots.txt',
   './sitemap.xml',
 ];
